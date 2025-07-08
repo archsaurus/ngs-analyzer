@@ -1,5 +1,4 @@
 from src.core.base import *
-
 class DependencyHandler(metaclass=SingletonMeta):
     def __init__(self, logger: logging.Logger=None):
         if logger is None: self.logger = logging.getLogger(name=self.__class__.__name__)
@@ -11,9 +10,9 @@ class DependencyHandler(metaclass=SingletonMeta):
         for handler in self.logger.handlers:
             handler.close()
             self.logger.removeHandler(handler)
-        for new_handler in new_logger.handlers: self.logger.addHandler(new_handler)
+        self.logger = new_logger
 
-    def check_reference(self, ref_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
+    def check_reference(self, ref_filepath: PathLike[AnyStr], ref_dirpath: PathLike[AnyStr]=os.path.curdir) -> PathLike[AnyStr]:
         """
             Check that file or archive with reference sequence exists.
             If there is only an archive, extract it to the current reference directory.
@@ -21,23 +20,23 @@ class DependencyHandler(metaclass=SingletonMeta):
             Returns path to reference file if it exists or raise FileNotFoundError otherwise.
         """
         # TODO: Нужно добавить обработку случая, когда референс - архив 
-        if os.path.isabs(ref_filepath) or os.path.exists(ref_filepath):
+        if os.path.exists(ref_filepath):
             if os.path.isfile(ref_filepath):
                 msg = f"Reference file '{ref_filepath}' was successfully found"
-                configurator.logger.info(msg)
+                self.logger.info(msg)
                 return os.path.abspath(ref_filepath)
             else:
                 msg = f"Can't find reference file at path '{ref_filepath}'"
-                configurator.logger.error(msg)
+                self.logger.error(msg)
                 raise FileNotFoundError(msg)
         else:
-            ref_rootpath = os.path.abspath(configurator.config['reference-directory'])
-            configurator.logger.info(f"Start searching in references' root directory '{ref_rootpath}'")
+            ref_rootpath = os.path.abspath(ref_dirpath)
+            self.logger.info(f"Start searching in references' root directory '{ref_rootpath}'")
             for root, dirs, files in os.walk(ref_rootpath):
-                if ref_filepath in files:
-                    configurator.logger.info(f"Reference file '{ref_filepath}' was found at '{os.path.abspath(os.path.join(root, ref_filepath))}'")
+                if os.path.basename(ref_filepath) in files:
+                    self.logger.info(f"Reference file '{ref_filepath}' was found at '{os.path.abspath(os.path.join(root, ref_filepath))}'")
                     return os.path.abspath(os.path.join(root, ref_filepath))
-            raise FileNotFoundError(f"Root directory not exists or '{ref_rootpath}' is not a directory")
+            raise FileNotFoundError(f"Root directory not exists or '{ref_rootpath}' is not a reference directory")
 
     @staticmethod
     def is_module_loaded(module_name: AnyStr) -> bool:
@@ -51,17 +50,17 @@ class DependencyHandler(metaclass=SingletonMeta):
     @staticmethod
     def fetch_dependency(module_name: AnyStr) -> None:
         """Tries to fetch depended module from pip distro. In case of failure calls exit function with suggested error code"""
-        configurator.logger.warning(f"Can't import '{module_name}' module. Is it installed with current interpreter?")
+        self.logger.warning(f"Can't import '{module_name}' module. Is it installed with current interpreter?")
         ans = input(f"Can't import '{module_name}' module. Do you want to try to fetch it from pip distro [y/n]: ")
         match ans.lower():
             case 'y':
-                if try_to_install_module(module_name): configurator.logger.info(f"Module '{module_name}' has successfully installed")
+                if try_to_install_module(module_name): self.logger.info(f"Module '{module_name}' has successfully installed")
                 else:
-                    configurator.logger.critical(f"The module '{module_name}' neither found nor installed. Abort")
+                    self.logger.critical(f"The module '{module_name}' neither found nor installed. Abort")
                     sys.exit(os.EX_SOFTWARE)
             case 'n': sys.exit(os.EX_OK)
             case _:
-                configurator.logger.critical(f"Unrecognized command '{ans}' was given. Abort")
+                self.logger.critical(f"Unrecognized command '{ans}' was given. Abort")
                 sys.exit(os.EX_USAGE)
 
     @staticmethod

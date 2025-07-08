@@ -63,7 +63,9 @@ class Configurator(metaclass=SingletonMeta):
             if not silent: handlers.append(logging.StreamHandler(stream=sys.stdout))
             logging.basicConfig(level=logging.INFO, format=r'%(asctime)s - %(levelname)s - %(message)s', handlers=handlers)
             
-            return logging.getLogger()
+            configuration_logger = logging.getLogger()
+            configuration_logger.propagate = False
+            return configuration_logger
         except Exception as e:
             print(f"A fatal error '{e.__repr__()}' occured at '{e.__traceback__.tb_frame}'", file=sys.stdout)
             exit(os.EX_SOFTWARE)

@@ -3,6 +3,7 @@ import os, sys, re
 from os import PathLike
 
 from importlib.util import find_spec
+from types import FunctionType
 from typing import AnyStr
 
 class SingletonMeta(type):
