@@ -85,16 +85,20 @@ class Configurator(metaclass=SingletonMeta):
         self.logger.info(f"Use '{output_dir}' directory as output")
         return output_dir
 
-    def parse_configuration(self, base_config_filepath: PathLike[AnyStr]=os.path.join(os.path.curdir, 'src', 'conf', 'config.ini')) -> dict:
+    def parse_configuration(
+        self,
+        base_config_filepath: PathLike[AnyStr]=os.path.join(os.path.curdir, 'src', 'conf', 'config.ini'),
+        target_section: AnyStr='Pathes'
+    ) -> dict:
         if os.path.exists(base_config_filepath) and os.path.isfile(base_config_filepath):
-            conf = configparser.ConfigParser()
+            conf = configparser.ConfigParser(inline_comment_prefixes=[';', '#'], comment_prefixes=[';', '#'])
             conf.read(os.path.join(base_config_filepath))
 
-            pathes_dict = dict()
-            if 'Pathes' in conf:
-                for path_value in conf['Pathes']: pathes_dict[path_value] = conf['Pathes'][path_value]
+            config_dict = {'target_section': target_section}
+            if target_section in conf:
+                for path_value in conf[target_section]: config_dict[path_value] = conf[target_section][path_value]
             else: raise ConfigurationError(f"Can't parse configuration file under path '{base_config_filepath}'. See the project config documentattion")
-            return pathes_dict
+            return config_dict
         else:
             self.logger.critical(msg=f"Can't find configuration file under path '{base_config_filepath}'")
             raise FileNotFoundError()
