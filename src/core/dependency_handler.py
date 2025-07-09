@@ -12,6 +12,7 @@ class DependencyHandler(metaclass=SingletonMeta):
             self.logger.removeHandler(handler)
         self.logger = new_logger
 
+    # FIXME: Некорректно отрабатывает поиск файла в ref_dirpath
     def check_reference(self, ref_filepath: PathLike[AnyStr], ref_dirpath: PathLike[AnyStr]=os.path.curdir) -> PathLike[AnyStr]:
         """
             Check that file or archive with reference sequence exists.
@@ -87,3 +88,25 @@ class DependencyHandler(metaclass=SingletonMeta):
             try: touch(src)
             except Exception: return False
         return True    
+
+    @staticmethod
+    def resolve_file_path_by_extensions(
+        base_name: PathLike[AnyStr],
+        extension_list: list[str]
+    ) -> PathLike[AnyStr]:
+        """
+            Searches for the first existing file that matches the base name with any of the provided extensions.
+
+            Args:
+                base_name (PathLike[AnyStr]): The base file path without extension.
+                extension_list (list[str]): A list of file extensions to check (including the dot, e.g., '.txt').
+
+            Returns:
+                PathLike[AnyStr]: The full path to the first existing file that matches the base name with one of the extensions.
+
+            Raises:
+                FileNotFoundError: If no file matching the base name with any of the provided extensions is found.
+        """
+        for path in [os.path.abspath(os.path.join(base_name + ext)) for ext in extension_list]:
+            if os.path.exists(path): return path
+        raise FileNotFoundError()
