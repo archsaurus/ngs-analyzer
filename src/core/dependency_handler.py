@@ -12,7 +12,6 @@ class DependencyHandler(metaclass=SingletonMeta):
             self.logger.removeHandler(handler)
         self.logger = new_logger
 
-    # FIXME: Некорректно отрабатывает поиск файла в ref_dirpath
     def check_reference(self, ref_filepath: PathLike[AnyStr], ref_dirpath: PathLike[AnyStr]=os.path.curdir) -> PathLike[AnyStr]:
         """
             Check that file or archive with reference sequence exists.
@@ -20,24 +19,94 @@ class DependencyHandler(metaclass=SingletonMeta):
 
             Returns path to reference file if it exists or raise FileNotFoundError otherwise.
         """
-        # TODO: Нужно добавить обработку случая, когда референс - архив 
+        def check_for_archive(ref_filepath: PathLike[AnyStr]) -> list[PathLike[AnyStr]]:
+            """
+                Checks if the given file path points to an archive file (e.g., ZIP, TAR, GZ).
+                If so, extracts its contents and returns a list of absolute paths to the extracted files.
+
+                The method performs the following:
+                - Resolves the file path by checking for common archive extensions.
+                - Logs the identified archive and initiates extraction.
+                - Extracts archive contents and logs the list of extracted files.
+                - Returns a list of absolute paths to the extracted files, or the original file path if no archive is found or an error occurs.
+
+                Args:
+                    ref_filepath (PathLike[AnyStr]): The path to the file to check.
+
+                Returns:
+                    list[PathLike[AnyStr]]: List of absolute paths to the extracted files if extraction occurs successfully; \
+                                            otherwise, returns a list containing the absolute path of the original file.
+            """
+            try:
+                archive_path = self.resolve_file_path_by_extensions(
+                    os.path.splitext(ref_filepath)[0],
+                    ['.zip', '.tar', '.tar.gz', '.tar.bz2', '.tar.xz', '.gz']
+                )
+                self.logger.debug(f"The file '{archive_path}' identified as an archive. Execute '{archive_path}' extraction")
+                
+                archive_file_names = extract_archive(archive_path)
+                files_count = len(archive_file_names)
+                self.logger.debug(
+                    f"Extraction has successfully done. "
+                    f"Path{'' if files_count == 1 else 'es'} to extracted "
+                    f"fil{ 'e' if files_count == 1 else 'es'}: "
+                    f"{
+                        archive_file_names[0] if files_count == 1 else
+                        archive_file_names[0]+', '.join(archive_file_names[1:-2])+archive_file_names[-1]
+                    }" 
+                )
+
+                return list(map(os.path.abspath, archive_file_names))
+
+            except (FileNotFoundError, IOError): return None
+            return os.path.abspath(ref_filepath)
+
+        def select_reference_option(path_list: list[PathLike[AnyStr]]) -> PathLike[AnyStr]:
+            self.logger.info(f"There were some files in the archive. Chose one to use as a reference file:")
+            
+            for i in range(len(path_list)): print(f"{i}) '{path_list[i]}'")
+            
+            ans = int(input())
+            self.logger.debug(ans)
+
+            if ans in range(1, len(path_list)): return path_list[ans]
+            else:
+                self.logger.critical(f"Incorrect value was given. Abort")
+                exit(os.EX_SOFTWARE)
+
         if os.path.exists(ref_filepath):
             if os.path.isfile(ref_filepath):
-                msg = f"Reference file '{ref_filepath}' was successfully found"
-                self.logger.info(msg)
-                return os.path.abspath(ref_filepath)
+                path_list = check_for_archive(ref_filepath)
+
+                if path_list is None:
+                    self.logger.info(f"Reference file '{ref_filepath}' was successfully found")
+                    return ref_filepath
+                else:
+                    chosen_ref_filepath = path_list[0] if len(path_list) == 1 else select_reference_option(path_list)
+                    self.logger.info(f"Reference file '{chosen_ref_filepath}' was successfully found")
+                    return chosen_ref_filepath
             else:
                 msg = f"Can't find reference file at path '{ref_filepath}'"
                 self.logger.error(msg)
                 raise FileNotFoundError(msg)
         else:
-            ref_rootpath = os.path.abspath(ref_dirpath)
-            self.logger.info(f"Start searching in references' root directory '{ref_rootpath}'")
-            for root, dirs, files in os.walk(ref_rootpath):
+            ref_dirpath = os.path.abspath(ref_dirpath)
+            self.logger.info(f"Start searching in references' root directory '{ref_dirpath}'")
+            for root, dirs, files in os.walk(ref_dirpath, followlinks=True):
                 if os.path.basename(ref_filepath) in files:
-                    self.logger.info(f"Reference file '{ref_filepath}' was found at '{os.path.abspath(os.path.join(root, ref_filepath))}'")
-                    return os.path.abspath(os.path.join(root, ref_filepath))
-            raise FileNotFoundError(f"Root directory not exists or '{ref_rootpath}' is not a reference directory")
+                    path_list = check_for_archive(os.path.join(root, ref_filepath))
+                    
+                    if path_list is None:
+                        self.logger.info(f"Reference file '{ref_filepath}' was found at '{os.path.abspath(os.path.join(root, ref_filepath))}'")
+                        return ref_filepath
+                    else:
+                        chosen_ref_filepath = path_list[0] if len(path_list) == 1 else select_reference_option(path_list)
+                        self.logger.info(
+                            f"Reference '{os.path.basename(ref_filepath)}' "
+                            f"was found at '{os.path.abspath(os.path.join(root, chosen_ref_filepath))}'"
+                        )
+                        return chosen_ref_filepath
+            raise FileNotFoundError(f"Root directory not exists or '{ref_dirpath}' is not a reference directory")
 
     @staticmethod
     def is_module_loaded(module_name: AnyStr) -> bool:
