@@ -5,7 +5,7 @@ from src.core.analyzer import Analyzer
 
 from src.settings import dependency_handler, configurator
 
-if __name__ == '__main__':
+def main():
     brca1_analyzer = Analyzer()
     brca1_analyzer.context.update(
         brca1_analyzer.prepareData(patient=PatientDataContainer(
@@ -16,3 +16,10 @@ if __name__ == '__main__':
     )
     
     brca1_analyzer.analyze()
+
+if __name__ == '__main__':
+    if configurator.args is None:
+        configurator.args = configurator.parse_argvars()
+        configurator.output_dir = configurator.set_output_directory(configurator.args.outputDir)
+    
+    main()

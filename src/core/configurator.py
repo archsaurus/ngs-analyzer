@@ -9,7 +9,7 @@ class Configurator(metaclass=SingletonMeta):
         self,
         log_path: PathLike[AnyStr]=os.path.abspath(os.path.join(os.path.curdir, 'logs'))
     ):
-        self.args = self.parse_argvars()
+        self.args = None
         self.log_path = log_path
 
         # Set logging
@@ -17,7 +17,11 @@ class Configurator(metaclass=SingletonMeta):
         try: os.mkdir(log_path)
         except FileExistsError: self.logger.info(f"Logger base path set to '{log_path}'")
 
-        self.output_dir = self.set_output_directory(self.args.outputDir)
+        if self.args:
+            self.output_dir = self.set_output_directory(self.args.outputDir)
+        else:
+            os.path.abspath(os.path.join(os.path.curdir, 'output'))
+        
         self.config = self.parse_configuration()
 
     def parse_argvars(self) -> argparse.Namespace:
@@ -56,7 +60,10 @@ class Configurator(metaclass=SingletonMeta):
 
     def set_logger(self, silent: bool=False):
         try:
-            base_logpath = os.path.abspath(os.path.join(self.log_path, self.args.logFilename))
+            if not self.args is None:
+                base_logpath = os.path.abspath(os.path.join(self.log_path, self.args.logFilename))
+            else:
+                base_logpath = os.path.abspath(os.path.join(self.log_path, 'default_analyzer_log.log'))
             if not DependencyHandler.verify_path(base_logpath): exit(os.EX_SOFTWARE)
 
             handlers=[logging.FileHandler(filename=base_logpath)]

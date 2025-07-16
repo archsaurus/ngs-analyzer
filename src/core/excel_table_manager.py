@@ -13,7 +13,7 @@ class ExcelTableManager(metaclass=SingletonMeta):
         else: self.logger = logger
 
     # TODO: Must to refactor hardcode by adding mapping file
-    def merge_data(
+    def aggregate_data(
         self,
         adapters_filepath: PathLike[AnyStr], 
         indexes_filepath: PathLike[AnyStr], 
@@ -57,7 +57,7 @@ class ExcelTableManager(metaclass=SingletonMeta):
             i7_mark, i5_mark = sample_row[14:16]
             table = pandas.concat([
                 table, pandas.DataFrame({
-                    'sample_id': [sample_id],
+                    'sample_id': [str(sample_id).strip().replace(' ', '')],
                     'lib_type': [lib_type],
                     'index_type': [index_type],
                     'i7_mark': [i7_mark],
@@ -154,13 +154,36 @@ def main():
     tm = ExcelTableManager()
     tm_config = configurator.parse_configuration(target_section='ExcelTableManager')
 
-    demultiplexing_table = tm.merge_data(
+    demultiplexing_table = tm.aggregate_data(
         adapters_filepath=tm_config['adapter-list'],
         indexes_filepath=tm_config['index-list'],
         samples_filepath=tm_config['sample-list']
     )
 
-    if tm.save_data(path=tm_config['dump'], data=demultiplexing_table): exit(os.EX_OK)
+    if tm.save_data(path=tm_config['dump'], data=demultiplexing_table):
+        barcodes_path = os.path.join(tm_config['base_outpath'], 'barcodes.tsv') 
+
+        try:
+            with open(barcodes_path, 'w') as barcodes_fd:
+                [print(f"{row[1]}", f"{row[8]}", f"{row[10]}", sep='\t', file=barcodes_fd) for row in demultiplexing_table.itertuples()]
+
+        except:
+            pass
+
+        output_dir_path = os.path.join(tm_config['base_outpath'], 'demultiplexed')
+        os.makedirs(output_dir_path, exist_ok=True)
+
+        cmd = ' '.join([
+            tm_config['demultiplexor'], 'match',
+            '-p', output_dir_path,
+            barcodes_path,
+            tm_config['r1_undetermined_path'],
+            tm_config['r2_undetermined_path'],
+        ])
+
+        os.system(cmd)
+
     else: exit(os.EX_SOFTWARE)
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
