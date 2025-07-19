@@ -170,12 +170,14 @@ def main():
         except:
             pass
 
-        output_dir_path = os.path.join(tm_config['base_outpath'], 'demultiplexed')
+        output_dir_path = os.path.join(tm_config['base_outpath'], 'demultiplexed3')
         os.makedirs(output_dir_path, exist_ok=True)
 
         cmd = ' '.join([
             tm_config['demultiplexor'], 'match',
             '-p', output_dir_path,
+            '-m', '3',
+            '-d',
             barcodes_path,
             tm_config['r1_undetermined_path'],
             tm_config['r2_undetermined_path'],

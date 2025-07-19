@@ -5,7 +5,7 @@ class PatientDataContainer:
         self,
         R1_source: PathLike[AnyStr],
         R2_source: PathLike[AnyStr]=None,
-        id: int=0,
+        id: str='1',
         processing_path: PathLike[AnyStr]=None,
         processing_logpath: PathLike[AnyStr]=None,
         report_path: PathLike[AnyStr]=None
@@ -19,3 +19,5 @@ class PatientDataContainer:
         self.processing_path = os.path.abspath(os.path.join(configurator.output_dir, f"patient_{self.id}")) if processing_path is None else processing_logpath
         self.processing_logpath = os.path.abspath(os.path.join(configurator.log_path, f"patient_{self.id}")) if processing_logpath is None else processing_logpath
         self.report_path = os.path.abspath(os.path.join(configurator.args.outputDir, f"patient_{self.id}", "report")) if report_path is None else report_path
+
+    def __str__(self): return "{"+f"id: '{self.id}', r1: '{self.R1_source}', r2: '{self.R2_source}'"+"}"
