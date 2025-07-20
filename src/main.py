@@ -1,12 +1,18 @@
 from src.core.base import *
 
 from src.core.patient_data_container import PatientDataContainer
-from src.core.analyzer import Analyzer
 
-from src.settings import dependency_handler, configurator
+from src.dependency_handler import DependencyHandler
+from src.configurator import Configurator
+from src.analyzer import Analyzer
 
 def main():
-    brca1_analyzer = Analyzer()
+    configurator = Configurator()
+    
+    dependency_handler = DependencyHandler()
+    dependency_handler.set_logger(configurator.logger)
+    
+    brca1_analyzer = Analyzer(configurator=configurator, cmd_caller=os.system)
 
     tm_config = configurator.parse_configuration(target_section='ExcelTableManager')
     reads_list = os.listdir(path=configurator.config['reads-dir'])
@@ -35,7 +41,7 @@ def main():
                         R1_source=os.path.join(configurator.config['reads-dir'], sample_r1_path),
                         R2_source=os.path.join(configurator.config['reads-dir'], sample_r2_path)
                     )
-                    
+
                     brca1_analyzer.context.update(brca1_analyzer.prepareData(patient))
                 else:
                     configurator.logger.critical(f"Can't find {'R1' if sample_r1_path is None else 'R2'} for sample '{sample_id}'")
@@ -44,9 +50,4 @@ def main():
 
         brca1_analyzer.analyze()
 
-if __name__ == '__main__':
-    if configurator.args is None:
-        configurator.args = configurator.parse_argvars()
-        configurator.output_dir = configurator.set_output_directory(configurator.args.outputDir)
-    
-    main()
+if __name__ == '__main__': main()

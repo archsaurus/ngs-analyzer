@@ -6,6 +6,8 @@ from importlib.util import find_spec
 from types import FunctionType
 from typing import AnyStr
 
+from abc import ABC, abstractmethod
+
 class SingletonMeta(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
@@ -13,7 +15,7 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 def touch(path: PathLike[AnyStr]) -> None:
-	with open(path, 'a'): os.utime(path, None)
+    with open(path, 'a'): os.utime(path, None)
 
 def insert_processing_infix(infix_str: str, filename: PathLike[AnyStr]) -> PathLike:
     base, ext = os.path.splitext(filename)
