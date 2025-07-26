@@ -1,6 +1,6 @@
 from src.core.base import *
 
-class PatientDataContainer:
+class SampleDataContainer:
     def __init__(
         self,
         R1_source: PathLike[AnyStr],
@@ -13,11 +13,14 @@ class PatientDataContainer:
         # TODO: Validate current patient data
         self.R1_source = R1_source
         self.R2_source = R2_source
-        
+
         self.id = id
-        
-        self.processing_path = os.path.abspath(os.path.join(os.path.curdir, f"patient_{self.id}")) if processing_path is None else processing_logpath
+
+        self.processing_path = os.path.abspath(os.path.join(os.path.curdir, 'logs', f"patient_{self.id}")) if processing_path is None else processing_logpath
         self.processing_logpath = os.path.abspath(os.path.join(os.path.curdir, f"patient_{self.id}")) if processing_logpath is None else processing_logpath
         self.report_path = os.path.abspath(os.path.join(os.path.curdir, f"patient_{self.id}", "report")) if report_path is None else report_path
 
     def __str__(self): return "{"+f"id: '{self.id}', r1: '{self.R1_source}', r2: '{self.R2_source}'"+"}"
+
+    def __repr__(self):
+        return f"{self.__class__}({self.R1_source}, {self.R2_source}, {self.id}, {self.processing_path}, {self.processing_logpath}, {self.report_path})"

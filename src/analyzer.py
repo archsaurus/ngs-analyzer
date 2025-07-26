@@ -1,7 +1,7 @@
 from src.core.base import *
 
 from src.configurator import Configurator
-from src.core.patient_data_container import PatientDataContainer
+from src.core.sample_data_container import SampleDataContainer
 
 class Analyzer(metaclass=SingletonMeta):
     def __init__(
@@ -17,12 +17,12 @@ class Analyzer(metaclass=SingletonMeta):
         self.cmd_caller = os.system if cmd_caller is None else cmd_caller
         self.context = {}
 
-    def prepareData(self, patient: PatientDataContainer) -> dict[str, dict[str, PathLike[AnyStr]]]:
+    def prepareData(self, patient: SampleDataContainer) -> dict[str, dict[str, PathLike[AnyStr]]]:
         """
             Performs data preparation for a comprehensive analysis pipeline of patient sequencing data.
 
             The method executes the following steps:
-            1. Initializes a PatientDataContainer with source read files.
+            1. Initializes a SampleDataContainer with source read files.
             2. Trims adapter sequences from the raw reads.
             3. Selects paired-end reads after trimming, if available.
             4. Aligns the processed reads to a reference genome.
@@ -32,14 +32,14 @@ class Analyzer(metaclass=SingletonMeta):
             This process prepares the patient's sequencing data for downstream analysis such as variant calling.
 
             Args:
-                patient (PatientDataContainer): The container holding patient-specific sequencing data, \
+                patient (SampleDataContainer): The container holding patient-specific sequencing data, \
                 including source read file paths and patient identifiers.
             Returns:
                 dict[str, dict[str, PathLike[AnyStr]]]: A dictionary containing a patient id \
                 and a dictionary of file paths needed for downstream analysis steps, \
                 such as aligned and recalibrated BAM files.
         """
-        trimmed_reads_pathes = self.trimAdapters(patient, self.configurator.args.outputDir)
+        trimmed_reads_pathes = self.trimAdapters(patient, self.configurator.output_dir)
         paired_trimmed_reads = []
         for path in trimmed_reads_pathes:
             if '.paired' in path: paired_trimmed_reads.append(path)
@@ -50,7 +50,7 @@ class Analyzer(metaclass=SingletonMeta):
         aligned_reads_path = self.alignReadsToReference(
             patient,
             self.configurator.config['reference'],
-            os.path.abspath(os.path.join(self.configurator.args.outputDir,f"patient_{patient.id}"))
+            os.path.abspath(os.path.join(self.configurator.args.outputDir,f"{patient.id}"))
         )
         
         bam_index_path, bam_filepath = self.groupReads(patient, aligned_reads_path)
@@ -63,7 +63,7 @@ class Analyzer(metaclass=SingletonMeta):
 
     def trimAdapters(
         self,
-        patient: PatientDataContainer,
+        patient: SampleDataContainer,
         output_dir: PathLike[AnyStr]
     ) -> list[PathLike[AnyStr]]:
         """
@@ -71,18 +71,14 @@ class Analyzer(metaclass=SingletonMeta):
             This step is necessary to ensure that primer sequences in the reads are positioned as close as possible to the ends of the reads.
             In this way, their identification is more accurate.
             Args:
-                patient (PatientDataContainer): The container holding patient's sequencing data, including raw reads path.
+                patient (SampleDataContainer): The container holding patient's sequencing data, including raw reads path.
                 output_dir (PathLike[AnyStr]): Directory where the trimmed reads and output files will be saved.
             Returns:
                 None
         """
         if not os.path.exists(patient.R1_source): msg = f"R1 reads file '{patient.R1_source}' not found. Abort"
         else:
-            trim_logpath = os.path.abspath(os.path.join(
-                patient.processing_logpath,
-                os.path.basename(os.path.splitext(self.configurator.config['trimmomatic'])[0]))+'.log')
-
-            trim_outpath = os.path.abspath(os.path.join(output_dir, f"patient_{patient.id}", 'trimmed_reads'))
+            trim_outpath = os.path.abspath(os.path.join(output_dir, f"{patient.id}", 'trimmed_reads'))
 
             os.makedirs(trim_outpath, exist_ok=True)
 
@@ -122,7 +118,7 @@ class Analyzer(metaclass=SingletonMeta):
                     )
                 })
 
-            os.makedirs(os.path.dirname(trim_logpath), exist_ok=True)
+            os.makedirs(os.path.dirname(patient.processing_logpath), exist_ok=True)
 
             trimmer_summary_path = os.path.abspath(os.path.join(
                 patient.processing_logpath,
@@ -133,8 +129,10 @@ class Analyzer(metaclass=SingletonMeta):
                 self.configurator.config['java'], '-jar',
                 self.configurator.config['trimmomatic'], trimmer_args['mode'],
                 '-threads', str(self.configurator.args.threads),
-                '-'+trimmer_args['phred'],
-                # '-trimlog', "'"+trim_logpath+"'", # Not human-readable output
+                f"-{trimmer_args['phred']}",
+                '-trimlog', os.path.join(
+                    patient.processing_logpath,
+                    os.path.basename(os.path.splitext(self.configurator.config['trimmomatic'])[0]))+'.log',
                 '-summary', "'"+trimmer_summary_path+"'",
                 ' ', ' '.join(trimmer_args['basein']),
                 ' ', ' '.join(trimmer_args['baseout']),
@@ -144,11 +142,11 @@ class Analyzer(metaclass=SingletonMeta):
                 f"SLIDINGWINDOW:{trimmer_args['slightwindow']}" if 'slightwindow' in trimmer_args else '',
                 f"MINLEN:{trimmer_args['minlen']}" if 'minlen' in trimmer_args else '',
                 f"CROP:{trimmer_args['crop']}" if 'crop' in trimmer_args else '',
-                f"HEADCROP:{trimmer_args['headcrop']}" if 'headcrop' in trimmer_args else ''
+                f"HEADCROP:{trimmer_args['headcrop']}" if 'headcrop' in trimmer_args else '',
+                '>> ', trimmer_summary_path
             ])
 
-            self.configurator.logger.info(f"Executing Trimmomatic command")
-            self.configurator.logger.debug(f"Command: {trimmer_cmd}")
+            self.configurator.logger.debug(f"Executing Trimmomatic with command: {trimmer_cmd}")
 
             self.cmd_caller(trimmer_cmd)
 
@@ -162,7 +160,7 @@ class Analyzer(metaclass=SingletonMeta):
     # TODO: Have to cover the case of no index
     def alignReadsToReference(
         self,
-        patient: PatientDataContainer,
+        patient: SampleDataContainer,
         reference_source: PathLike[AnyStr],
         output_path: PathLike[AnyStr]
     ) -> PathLike[AnyStr]:
@@ -174,7 +172,7 @@ class Analyzer(metaclass=SingletonMeta):
             and their alignment is performed relative to each other.
 
             Args:
-                patient (PatientDataContainer): The container holding patient's sequencing data, including raw reads path.
+                patient (SampleDataContainer): The container holding patient's sequencing data, including raw reads path.
                 reference_source (PathLike[AnyStr]): Path to the reference genome file to which reads will be aligned.
                 output_path (PathLike[AnyStr]): Path where the alignment results, including CIGAR strings, will be saved.
             Returns:
@@ -186,7 +184,7 @@ class Analyzer(metaclass=SingletonMeta):
         )
 
         try:
-            aligning_outpath = os.path.abspath(os.path.join(patient.processing_path, f"patient_{patient.id}.sam"))
+            aligning_outpath = os.path.abspath(os.path.join(patient.processing_path, f"{patient.id}.sam"))
             
             reads_mapping_cmd = ' '.join([
                 self.configurator.config['bwa-mem2'], 'mem', self.configurator.config['reference'],
@@ -197,7 +195,7 @@ class Analyzer(metaclass=SingletonMeta):
                 '2>', aligning_logpath
             ])
 
-            self.configurator.logger.info(f"Starting to map patient '{patient.id}' reads to reference '{self.configurator.config['reference']}'")
+            self.configurator.logger.info(f"Starting to map sample '{patient.id}' reads to reference '{self.configurator.config['reference']}'")
             self.configurator.logger.debug(f"Command: {reads_mapping_cmd}")
 
             self.cmd_caller(reads_mapping_cmd)
@@ -207,11 +205,11 @@ class Analyzer(metaclass=SingletonMeta):
             return aligning_outpath
         except Exception as e:
             self.configurator.logger.critical(f"A fatal error '{e.__repr__()}' occured at '{e.__traceback__.tb_frame}'")
-            exit(os.EX_SOFTWARE)
+            raise e
 
     def groupReads(
         self,
-        patient: PatientDataContainer,
+        patient: SampleDataContainer,
         input_path: PathLike[AnyStr]
     ) -> (PathLike[AnyStr], PathLike[AnyStr]):
         """
@@ -221,7 +219,7 @@ class Analyzer(metaclass=SingletonMeta):
             BAM files occupy less disk space, and due to indexing and their binary format,
             interaction speed with these files is significantly higher.
             Args:
-                patient (PatientDataContainer): The container with patient's data, may be used for naming or metadata.
+                patient (SampleDataContainer): The container with patient's data, may be used for naming or metadata.
                 input_path (PathLike[AnyStr]): Path to the input SAM file generated from mapping.
 
             Returns:
@@ -237,7 +235,7 @@ class Analyzer(metaclass=SingletonMeta):
 
         picard_grouping_outpath = os.path.abspath(os.path.join(
             patient.processing_path,
-            f"patient_{patient.id}.sorted.read_groups")
+            f"{patient.id}.sorted.read_groups")
         )
 
         group_reads_cmd = ' '.join([
@@ -252,7 +250,7 @@ class Analyzer(metaclass=SingletonMeta):
             '-RGLB', 'MiSeq',
             '-RGPL', 'Illumina',
             '-RGPU', 'barcode',
-            '-RGSM', f"patient_{patient.id}"
+            '-RGSM', f"{patient.id}"
             # endregion
         ])
 
@@ -266,7 +264,7 @@ class Analyzer(metaclass=SingletonMeta):
 
     def performBQSR(
         self,
-        patient: PatientDataContainer,
+        patient: SampleDataContainer,
         input_path: PathLike[AnyStr]
     ) -> PathLike[AnyStr]:
         """
@@ -277,7 +275,7 @@ class Analyzer(metaclass=SingletonMeta):
             2. ApplyBQSR to produce a recalibrated BAM file.
 
             Args:
-                patient (PatientDataContainer): The patient data container with processing info.
+                patient (SampleDataContainer): The patient data container with processing info.
                 input_path (PathLike[AnyStr]): Path to the input BAM file to be recalibrated.
 
             Returns:
@@ -292,7 +290,7 @@ class Analyzer(metaclass=SingletonMeta):
         )
 
         racalibration_table_path = os.path.abspath(os.path.join(
-            patient.processing_path, f"patient_{patient.id}.table"
+            patient.processing_path, f"{patient.id}.table"
         ))
 
         base_recal_cmd_str = ' '.join([
@@ -348,6 +346,8 @@ class Analyzer(metaclass=SingletonMeta):
             )
 
             exit(os.EX_SOFTWARE)
+
+    def cutPrimers(): pass
 
     def analyze(self): pass
 

@@ -1,18 +1,17 @@
 from src.core.base import *
+from src.utils.table_manager import *
 
-import pandas
+from src.utils.table_manager.sample_sheet_container import SampleSheetContainer, Section
+from src.utils.table_manager.sample_sheet_builder import SampleSheetBuilder
 
-class ExcelTableManager(metaclass=SingletonMeta):
+
+import datetime
+
+class ExcelTableManager(LoggerMixin, ITableManager):
     def __init__(self, logger: logging.Logger=None):
-        if logger is None:
-            self.logger = logging.Logger(__name__)
-            self.logger.setLevel(logging.INFO)
-            stdout_handler = logging.StreamHandler(stream=sys.stdout)
-            stdout_handler.setFormatter(logging.Formatter(r'%(asctime)s - %(levelname)s - %(message)s'))
-            self.logger.addHandler(stdout_handler)
-        else: self.logger = logger
+        super().__init__()
+        self.set_logger(logger)
 
-    # TODO: Must to refactor hardcode by adding mapping file
     def aggregate_data(
         self,
         adapters_filepath: PathLike[AnyStr], 
@@ -31,6 +30,8 @@ class ExcelTableManager(metaclass=SingletonMeta):
                 pandas.DataFrame: The merged DataFrame, or None if errors occur. \
                 Prints informative error messages if a logger is not provided.
         """
+
+        # TODO: Must to refactor hardcode by adding mapping file
         try:
             adapters_book = pandas.read_excel(adapters_filepath)
             indexes_book = pandas.read_excel(indexes_filepath)
@@ -111,7 +112,6 @@ class ExcelTableManager(metaclass=SingletonMeta):
                     table.loc[mask5, 'p5'] = str(adapter_seq).upper()
         return table
 
-    # TODO: Write FormatHandler for more flexible API
     def save_data(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool:
         """
             Saves data from a Pandas DataFrame to a CSV file.
@@ -128,10 +128,10 @@ class ExcelTableManager(metaclass=SingletonMeta):
         """
         if not isinstance(data, pandas.DataFrame): raise TypeError("Input data must be a Pandas DataFrame.")
         try:
-            with open(path, 'x') as dump_fd:
+            with open(path, 'x') as sample_sheet_fd:
                 header = "sample_id;lib_type;index_type;i7_mark;i5_mark;p7;p5;i7;i7_compl;i5;i5_compl;"
-                print(header, file=dump_fd)
-                for i in data.itertuples(): print(';'.join((map(str,i[1:]))), file=dump_fd)
+                print(header, file=sample_sheet_fd)
+                for i in data.itertuples(): print(';'.join((map(str,i[1:]))), file=sample_sheet_fd)
             return True
         except FileExistsError as e:
             self.logger.warning(f"File {path} already exists.")
@@ -141,50 +141,65 @@ class ExcelTableManager(metaclass=SingletonMeta):
                 
                 print("Invalid input. Please enter 'y' or 'n'.")
             if response == 'y':
-                with open(path, 'w') as dump_fd:
+                with open(path, 'w') as sample_sheet_fd:
                     header = "sample_id;lib_type;index_type;i7_mark;i5_mark;p7;p5;i7;i7_compl;i5;i5_compl;"
-                    print(header, file=dump_fd)
-                    for i in data.itertuples(): print(';'.join((map(str,i[1:]))), file=dump_fd)
+                    print(header, file=sample_sheet_fd)
+                    for i in data.itertuples(): print(';'.join((map(str,i[1:]))), file=sample_sheet_fd)
                 return True
             else: return False
 
-def main():
-    from src.settings import dependency_handler, configurator
-
-    tm = ExcelTableManager()
-    tm_config = configurator.parse_configuration(target_section='ExcelTableManager')
-
-    demultiplexing_table = tm.aggregate_data(
-        adapters_filepath=tm_config['adapter-list'],
-        indexes_filepath=tm_config['index-list'],
-        samples_filepath=tm_config['sample-list']
-    )
-
-    if tm.save_data(path=tm_config['dump'], data=demultiplexing_table):
-        barcodes_path = os.path.join(tm_config['base_outpath'], 'barcodes.tsv') 
-
+    def create_sample_sheet(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool:
+        sh, sh_builder = None, None
         try:
-            with open(barcodes_path, 'w') as barcodes_fd:
-                [print(f"{row[1]}", f"{row[8]}", f"{row[10]}", sep='\t', file=barcodes_fd) for row in demultiplexing_table.itertuples()]
+            with open(path, 'w') as sample_sheet_fd:
+                """
+                    print("[Header]", file=sample_sheet_fd)
+                    print("Local Run Manager Analysis Id", "1", sep=',', file=sample_sheet_fd)
+                    print("Date", "22.07.2025", sep=',', file=sample_sheet_fd)
+                    print("Experiment Name","NGS216", sep=',', file=sample_sheet_fd)
+                    print("Workflow", "GenerateFastQWorkflow", sep=',', file=sample_sheet_fd)
+                    print("Description", "Auto generated sample sheet.  Used by workflow module to kick off Isis analysis", sep=',', file=sample_sheet_fd)
+                    print("Chemistry", "Amplicon", sep=',', end='\n\n', file=sample_sheet_fd)
+                    print("[Reads]", "151", "151", sep='\n', end='\n\n', file=sample_sheet_fd)
+                    print("[Data]", file=sample_sheet_fd)
+                    print("Sample_ID", "Sample_Name", "Index", "I7_Index_ID", "index2", "I5_Index_ID", sep=',', file=sample_sheet_fd)
+                """
+                sh = SampleSheetContainer()
+                sh.add_section(Section("Header", {
+                    "Local Run Manager Analysis Id": 1,
+                    "Date": datetime.date.today(),
+                    "Experiment Name": "NSG216",
+                    "WorkFlow": "GenerateFastQWorkflow",
+                    "Description": "",
+                    "Chemistry": "Amplicon"}))
+                sh.add_section(Section("Reads", ["151", "151"]))
 
-        except:
-            pass
+                """
+                    row[0]  - column index,  row[1] - sample identifier
+                    row[2]  - lib identifier,row[3] - index identifier
+                    row[4]  - p7 forward,    row[5] - p7 compl
+                    row[6]  - p5 forward,    row[7] - p5 compl
+                    row[8]  - i7 forward,    row[9] - i7 compl
+                    row[10] - i5 forward,    row[11] - i5 compl
+                """
+                
+                # Writing [Data] Section with format:   Sample_ID   Sample_Name Index   I7_Index_ID index2  I5_Index_ID
+                # For more details see documentation provided by Illumina
+                # (https://support.illumina.com/content/dam/illumina-support/documents/documentation/software_documentation/bcl2fastq/bcl2fastq2-v2-20-software-guide-15051736-03.pdf)
+                counter = 1
+                sh_data_dict = {}
+                for row in data.itertuples():
+                    if counter not in sh_data_dict:
+                        sh_data_dict[counter] = [f"{row[1]}", f"{row[9]}", f"{row[4]}", f"{row[11]}", f"{row[5]}"]
+                    else:
+                        raise IndexError(f"Not unique value {counter} passed as primary key")
+                    counter += 1
+                
+                sh.add_section(Section("Data", sh_data_dict))
 
-        output_dir_path = os.path.join(tm_config['base_outpath'], 'demultiplexed3')
-        os.makedirs(output_dir_path, exist_ok=True)
+                sh_builder = SampleSheetBuilder(sh, separator=',')
+                sh_builder.build()
+                sh_builder.save_to_csv('/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/src/conf/sample_sheet_test.csv')
 
-        cmd = ' '.join([
-            tm_config['demultiplexor'], 'match',
-            '-p', output_dir_path,
-            '-m', '3',
-            '-d',
-            barcodes_path,
-            tm_config['r1_undetermined_path'],
-            tm_config['r2_undetermined_path'],
-        ])
-
-        os.system(cmd)
-
-    else: exit(os.EX_SOFTWARE)
-
-if __name__ == '__main__': main()
+                return True
+        except Exception as e: return False

@@ -1,0 +1,11 @@
+from src.core.base import *
+from . import *
+
+class XmlTableManager(LoggerMixin, ITableManager):
+    def __init__(self, logger: logging.Logger=None):
+        super().__init__()
+        self.set_logger(logger)
+
+    def aggregate_data() -> pandas.DataFrame: pass
+
+    def save_data(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool: pass

@@ -4,15 +4,29 @@ from os import PathLike
 
 from importlib.util import find_spec
 from types import FunctionType
-from typing import AnyStr
 
 from abc import ABC, abstractmethod
+from typing import Protocol
+from typing import AnyStr, Optional
 
 class SingletonMeta(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances: cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+class LoggerMixin:
+    def __init__(self, logger: logging.Logger=None):
+        self.logger = logger
+        self.set_logger(logger)
+    def set_logger(self, logger: logging.Logger=None) -> None:
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.INFO)
+            stdout_handler = logging.StreamHandler(stream=sys.stdout)
+            stdout_handler.setFormatter(logging.Formatter(r'%(asctime)s - %(levelname)s - %(message)s'))
+            self.logger.addHandler(stdout_handler)
+        else: self.logger = logger
 
 def touch(path: PathLike[AnyStr]) -> None:
     with open(path, 'a'): os.utime(path, None)
