@@ -1,4 +1,4 @@
-from src.core.base import *
+from . import *
 
 class SampleDataContainer:
     def __init__(
@@ -8,6 +8,8 @@ class SampleDataContainer:
         id: str='1',
         processing_path: PathLike[AnyStr]=None,
         processing_logpath: PathLike[AnyStr]=None,
+        bam_filepath: Optional[PathLike[AnyStr]]=None,
+        vcf_filepath: Optional[PathLike[AnyStr]]=None,
         report_path: PathLike[AnyStr]=None
     ):
         # TODO: Validate current patient data
@@ -19,6 +21,9 @@ class SampleDataContainer:
         self.processing_path = os.path.abspath(os.path.join(os.path.curdir, 'logs', f"patient_{self.id}")) if processing_path is None else processing_logpath
         self.processing_logpath = os.path.abspath(os.path.join(os.path.curdir, f"patient_{self.id}")) if processing_logpath is None else processing_logpath
         self.report_path = os.path.abspath(os.path.join(os.path.curdir, f"patient_{self.id}", "report")) if report_path is None else report_path
+
+        self.bam_filepath = bam_filepath
+        self.vcf_filepath = vcf_filepath
 
     def __str__(self): return "{"+f"id: '{self.id}', r1: '{self.R1_source}', r2: '{self.R2_source}'"+"}"
 

@@ -1,4 +1,4 @@
-import logging, argparse, configparser, subprocess
+import logging, argparse, configparser
 import os, sys, re
 from os import PathLike
 
@@ -6,8 +6,7 @@ from importlib.util import find_spec
 from types import FunctionType
 
 from abc import ABC, abstractmethod
-from typing import Protocol
-from typing import AnyStr, Optional
+from typing import Protocol, AnyStr, Optional, Union, Any
 
 class SingletonMeta(type):
     _instances = {}
@@ -19,6 +18,7 @@ class LoggerMixin:
     def __init__(self, logger: logging.Logger=None):
         self.logger = logger
         self.set_logger(logger)
+
     def set_logger(self, logger: logging.Logger=None) -> None:
         if logger is None:
             self.logger = logging.getLogger(__name__)
@@ -28,12 +28,45 @@ class LoggerMixin:
             self.logger.addHandler(stdout_handler)
         else: self.logger = logger
 
+class ICommandExecutor(Protocol):
+    def run(cmd): ...
+
+class CommandExecutor(LoggerMixin, ICommandExecutor):
+    def __init__(self, caller: callable=os.system):
+        if callable(caller): self.caller = caller
+        else: raise TypeError(f"Command caller must be callable, '{type(caller)}' given")
+
+    def run(command: Union[list[str], str, dict[str, str]]) -> bool:
+        if   isinstance(command, list): pass
+        elif isinstance(command, str): pass
+        elif isinstance(command, dict): pass
+        else: raise TypeError(f"Unsupported command type: {type(command)}")
+        
+        self.logger.debug(f"'{self.__class__.__name__}' got '{command.__str__()}' command as type '{type(command)}'")
+
+        try:
+            self.caller(command)
+
+            return True
+
+        except Exception as e:
+            self.logger.critical(e)
+            return False
+
+def execute(executor, command) -> None:
+    if hasattr(executor, 'run'): executor.run(command)
+    elif callable(executor): executor(command)
+    else: raise TypeError(f"Unsupported executor type: {type(executor)}")
+
 def touch(path: PathLike[AnyStr]) -> None:
     with open(path, 'a'): os.utime(path, None)
 
 def insert_processing_infix(infix_str: str, filename: PathLike[AnyStr]) -> PathLike:
     base, ext = os.path.splitext(filename)
-    return f"{base}{infix_str}{ext}"
+    if ext in [".gz", ".zip"]:
+        sub_base, sub_ext = os.path.splitext(base)
+        return f"{sub_base}{infix_str}{sub_ext}{ext}"
+    else: return f"{base}{infix_str}{ext}"
 
 def extract_archive(archive_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
     archive_absolute_filepath = os.path.abspath(archive_filepath)

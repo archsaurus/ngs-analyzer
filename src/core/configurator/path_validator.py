@@ -1,4 +1,4 @@
-from src.core.base import *
+from . import *
 
 class IPathValidator(ABC):
     @abstractmethod

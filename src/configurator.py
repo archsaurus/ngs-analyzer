@@ -1,9 +1,5 @@
 from src.core.base import *
-
-from src.core.path_validator import PathValidator
-from src.core.logging_configurator import LoggingConfigurator
-from src.core.config_loader import ConfigLoader
-from src.core.argument_parser import ArgumentParser
+from src.core.configurator import *
 
 class Configurator(metaclass=SingletonMeta):
     def __init__(
@@ -57,15 +53,4 @@ class Configurator(metaclass=SingletonMeta):
         base_config_filepath: PathLike[AnyStr]=os.path.join(os.path.curdir, 'src', 'conf', 'config.ini'),
         target_section: AnyStr='Pathes'
     ) -> dict:
-        if os.path.exists(base_config_filepath) and os.path.isfile(base_config_filepath):
-            conf = configparser.ConfigParser(inline_comment_prefixes=[';', '#'], comment_prefixes=[';', '#'])
-            conf.read(os.path.join(base_config_filepath))
-
-            config_dict = {'target_section': target_section}
-            if target_section in conf:
-                for path_value in conf[target_section]: config_dict[path_value] = conf[target_section][path_value]
-            else: raise ConfigurationError(f"Can't parse configuration file under path '{base_config_filepath}'. See the project config documentattion")
-            return config_dict
-        else:
-            self.logger.critical(msg=f"Can't find configuration file under path '{base_config_filepath}'")
-            raise FileNotFoundError()
+        return ConfigLoader().load(base_config_filepath, target_section)

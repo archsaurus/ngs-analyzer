@@ -1,10 +1,7 @@
-from src.core.base import *
+from . import *
 
-from src.core.sample_data_container import SampleDataContainer
-
-class ISampleDataFactory(ABC):
-    @abstractmethod
-    def parse_sample_data(self, path: PathLike[AnyStr], sample_id: AnyStr) -> SampleDataContainer: pass
+class ISampleDataFactory(Protocol):
+    def parse_sample_data(self, path: PathLike[AnyStr], sample_id: AnyStr) -> SampleDataContainer: ...
 
 class SampleDataFactory(LoggerMixin, ISampleDataFactory):
     def __init__(self, logger: logging.Logger=None):
@@ -12,7 +9,6 @@ class SampleDataFactory(LoggerMixin, ISampleDataFactory):
 
     def parse_sample_data(self, path: PathLike[AnyStr], sample_id: AnyStr) -> SampleDataContainer:
         regexp_filter = re.compile(rf"^.*{sample_id}.*")
-
         sample_reads_source_pathes = filter(regexp_filter.match, os.listdir(path))
 
         sample_r1_path, sample_r2_path = None, None
@@ -29,5 +25,5 @@ class SampleDataFactory(LoggerMixin, ISampleDataFactory):
 
             return sample_data
         else:
-            self.logger.critical(f"Can't find {'R1' if sample_r1_path is None else 'R2'} for sample '{sample_id}'")
+            self.logger.critical(f"Can't find {'R1' if sample_r1_path is None else 'R2'} file for sample '{sample_id}'")
             return None 

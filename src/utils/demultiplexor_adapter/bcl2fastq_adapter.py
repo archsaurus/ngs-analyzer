@@ -1,5 +1,5 @@
 from src.core.base import *
-from src.core.configuration_error import ConfigurationError
+from src.core.configurator.configuration_error import ConfigurationError
 
 from .i_demultiplexor_adapter import IDemultiplexorAdapter
 

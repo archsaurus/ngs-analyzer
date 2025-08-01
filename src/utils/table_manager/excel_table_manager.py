@@ -4,7 +4,6 @@ from src.utils.table_manager import *
 from src.utils.table_manager.sample_sheet_container import SampleSheetContainer, Section
 from src.utils.table_manager.sample_sheet_builder import SampleSheetBuilder
 
-
 import datetime
 
 class ExcelTableManager(LoggerMixin, ITableManager):
@@ -112,7 +111,7 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                     table.loc[mask5, 'p5'] = str(adapter_seq).upper()
         return table
 
-    def save_data(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool:
+    def save_dump(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool:
         """
             Saves data from a Pandas DataFrame to a CSV file.
 
@@ -151,55 +150,46 @@ class ExcelTableManager(LoggerMixin, ITableManager):
     def create_sample_sheet(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool:
         sh, sh_builder = None, None
         try:
-            with open(path, 'w') as sample_sheet_fd:
-                """
-                    print("[Header]", file=sample_sheet_fd)
-                    print("Local Run Manager Analysis Id", "1", sep=',', file=sample_sheet_fd)
-                    print("Date", "22.07.2025", sep=',', file=sample_sheet_fd)
-                    print("Experiment Name","NGS216", sep=',', file=sample_sheet_fd)
-                    print("Workflow", "GenerateFastQWorkflow", sep=',', file=sample_sheet_fd)
-                    print("Description", "Auto generated sample sheet.  Used by workflow module to kick off Isis analysis", sep=',', file=sample_sheet_fd)
-                    print("Chemistry", "Amplicon", sep=',', end='\n\n', file=sample_sheet_fd)
-                    print("[Reads]", "151", "151", sep='\n', end='\n\n', file=sample_sheet_fd)
-                    print("[Data]", file=sample_sheet_fd)
-                    print("Sample_ID", "Sample_Name", "Index", "I7_Index_ID", "index2", "I5_Index_ID", sep=',', file=sample_sheet_fd)
-                """
-                sh = SampleSheetContainer()
-                sh.add_section(Section("Header", {
-                    "Local Run Manager Analysis Id": 1,
-                    "Date": datetime.date.today(),
-                    "Experiment Name": "NSG216",
-                    "WorkFlow": "GenerateFastQWorkflow",
-                    "Description": "",
-                    "Chemistry": "Amplicon"}))
-                sh.add_section(Section("Reads", ["151", "151"]))
+            sh = SampleSheetContainer()
+            sh.add_section(Section("Header", {
+                "Local Run Manager Analysis Id": 1,
+                "Date": datetime.date.today(),
+                "Experiment Name": "NSG216",
+                "WorkFlow": "GenerateFastQWorkflow",
+                "Description": "",
+                "Chemistry": "Amplicon"}))
+            sh.add_section(Section("Reads", ["151", "151"]))
 
-                """
-                    row[0]  - column index,  row[1] - sample identifier
-                    row[2]  - lib identifier,row[3] - index identifier
-                    row[4]  - p7 forward,    row[5] - p7 compl
-                    row[6]  - p5 forward,    row[7] - p5 compl
-                    row[8]  - i7 forward,    row[9] - i7 compl
-                    row[10] - i5 forward,    row[11] - i5 compl
-                """
-                
-                # Writing [Data] Section with format:   Sample_ID   Sample_Name Index   I7_Index_ID index2  I5_Index_ID
-                # For more details see documentation provided by Illumina
-                # (https://support.illumina.com/content/dam/illumina-support/documents/documentation/software_documentation/bcl2fastq/bcl2fastq2-v2-20-software-guide-15051736-03.pdf)
-                counter = 1
-                sh_data_dict = {}
-                for row in data.itertuples():
-                    if counter not in sh_data_dict:
-                        sh_data_dict[counter] = [f"{row[1]}", f"{row[9]}", f"{row[4]}", f"{row[11]}", f"{row[5]}"]
-                    else:
-                        raise IndexError(f"Not unique value {counter} passed as primary key")
-                    counter += 1
-                
-                sh.add_section(Section("Data", sh_data_dict))
+            """ data:
+                row[0]  - column index,  row[1] - sample identifier
+                row[2]  - lib identifier,row[3] - index identifier
+                row[4]  - p7 forward,    row[5] - p7 compl
+                row[6]  - p5 forward,    row[7] - p5 compl
+                row[8]  - i7 forward,    row[9] - i7 compl
+                row[10] - i5 forward,    row[11] - i5 compl
+            """
 
-                sh_builder = SampleSheetBuilder(sh, separator=',')
-                sh_builder.build()
-                sh_builder.save_to_csv('/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/src/conf/sample_sheet_test.csv')
+            # Writing [Data] Section with format:   Sample_ID   Sample_Name Index   I7_Index_ID index2  I5_Index_ID
+            # This header is required for [Data] section.
+            # For more details see documentation provided by Illumina
+            # (https://support.illumina.com/content/dam/illumina-support/documents/documentation/software_documentation/bcl2fastq/bcl2fastq2-v2-20-software-guide-15051736-03.pdf)
+            
+            counter = 1
+            sh_data_dict = {}
+            sh_data_dict['Sample_ID'] = ['Sample_Name','Index','I7_Index_ID','index2','I5_Index_ID']
+            for row in data.itertuples():
+                if counter not in sh_data_dict:
+                    sh_data_dict[counter] = [f"{row[1]}", f"{row[9]}", f"{row[4]}", f"{row[11]}", f"{row[5]}"]
+                else:
+                    raise IndexError(f"Not unique value '{counter}' passed as primary key")
+                counter += 1
 
-                return True
-        except Exception as e: return False
+            sh.add_section(Section("Data", sh_data_dict))
+
+            sh_builder = SampleSheetBuilder(sh, separator=',')
+            sh_builder.build()
+            sh_builder.save_to_csv(path)
+
+            return True
+        except Exception as e:
+            raise e

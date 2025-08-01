@@ -1,10 +1,7 @@
-from src.core.base import *
+from . import *
 
-from src.core.path_validator import IPathValidator
-
-class ILoggingConfigurator(ABC):
-    @abstractmethod
-    def set_logger(self, silet: bool=False) -> logging.Logger: pass
+class ILoggingConfigurator(Protocol):
+    def set_logger(self, silet: bool=False) -> logging.Logger: ...
 
 class LoggingConfigurator(ILoggingConfigurator):
     def __init__(

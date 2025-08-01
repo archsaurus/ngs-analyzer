@@ -8,4 +8,4 @@ class XmlTableManager(LoggerMixin, ITableManager):
 
     def aggregate_data() -> pandas.DataFrame: pass
 
-    def save_data(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool: pass
+    def save_dump(self, path: PathLike[AnyStr], data: pandas.DataFrame) -> bool: pass

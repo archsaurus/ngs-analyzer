@@ -1,10 +1,12 @@
-from src.core.base import *
+from . import *
 
-class IConfigLoader(ABC):
-    @abstractmethod
-    def load(): pass
+class IConfigLoader(Protocol):
+    def load(): ...
 
-class ConfigLoader(IConfigLoader):
+class ConfigLoader(LoggerMixin, IConfigLoader):
+    def __init__(self, logger: Optional[logging.Logger]=None):
+        super().__init__(logger)
+
     def load(
         self,
         base_config_filepath: PathLike[AnyStr]=os.path.join(os.path.curdir, 'src', 'conf', 'config.ini'),
