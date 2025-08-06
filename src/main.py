@@ -7,9 +7,12 @@ def main():
     dependency_handler = DependencyHandler(logger=main_logger)
 
     import subprocess
-    brca1_analyzer = Analyzer(configurator=configurator, cmd_caller=subprocess.run)
+    brca1_analyzer = Analyzer(
+        configurator = configurator,
+        cmd_caller = os.system
+        )
 
-    if True:
+    if False:
         from src import table_manager
         table_manager.main()
 
@@ -36,9 +39,9 @@ def main():
                 sample.processing_path = sample_base_outpath
                 sample.report_path =  os.path.join(sample_base_outpath, "report")
 
-                brca1_analyzer.context.update(brca1_analyzer.prepareData(sample))
+                brca1_analyzer.prepareData(sample)
+                brca1_analyzer.analyze(sample)
+                
                 input('end')
 
-    brca1_analyzer.analyze()
-    
 if __name__ == '__main__': main()
