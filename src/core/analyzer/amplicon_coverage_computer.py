@@ -82,7 +82,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                 return 0.0
 
         except Exception as e:
-            self.logger.critical(f"An error '{e}' occured in '{self.__class__.__name__}.{self.__name__}'. Abort")
+            self.logger.critical(f"An error {str(e)} occured in '{self.__class__.__name__}.{self.perform.__func__.__name__}'. Abort")
             raise e
 
     def count_variant_coverage(
@@ -91,7 +91,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         position: Union[int, str],
         ref: str,
         alt: str
-    ) -> (int, float):
+    ) -> (int, int, float):
         if chromosome in self.mpileup_files:
             with open(self.mpileup_files[chromosome], 'r') as fd:
                 for line in fd:
@@ -99,11 +99,11 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                         columns = line.split('\t')[3:5]
                         depth = int(columns[0])
                         alt_count = depth - columns[1].upper().count(ref)
-                        return (alt_count, round(alt_count/depth, 3))
+                        return (depth, alt_count, round(alt_count/depth, 3))
             raise PositionNotFoundError(f"There is no '{position}' position in '{self.mpileup_files[chromosome]}' file")
 
         else:
-            msg = f"The mpileup file for chromosome {chrmosome} doesn't exist"
+            msg = f"The mpileup file for chromosome {chromosome} doesn't exist"
             self.logger.critical(msg + 'You have to execute {self.__class__.__name__}.perform at first')
             raise FileNotFoundError(msg)
 
@@ -112,11 +112,16 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
     ) -> list:
-        target_regions=[(self.configurator.config['chr13-interval'], 'mpileup13'), (self.configurator.config['chr17-interval'], 'mpileup17')]
+        #target_regions=[(self.configurator.config['chr13-interval'], 'mpileup13'), (self.configurator.config['chr17-interval'], 'mpileup17')]
+        target_regions=[
+            (self.configurator.config['chr10-interval'], 'mpileup10'),
+            (self.configurator.config['chr14-interval'], 'mpileup14'),
+            (self.configurator.config['chr19-interval'], 'mpileup19')
+        ]
 
-        self.mpileup_files['13'], self.mpileup_files['17'] = self.generate_mpileup(sample=sample, regions=target_regions, executor=os.system)
+        self.mpileup_files['10'], self.mpileup_files['14'], self.mpileup_files['19'] = self.generate_mpileup(sample=sample, regions=target_regions, executor=os.system)
 
-        if not os.path.exists(self.coords):
+        if not os.path.exists(self.coords) or sample.id not in self.coords:
             self.coords = os.path.join(sample.processing_path, sample.id+".coords")
             try:
                 cmd = ''
@@ -152,7 +157,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
         with open(self.coords, 'r') as fd:
             for data in map(str.strip, fd.readlines()):
-                chrom, start, end = data.split('\t')
+                chrom, start, end, depth = data.split('\t')
+                chrom = chrom.replace('chr', '')
                 if chrom in self.mpileup_files:
                     mpileup = self.mpileup_files[chrom]
                     cov_value = round(self.count_region_coverage(mpileup, chrom, start, end), 3)

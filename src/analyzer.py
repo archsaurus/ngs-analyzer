@@ -79,7 +79,6 @@ class Analyzer(metaclass=SingletonMeta):
             '--protocol',   ','.join(['refGene', 'clinvar_20250721', ]),
             '--outfile',    os.path.join(sample.processing_path, sample.id+".ann"),
             '--remove',
-            '--csvout',
             '--otherinfo',
             annotated_sample_filepath+'.avinput',
             self.configurator.config['annovar_humandb'],

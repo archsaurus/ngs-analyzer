@@ -114,7 +114,8 @@ class PTrimmer(LoggerMixin, IDataPreparator):
                 Tuple of paths to the trimmed R1 and R2 files.
         """
         primer_cutter_logpath = os.path.join(sample.processing_logpath, 'pTrimmer.log')
-        if not os.path.exists(os.path.dirname(primer_cutter_logpath)): os.makedirs(os.path.dirname(primer_cutter_logpath))
+        if not os.path.exists(os.path.dirname(primer_cutter_logpath)):
+            os.makedirs(os.path.abspath(os.path.dirname(primer_cutter_logpath)))
         if not os.path.exists(primer_cutter_logpath):
             with open(primer_cutter_logpath, 'a') as f: pass
 

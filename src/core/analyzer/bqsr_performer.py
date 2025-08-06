@@ -47,8 +47,11 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             #'--intervals', '19:40736224-40791252', # AKT2
             #'--intervals', '3:178865902-178957881', # PIK3CA
             #'--intervals', '6:152128817-152424409', # ESR1
-            '--intervals', self.configurator.config['chr13-interval'],
-            '--intervals', self.configurator.config['chr17-interval'],
+            #'--intervals', self.configurator.config['chr13-interval'],
+            #'--intervals', self.configurator.config['chr17-interval'],
+            '--intervals', self.configurator.config['chr10-interval'],
+            '--intervals', self.configurator.config['chr14-interval'],
+            '--intervals', self.configurator.config['chr19-interval'],
             '2>', base_recal_logpath,
             '>>', base_recal_logpath
         ])

@@ -25,5 +25,5 @@ class SampleDataFactory(LoggerMixin, ISampleDataFactory):
 
             return sample_data
         else:
-            self.logger.critical(f"Can't find {'R1' if sample_r1_path is None else 'R2'} file for sample '{sample_id}'")
+            self.logger.critical(f"Can't find {'R1' if sample_r1_path is None else 'R2'} file for sample '{sample_id.strip()}'")
             return None 
