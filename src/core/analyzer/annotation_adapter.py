@@ -20,12 +20,14 @@ class SnpEffAnnotationAdapter(LoggerMixin, IAnnotationAdapter):
         executor: Union[CommandExecutor, callable]
     ) -> PathLike[AnyStr]:
         annotated_vcf = insert_processing_infix('.ann', sample.vcf_filepath)
-        
+
+        html_stats_path = os.path.join(sample.processing_logpath, f"{sample.id}_snpEff_summary.html")
+        csv_stats_path = os.path.join(sample.processing_logpath, f"{sample.id}_snpEff_summary.csv")
         cmd = ' '.join([
             self.configurator.config['java'], '-jar',
             self.configurator.config['snpeff'], reference_ident,
-            '-stats', os.path.join(sample.processing_logpath, f"{sample.id}_snpEff_summary.html"),
-            '-csvStats', os.path.join(sample.processing_logpath, f"{sample.id}_snpEff_summary.csv"),
+            '-stats', html_stats_path,
+            '-csvStats', csv_stats_path,
             sample.vcf_filepath, '>', annotated_vcf
         ])
 

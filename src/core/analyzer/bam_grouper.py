@@ -50,7 +50,7 @@ class BamGrouper(LoggerMixin, IDataPreparator):
         ])
 
         self.configurator.logger.info("Start grouping aligned reads")
-        self.configurator.logger.info(f"Command: {group_reads_cmd}")
+        self.configurator.logger.debug(f"Command: {group_reads_cmd}")
 
         execute(executor, group_reads_cmd)
         

@@ -49,7 +49,8 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             #'--intervals', '6:152128817-152424409', # ESR1
             '--intervals', self.configurator.config['chr13-interval'],
             '--intervals', self.configurator.config['chr17-interval'],
-            '2>', base_recal_logpath
+            '2>', base_recal_logpath,
+            '>>', base_recal_logpath
         ])
 
         try:

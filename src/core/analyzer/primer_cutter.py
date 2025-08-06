@@ -132,6 +132,7 @@ class PTrimmer(LoggerMixin, IDataPreparator):
             '--summary', os.path.join(sample.processing_logpath, 'pTrimmer.summary'), 
             '--mismatch', str(1),
             '--kmer', str(4),
+            '>', primer_cutter_logpath, '2>&1'
             #'--gzip'
             ])
 

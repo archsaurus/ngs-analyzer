@@ -16,10 +16,16 @@ class PiscesVariantCaller(VariantCaller):
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
     ):
+        self.logger.info(f"Starting variant calling with Pisces")
+
+        base_logpath = os.path.join(sample.processing_logpath, 'pisces.log')
+    
         cmd = ' '.join([
             self.configurator.config['pisces'],
             # '--coveragemethod, f'"exact"',
             # '--sbfilter' str(0.1),
+            '--coveragemethod', 'exact', # 'exact' or 'approximate'. 'exect' method is greedy
+            '--multiprocess', 'true',
             '--gvcf false',
             '--minbasecallquality', str(10),
             '--minmapquality', str(10),
@@ -28,10 +34,17 @@ class PiscesVariantCaller(VariantCaller):
             '--bampaths', sample.bam_filepath,
             '--genomefolders', os.path.dirname(self.configurator.config['reference']),
             '--outfolder', sample.processing_path,
-            '--baselogname', os.path.join(sample.processing_logpath, 'pisces.log')
+            '--baselogname', base_logpath,
+            '>>', base_logpath,
+            '2>&1',
         ])
 
+        self.logger.info("Executing Pisces command")
+        self.logger.debug("Command: {cmd}")
+
         execute(executor, cmd)
+
+        self.logger.info(f"Variant calling successfully done. See it's log on {base_logpath}")
 
         return os.path.splitext(sample.bam_filepath)[0]+".vcf"
 

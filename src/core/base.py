@@ -1,5 +1,8 @@
 import logging, argparse, configparser
 import os, sys, re
+
+import platform
+
 from os import PathLike
 
 from importlib.util import find_spec
@@ -32,21 +35,32 @@ class ICommandExecutor(Protocol):
     def run(cmd): ...
 
 class CommandExecutor(LoggerMixin, ICommandExecutor):
-    def __init__(self, caller: callable=os.system):
+    def __init__(
+        self,
+        caller: callable=os.system,
+        logger: Optional[logging.Logger]=None
+    ):
+        super().__init__(logger)
+
         if callable(caller): self.caller = caller
         else: raise TypeError(f"Command caller must be callable, '{type(caller)}' given")
 
-    def run(command: Union[list[str], str, dict[str, str]]) -> bool:
-        if   isinstance(command, list): pass
-        elif isinstance(command, str): pass
-        elif isinstance(command, dict): pass
+    def run(self, command: Union[list[str], str, dict[str, str]]) -> bool:
+        if   isinstance(command, list):
+            self.caller(' '.join(command))
+        elif isinstance(command, str):
+            self.caller(command)
+        elif isinstance(command, dict):
+            self.caller(' '.join(list([
+                f"{key} {value}" for (key, value) in command.items()
+                ])))
+
         else: raise TypeError(f"Unsupported command type: {type(command)}")
         
         self.logger.debug(f"'{self.__class__.__name__}' got '{command.__str__()}' command as type '{type(command)}'")
 
         try:
             self.caller(command)
-
             return True
 
         except Exception as e:
@@ -102,3 +116,13 @@ def extract_archive(archive_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
 
             case _: raise IOError(f"The program doesn't support decompression of '{ext}' files")
     else: raise FileNotFoundError
+
+def get_platform() -> str:
+    sys_platform = platform.system().lower()
+    if sys_platform.startswith('linux'): return 'linux'
+    elif sys_platform.startswith('freebsd'): return 'freebsd'
+    elif sys_platform.startswith('aix'): return 'aix'
+    elif sys_platform.startswith('darwin'): return 'macos'
+    elif sys_platform.startswith('win') or sys_platform.startswith('cygwin'): return 'windows'
+    else: return 'unknown'
+
