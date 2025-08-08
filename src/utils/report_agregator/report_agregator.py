@@ -1,5 +1,7 @@
 from . import *
 
+import pandas
+
 @dataclass
 class ReportDTO(IReportDataContainer):
     id: str
@@ -21,14 +23,40 @@ class ReportDTO(IReportDataContainer):
     _1K_Genomics: str
     clinvar_clinical_sign: str
 
-def main():
-    logger = Configurator().logger
-    report_conf = Configurator().parse_configuration(target_section='Report')
-    avinput_path, csv_path, txt_path = report_conf['avinput_path'], report_conf['csv_path'], report_conf['txt_path']
+def main(sample: SampleDataContainer=None):
+    configurator = Configurator()
 
-    from statistics import mean, median
-    preparator = AmpliconCoverageDataPreparator(Configurator(), filter_func=mean)
-    preparator.perform(sample, os.system)
+    logger = configurator.logger
+
+    reg_tuple_generator = lambda configurator, chr_interval: (
+        configurator.config[chr_interval].replace('chr', '').strip(),
+        f"mpileup{chr_interval[3:5]}")
+
+    target_regions=[
+        reg_tuple_generator(configurator, 'chr03-interval'),
+        reg_tuple_generator(configurator, 'chr06-interval'),
+        reg_tuple_generator(configurator, 'chr10-interval'),
+        reg_tuple_generator(configurator, 'chr13-interval'),
+        reg_tuple_generator(configurator, 'chr14-interval'),
+        reg_tuple_generator(configurator, 'chr17-interval'),
+        reg_tuple_generator(configurator, 'chr19-interval')
+    ]
+
+    report_conf = configurator.parse_configuration(target_section='Report')
+
+    avinput_path = report_conf['avinput_path']
+    csv_path = report_conf['csv_path']
+
+    txt_path = report_conf['txt_path'] = os.path.abspath(os.path.join(
+        sample.processing_path, sample.id+".ann.hg19_multianno.txt"))
+
+    if not os.path.exists(sample.report_path): os.makedirs(sample.report_path)
+
+    from statistics import mean
+
+    preparator = AmpliconCoverageDataPreparator(
+        Configurator(), filter_func=mean)
+    preparator.perform(sample, target_regions, os.system)
 
     report_list = []
 
@@ -37,6 +65,8 @@ def main():
             if ";ANN=" in line:
                 variants_section, annotations_section = line.split(";ANN=")
                 var_fields = variants_section.split('\t')
+
+                print(sample.id, var_fields[:5])
 
                 variant = VariantDataContainer(
                     chromosome=var_fields[0],
@@ -67,9 +97,10 @@ def main():
                     clinvar_somatic_clinical_impact=var_fields[22],
 
                     _1K_Genomics=var_fields[23],
-                    other_info=var_fields[24:],
-                    )
+                    other_info=var_fields[24:])
+
                 ann_fields = annotations_section.split(";LOF=")[0].split('|')[:16]
+
                 annotation = AnnotationDataContainer(
                     allele=ann_fields[0],
                     annotation=ann_fields[1],
@@ -86,12 +117,23 @@ def main():
                     CDS=ann_fields[12],
                     aminoacid=ann_fields[13],
                     distance=ann_fields[14],
-                    info=ann_fields[15].split(',')[0]
-                    )
+                    info=ann_fields[15].split(',')[0])
 
-                depth, alt_count, alt_coverage = preparator.count_variant_coverage(variant.chromosome.replace('chr', ''), variant.start, variant.reference, variant.alternate)
+                data = preparator.count_variant_coverage(
+                    variant.chromosome.replace('chr', '').strip(),
+                    variant.start,
+                    variant.reference,
+                    variant.alternate)
+
+                if data: depth, alt_count, alt_coverage = data
+                else: depth, alt_count, alt_coverage = 0, 0, 0
                 ref_count = depth - alt_count
-
+                """
+                if depth < 30:
+                    del variant
+                    del annotation
+                    continue
+                """
                 report_list.append(ReportDTO(
                     sample.id,
                     # barcode7,
@@ -110,13 +152,13 @@ def main():
                     annotation.HGVS_CDS,
                     annotation.HGVS_protein,
                     variant._1K_Genomics,
-                    variant.clinvar_clinical_sign
-                    ))
-    import pandas
+                    variant.clinvar_clinical_sign))
+
     report = pandas.DataFrame(report_list)
+
     report.to_excel(
-        excel_writer=f"{os.path.join(sample.processing_path, sample.id+'.report.xlsx')}",
-        sheet_name="main",
-        )
+        excel_writer=f"{
+            os.path.join(sample.report_path, sample.id+'.report.xlsx')}",
+        sheet_name="main")
 
 if __name__ == '__main__': main()

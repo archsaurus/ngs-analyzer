@@ -4,7 +4,7 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
     def __init__(self, configurator):
         super().__init__(logger=configurator.logger)
         self.configurator = configurator
-    
+
     def perform(
         self,
         sample: SampleDataContainer,
@@ -12,46 +12,50 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
     ) -> list[PathLike[AnyStr]]:
         """
             Removal of adapter sequences from reads using the Trimmomatic program.
-            This step is necessary to ensure that primer sequences in the reads are positioned as close as possible to the ends of the reads.
+            This step is necessary to ensure that primer sequences in the reads \
+                are positioned as close as possible to the ends of the reads.
             In this way, their identification is more accurate.
             Args:
-                sample (SampleDataContainer): The container holding sample's sequencing data, including raw reads path.
-                output_dir (PathLike[AnyStr]): Directory where the trimmed reads and output files will be saved.
+                sample (SampleDataContainer): \
+                    The container holding sample's sequencing data, \
+                    including raw reads path.
+                output_dir (PathLike[AnyStr]): \
+                    Directory where the trimmed reads and output files will be saved.
             Returns:
                 None
         """
-        
+
         if not os.path.exists(sample.R1_source):
             msg = f"R1 reads file '{sample.R1_source}' not found. Abort"
-            self.configurator.logger.critical(msg)
+            self.logger.critical(msg)
             raise FileNotFoundError(msg)
 
-        trim_outpath = os.path.abspath(os.path.join(sample.processing_path, 'trimmed_reads'))
+        trim_outpath = os.path.abspath(os.path.join(
+            sample.processing_path, 'trimmed_reads'))
         os.makedirs(trim_outpath, exist_ok=True)
         os.makedirs(sample.processing_logpath, exist_ok=True)
 
         trimmer_args = self.configurator.parse_configuration(target_section='Trimmomatic')
 
-
         outpathes = [t for t in [insert_processing_infix(
             infix, os.path.abspath(
                 os.path.join(
                     trim_outpath,
-                    os.path.basename(sample.R1_source)
+                    os.path.basename(sample.R1_source))
                 )
-            )
-        ) for infix in ['.paired', '.unpaired']]]
+            ) for infix in ['.paired', '.unpaired']]]
+
         if sample.R2_source is None: # SE
             trimmer_args.update({
                 'mode': 'SE',
                 'basein': sample.R1_source,
-                'baseout': tuple(outpathes)
-            })
+                'baseout': tuple(outpathes)})
+
         else: # PE
             if not os.path.exists(sample.R2_source):
                 msg = f"R2 reads file '{sample.R2_source}' not found. Abort"
                 
-                self.configurator.logger.critical(msg)
+                self.logger.critical(msg)
                 raise FileNotFoundError(msg)
 
             outpathes.extend(
@@ -59,23 +63,23 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
                     infix, os.path.abspath(
                         os.path.join(
                             trim_outpath,
-                            os.path.basename(sample.R2_source)
-                        )
+                            os.path.basename(sample.R2_source))
                     )
                 ) for infix in ['.paired', '.unpaired']]])
 
             trimmer_args.update({
                 'mode': 'PE',
                 'basein': (sample.R1_source, sample.R2_source),
-                'baseout': tuple(outpathes)
-            })
+                'baseout': tuple(outpathes)})
 
         os.makedirs(os.path.dirname(sample.processing_logpath), exist_ok=True)
 
+        trimmer_logging_basepath =  os.path.basename(
+            os.path.splitext(self.configurator.config['trimmomatic'])[0])
         trimmer_summary_path = os.path.abspath(os.path.join(
-            sample.processing_logpath,
-            os.path.basename(os.path.splitext(self.configurator.config['trimmomatic'])[0]))+'.summary'
-        )
+            sample.processing_logpath, trimmer_logging_basepath+'.summary'))
+        trimmer_log_path = os.path.abspath(os.path.join(
+            sample.processing_logpath, trimmer_logging_basepath+'.log'))
 
         trimmer_cmd = ' '.join([
             self.configurator.config['java'], '-jar',
@@ -92,15 +96,19 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
             f"MINLEN:{trimmer_args['minlen']}" if 'minlen' in trimmer_args else '',
             f"CROP:{trimmer_args['crop']}" if 'crop' in trimmer_args else '',
             f"HEADCROP:{trimmer_args['headcrop']}" if 'headcrop' in trimmer_args else '',
-            '>> ', trimmer_summary_path
-        ])
+            '>>', trimmer_summary_path,
+            '1>', trimmer_log_path,
+            '2>&1',])
 
-        self.configurator.logger.debug(f"Executing Trimmomatic with command: {trimmer_cmd}")
+        self.logger.info("Starting to trim adapters with Trimmomatic")
+        self.logger.debug(f"Command: {trimmer_cmd}")
 
         execute(executor, trimmer_cmd)
 
-        self.configurator.logger.info(f"Trimming completed successfully. See the log at '{trimmer_summary_path}'")
-        
+        self.logger.info(
+            f"Adapter trimming completed successfully. "
+            f"See the log at '{trimmer_summary_path}'")
+
         paired_trimmed_reads = []
         for path in trimmer_args['baseout']:
             if '.paired' in path: paired_trimmed_reads.append(path)

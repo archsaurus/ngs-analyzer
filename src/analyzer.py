@@ -9,48 +9,79 @@ class Analyzer(metaclass=SingletonMeta):
     ):
         self.configurator = configurator
 
-        if isinstance(cmd_caller, CommandExecutor): self.cmd_caller = cmd_caller
-        elif callable(cmd_caller): self.cmd_caller = CommandExecutor(cmd_caller)
-        elif cmd_caller is None: self.cmd_caller = os.system
-        else: raise TypeError(f"Command caller must be callable, '{type(cmd_caller)}' given")
+        if isinstance(cmd_caller, CommandExecutor):
+            self.cmd_caller = cmd_caller
+        elif callable(cmd_caller):
+            self.cmd_caller = CommandExecutor(cmd_caller)
+        elif cmd_caller is None:
+            self.cmd_caller = os.system
+        else: raise TypeError(
+            "Command caller must be callable, "
+            f"'{type(cmd_caller)}' given")
 
-    def prepareData(self, sample: SampleDataContainer) -> SampleDataContainer:
-        
+    def prepareData(
+        self,
+        sample: SampleDataContainer
+    ) -> SampleDataContainer:
+        reg_tuple_generator = lambda configurator, chr_interval: (
+            self.configurator.config[chr_interval].replace('chr', '').strip(),
+            f"mpileup{chr_interval[3:5]}")
+
+        target_regions=[
+            reg_tuple_generator(configurator, 'chr03-interval'),
+            reg_tuple_generator(configurator, 'chr06-interval'),
+            reg_tuple_generator(configurator, 'chr10-interval'),
+            reg_tuple_generator(configurator, 'chr13-interval'),
+            reg_tuple_generator(configurator, 'chr14-interval'),
+            reg_tuple_generator(configurator, 'chr17-interval'),
+            reg_tuple_generator(configurator, 'chr17-interval')]
+
         bwa2mem = SequenceAligner(self.configurator)
         picardGroupReads = BamGrouper(self.configurator)
-        gatk4BQSR = BQSRPerformer(self.configurator)
+        gatk4BQSR = BQSRPerformer(self.configurator, target_regions)
 
         pTrimmer = PrimerCutter.create_primer_cutter(
             configurator = self.configurator,
-            cutter_name  = 'ptrimmer'
-        )
+            cutter_name  = 'ptrimmer')
 
-        # trimmomatic = AdapterTrimmer(self.configurator)
-        # sample.R1_source, sample.R2_source = trimmomatic.perform(sample, executor=self.cmd_caller)
+        """
+        trimmomatic = AdapterTrimmer(self.configurator)
+        sample.R1_source, sample.R2_source = trimmomatic.perform(
+            sample, executor=self.cmd_caller)
+        """
 
-        sample.R1_source, sample.R2_source = pTrimmer.perform(sample, executor=self.cmd_caller)
+        sample.R1_source, sample.R2_source = pTrimmer.perform(
+            sample, executor=self.cmd_caller)
 
         sample.bam_filepath = bwa2mem.perform(
             sample,
             self.configurator.config['reference'],
             self.configurator.output_dir,
-            executor=self.cmd_caller
-        )
+            executor=self.cmd_caller)
 
-        bam_index_filepath, sample.bam_filepath = picardGroupReads.perform(sample, executor=self.cmd_caller)
+        bam_index_filepath, sample.bam_filepath = picardGroupReads.perform(
+            sample, executor=self.cmd_caller)
 
-        sample.bam_filepath = gatk4BQSR.perform(sample, executor=self.cmd_caller)
+        sample.bam_filepath = gatk4BQSR.perform(
+            sample, executor=self.cmd_caller)
         os.rename(bam_index_filepath, sample.bam_filepath+".bai")
 
         return sample
 
-    def analyze(self, sample: SampleDataContainer) -> SampleDataContainer:
-        piscesVariantCaller = VariantCallerFactory.create_caller(caller_config={'name': 'pisces'}, configurator=self.configurator)
+    def analyze(
+        self,
+        sample: SampleDataContainer
+    ) -> SampleDataContainer:
+        piscesVariantCaller = VariantCallerFactory.create_caller(
+            caller_config={'name': 'pisces'}, configurator=self.configurator)
         snpEff = SnpEffAnnotationAdapter(self.configurator)
-        sample.vcf_filepath = piscesVariantCaller.call_variant(sample, executor=self.cmd_caller)
-        annotated_sample_filepath = snpEff.annotate(sample, 'hg19', executor=self.cmd_caller)
-        
-        convert2annovar_logpath = os.path.join(sample.processing_logpath, "convert2annovar.log")
+        sample.vcf_filepath = piscesVariantCaller.call_variant(
+            sample, executor=self.cmd_caller)
+        annotated_sample_filepath = snpEff.annotate(
+            sample, 'hg19', executor=self.cmd_caller)
+
+        convert2annovar_logpath = os.path.join(
+            sample.processing_logpath, "convert2annovar.log")
 
         convert2annovar_cmd = ' '.join([
             self.configurator.config['convert2annovar'],
@@ -59,43 +90,55 @@ class Analyzer(metaclass=SingletonMeta):
             #'-allsample',
             '-withfreq',
             '2>', convert2annovar_logpath,
-            annotated_sample_filepath, '>', annotated_sample_filepath+'.avinput',
-        ])
+            annotated_sample_filepath,
+            '>', annotated_sample_filepath+'.avinput'])
 
         self.configurator.logger.info("Starting to execute convert2annovar")
         self.configurator.logger.debug(f"Command: {convert2annovar_cmd}")
 
         execute(self.cmd_caller, convert2annovar_cmd)
-        
-        self.configurator.logger.info(
-            f"""Convertation to avinput format successfully done. See it's output on {annotated_sample_filepath+'.avinput'}"""
-            )
 
-        table_annovar_logpath = os.path.join(sample.processing_logpath, "table_annovar.log")
+        self.configurator.logger.info(
+            "Convertation to avinput format successfully done. "
+            f"See it's output on {annotated_sample_filepath+'.avinput'}")
+
+        table_annovar_logpath = os.path.join(
+            sample.processing_logpath, "table_annovar.log")
         table_annovar_cmd = ' '.join([
             self.configurator.config['table_annovar'],
-            '--buildver',   'hg19',
-            '--operation',  ','.join(['g',       'f',                ]),
-            '--protocol',   ','.join(['refGene', 'clinvar_20250721', ]),
-            '--outfile',    os.path.join(sample.processing_path, sample.id+".ann"),
+            '--buildver', 'hg19',
+            '--operation', ','.join([
+                'g', 'f', 'f']),
+            '--protocol', ','.join([
+                'refGene', 'clinvar_20250721', 'ALL.sites.2015_08']),
+            '--outfile', os.path.join(
+                sample.processing_path, sample.id+".ann"),
             '--remove',
             '--otherinfo',
             annotated_sample_filepath+'.avinput',
             self.configurator.config['annovar_humandb'],
             '>', table_annovar_logpath,
-            '2>&1'
-        ])
-        
-        self.configurator.logger.info("Starting to execute annotation with table_annovar")
+            '2>&1'])
+
+        self.configurator.logger.info(
+            "Starting to execute annotation with table_annovar")
         self.configurator.logger.debug(f"Command: {table_annovar_cmd}")
 
         execute(self.cmd_caller, table_annovar_cmd)
 
+        annotation_result_filepath = os.path.join(
+            sample.processing_path, sample.id+".ann.hg19_multianno.csv")
+
         self.configurator.logger.info(
-            f"""Annotation with annovar successfully done. See it's output on {os.path.join(sample.processing_path, sample.id+".ann.hg19_multianno.csv")}"""
-            )
+            "Annotation with annovar successfully done. "
+            f"See it's output on {annotation_result_filepath}")
 
         return sample
 
-    def __repr__(self): return f"{self.__class__}(configurator={self.configurator.__repr__()}, cmd_caller={self.cmd_caller.__repr__()}"
-    def __str__(self): return f"{self.context}"
+    def __repr__(self):
+        return ''.join([
+            f"{self.__class__}(configurator={self.configurator.__repr__()}, "
+            f"cmd_caller={self.cmd_caller.__repr__()}"])
+
+    def __str__(self):
+        return f"{self.context}"

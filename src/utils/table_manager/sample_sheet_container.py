@@ -10,9 +10,12 @@ class Section:
         Represents a section within the sample sheet.
 
         Attributes:
-            name (str): The name of the section.
-            data (Union[Dict[str, str], List[Union[Dict, str]]]): The data associated with the section, \
-            which can be a dictionary of string key-value pairs or a list containing dictionaries or strings.
+            name (str): \
+                The name of the section.
+            data (Union[Dict[str, str], List[Union[Dict, str]]]): \
+                The data associated with the section, \
+            which can be a dictionary of string key-value pairs \
+                or a list containing dictionaries or strings.
     """
     name: str
     data: Union[Dict[str, str], List[Union[Dict, str]]]

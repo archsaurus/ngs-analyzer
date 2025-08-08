@@ -2,23 +2,25 @@ from . import *
 
 @dataclass
 class AnnotationDataContainer(IReportDataContainer):
-    """annotation section (ANN) has a bit of annotations divided by 15 fields such as
-        Allele
-        Annotation
-        Annotation_Impact
-        Gene_Name
-        Gene_ID
-        Feature_Type
-        Feature_ID
-        Transcript_BioType
-        Rank
-        HGVS.c
-        HGVS.p
-        cDNA.pos / cDNA.length
-        CDS.pos / CDS.length
-        AA.pos / AA.length
-        Distance
-        ERRORS / WARNINGS / INFO'
+    """annotation section (ANN) has a bit of annotations \
+        divided by 15 fields such as attributes listed bellow
+        Attributes:
+            Allele
+            Annotation
+            Annotation_Impact
+            Gene_Name
+            Gene_ID
+            Feature_Type
+            Feature_ID
+            Transcript_BioType
+            Rank
+            HGVS.c
+            HGVS.p
+            cDNA.pos / cDNA.length
+            CDS.pos / CDS.length
+            AA.pos / AA.length
+            Distance
+            ERRORS / WARNINGS / INFO'
     """
 
     allele: str

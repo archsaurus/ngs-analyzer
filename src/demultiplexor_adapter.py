@@ -4,7 +4,8 @@ from src.utils.demultiplexor_adapter.demultiplexor_adapter_factory import Demult
 
 def main():
     demultiplexor_adapter = DemultiplexorAdapterFactory.create_adapter(
-        config=Configurator().parse_configuration(target_section='DemultiplexorAdapter'),
+        config=Configurator().parse_configuration(
+            target_section='DemultiplexorAdapter'),
         logger=Configurator().logger,
         caller=os.system
     )

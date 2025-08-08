@@ -14,15 +14,30 @@ class VariantDataContainer(IReportDataContainer):
     aminoacid_change: str
 
     """
-        SCI	Aggregate somatic clinical impact for this single variant
-        SCIDN	ClinVar’s preferred disease name for the concept specified by disease identifiers in SCIDISDB
-        SCIDISDB	Tag-value pairs of disease database name and identifier submitted for somatic clinical impact classifications, e.g. MedGen: NNNNNN
-        SCIREVSTAT	ClinVar review status of somatic clinical impact for the Variation ID
-        ONC	Aggregate oncogenicity classification for the variant
-        ONCDN	ClinVar’s preferred disease name for the concept specified by disease identifiers in ONCDISDB
-        ONCDISDB	Tag-value pairs of disease database name and identifier submitted for oncogenicity classifications, e.g. MedGen: NNNNNN
-        ONCREVSTAT	ClinVar review status of oncogenicity classification for the Variation ID
-        ONCCONF	Conflicting oncogenicity classifications for the variant
+        SCI	\
+            Aggregate somatic clinical impact for this single variant
+        SCIDN	\
+            ClinVar’s preferred disease name for the concept \
+                specified by disease identifiers in SCIDISDB
+        SCIDISDB	\
+            Tag-value pairs of disease database name and identifier \
+            submitted for somatic clinical impact classifications, \
+                e.g. MedGen: NNNNNN
+        SCIREVSTAT	\
+            ClinVar review status of somatic clinical impact \
+                for the Variation ID
+        ONC	\
+            Aggregate oncogenicity classification for the variant
+        ONCDN	\
+            ClinVar’s preferred disease name for the concept \
+                specified by disease identifiers in ONCDISDB
+        ONCDISDB	\
+            Tag-value pairs of disease database name and identifier submitted \
+                for oncogenicity classifications, e.g. MedGen: NNNNNN
+        ONCREVSTAT	\
+            ClinVar review status of oncogenicity classification for the Variation ID
+        ONCCONF	\
+            Conflicting oncogenicity classifications for the variant
     """
 
     clinvar_allele_id: str
@@ -55,8 +70,14 @@ class VariantDataLineContainer:
 
     def __str__(self):
         hr_str = ''
-        if self.variants['v1']: hr_str += f"Variant 1:\n{self.variants['v1'].__str__()}\n\n"
-        if self.variants['v2']: hr_str += f"Variant 2:\n{self.variants['v2'].__str__()}\n\n"
+        if self.variants['v1']:
+            hr_str += f"Variant 1:\n{self.variants['v1'].__str__()}\n\n"
+
+        if self.variants['v2']:
+            hr_str += f"Variant 2:\n{self.variants['v2'].__str__()}\n\n"
+
         if self.annotations:
-            for annotation in self.annotations: hr_str += f"Annotation:\n{annotation.__str__()}\n"
+            for annotation in self.annotations:
+                hr_str += f"Annotation:\n{annotation.__str__()}\n"
+
         return hr_str+'\n'
