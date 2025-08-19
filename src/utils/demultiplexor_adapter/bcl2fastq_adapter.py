@@ -1,4 +1,26 @@
-from src.core.base import *
+"""
+    This module defines the BclToFastqAdapter class, \
+    which is a demultiplexer adapter for converting BCL files to FASTQ \
+    format using the Illumina bcl2fastq tool.
+    
+    It inherits from LoggerMixin and IDemultiplexorAdapter, \
+    providing logging capabilities and adhering to the \
+        demultiplexer adapter interface.
+
+    The adapter handles configuration validation, \
+    command construction, \
+    and execution of the bcl2fastq command.
+"""
+
+import os
+import logging
+
+from os import PathLike
+from typing import Optional, AnyStr
+
+from src.core.base import LoggerMixin
+from src.core.base import execute
+
 from src.core.configurator.configuration_error import ConfigurationError
 
 from .i_demultiplexor_adapter import IDemultiplexorAdapter
@@ -38,14 +60,14 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
                 "'cmd_caller' should be callable, "
                 f"got {type(cmd_caller)}")
 
-        else: self.cmd_caller = cmd_caller
+        self.cmd_caller = cmd_caller
 
         is_config_valid, msg = self._check_config(config)
         if not is_config_valid:
             self.logger.critical(msg)
             raise ConfigurationError(msg)
 
-        else: self.config = config
+        self.config = config
 
     def _check_config(self, config: dict[str, str],) -> (bool, str):
         """
@@ -65,7 +87,7 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             return (
                 False,
                 f"Expected 'config' to be a dict, got {type(config)}")
-        
+
         required_keys = [
             'demultiplexor',
             'input-dir',
@@ -74,9 +96,9 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'runfolder-dir']
 
         missing_keys = [k for k in required_keys if k not in config]
-        if missing_keys: return (
-            False,
-            f"Missing required configuration keys: {missing_keys}")
+        if missing_keys:
+            return (
+                False, f"Missing required configuration keys: {missing_keys}")
 
         return (True, "OK")
 
@@ -85,7 +107,6 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
         arguments: list,
         arg_name: str,
         config_key=None,
-        value=None,
         is_flag=False
     ):
         """
@@ -102,9 +123,6 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
                     The key to look up in the configuration dictionary. \
                     Defaults to None, in which case the argument name \
                         without '--' is used.
-                value (any, optional): \
-                    The value to be added as an argument if present. \
-                        Defaults to None.
                 is_flag (bool, optional): \
                     If True, adds only the flag (without a value) if \
                     the corresponding config is True. Defaults to False.
@@ -116,11 +134,14 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
                         of the value to the list.
         """
         key = config_key or arg_name.lstrip('-')
+
         if is_flag:
-            if self.config[key] == "True" : arguments.append(arg_name)
+            if self.config[key] == "True":
+                arguments.append(arg_name)
         else:
             val = self.config.get(key)
-            if val is not None: arguments.extend([arg_name, str(val)])
+            if val is not None:
+                arguments.extend([arg_name, str(val)])
 
     def demultiplex(self) -> None:
         """
@@ -146,7 +167,9 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'use-bases-mask'
         ]
 
-        [self._add_param(cmd_args, arg_name=f"--{arg}", config_key=arg) for arg in required]
+        _ = [self._add_param(
+            cmd_args, arg_name=f"--{arg}", config_key=arg)
+            for arg in required]
 
         defaults = {
             'min-log-level': 'INFO',
@@ -160,9 +183,8 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'barcode-mismatches': 1
         }
 
-        for key, default in defaults.items(): 
-            if key in self.config: self._add_param(cmd_args, arg_name=f"--{key}", config_key=key)
-            else: self._add_param(cmd_args, arg_name=f"--{key}", value=default)
+        for key in defaults:
+            self._add_param(cmd_args, arg_name=f"--{key}", config_key=key)
 
         for flag in [
             'ignore-missing-bcls',
@@ -191,6 +213,13 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             arg_name=f"--{other_optional}",
             config_key=other_optional)
 
-        [print(arg) for arg in cmd_args]
+        _ = [print(arg) for arg in cmd_args]
 
         execute(self.cmd_caller, ' '.join(cmd_args))
+
+    def extract_barcodes(
+        self,
+        r1_path: PathLike[AnyStr],
+        r2_path: Optional[PathLike[AnyStr]]=None
+    ) -> PathLike[AnyStr]:
+        return None

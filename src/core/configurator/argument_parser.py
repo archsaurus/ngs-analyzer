@@ -1,36 +1,96 @@
-from . import *
+"""
+    This module provides command-line argument parsing functionality
+    for a sequencing data processing script.
 
-class IArgumentParser(ABC):
-    @abstractmethod
-    def parse(): pass
+    It defines:
+        - `IArgumentParser`:
+            An interface (via Protocol) specifying a `parse()` method
+            that returns parsed arguments.
+        - `ArgumentParser`:
+            Implements `IArgumentParser` using Python's `argparse` module
+            to define and parse command-line arguments.
+
+    Main features:
+        - Supports arguments for log file, output directory,
+        report language, number of threads,
+        and flags for demultiplexor and table manager.
+        - Provides a clear and extendable way to
+        handle command-line inputs for the script.
+
+    Usage:
+        Create an instance of `ArgumentParser` and call its `parse()` method
+        to get an `argparse.Namespace` object with all parsed arguments.
+"""
+
+import argparse
+
+from typing import Protocol
+
+class IArgumentParser(Protocol):
+    """
+        Interface for argument parser classes.
+        Defines a method parse() that returns parsed command-line arguments.
+    """
+    def parse(self):
+        """
+            Parses command-line arguments
+            and returns a Namespace object containing the arguments.
+        """
 
 class ArgumentParser(IArgumentParser):
-    def parse(self) -> argparse.Namespace:
-        """Set a list of command line arguments and return a compiled object stored these arguments attributes."""
-        parser = argparse.ArgumentParser(description='This script do all processing of BRCA sequencing data')
-        arguments = [
-            {'name': ('--log-file',                 '-l'), 'kwargs': {'dest': 'logFilename',     'type':   str,          'help': 'use non-default logger. Default logger named "./brca_analyzer.log"',                                                                                                                                                                                           'default':  'brca_analyzer.log'}},
-            {'name': ('--output-dir',               '-o'), 'kwargs': {'dest': 'outputDir',       'type':   str,          'help': 'directory for output',                                                                                                                                                                                                                                        'required':                 True}},
-            {'name': ('--language',                 '-L'), 'kwargs': {'dest': 'lang',            'type':   str,          'help': 'Language of report and text on figures (russian or english). Default is english',                                                                                                                                                                              'default':            'english'}},
+    """
+        Implements argument parsing using argparse
+        for sequencing data processing.
 
-            {'name': ('--minimal-read-length', '-minlen'), 'kwargs': {'dest': 'minReadLen',      'type':   int,          'help': 'minimal length of read after trimming. Default: 30',                                                                                                                                                                                                           'default':                   30}},
-            {'name': ('--primersFileR1_3',       '-pr13'), 'kwargs': {'dest': 'primersFileR1_3', 'type':   str,          'help': 'fasta-file with sequences of primers on the 3\'-end of R1 reads. Use it, only if you need to cut primer sequences from reads. It is not required. But if it is determined, -pr23 is necessary',                                                               'required':                False}},
-            {'name': ('--primersFileR2_3',       '-pr23'), 'kwargs': {'dest': 'primersFileR2_3', 'type':   str,          'help': 'fasta-file with sequences of primers on the 3\'-end of R2 reads. Use it, only if you need to cut primer sequences from reads.',                                                                                                                               'required':                False}},
-            {'name': ('--primersFileR1_5',       '-pr15'), 'kwargs': {'dest': 'primersFileR1_5', 'type':   str,          'help': 'fasta-file with sequences of primers on the 5\'-end of R1 reads. Use it, only if you need to cut primer sequences from reads',                                                                                                                                'required':                False}},
-            {'name': ('--primersFileR2_5',       '-pr25'), 'kwargs': {'dest': 'primersFileR2_5', 'type':   str,          'help': 'fasta-file with sequences of primers on the 5\'-end of R2 reads. Use it, only if you need to cut primer sequences from reads. Also, do not use this parameter if you have single-end reads',                                                                  'required':                False}},
-            {'name': ('--primer-location-buffer', '-plb'), 'kwargs': {'dest': 'primerLocBuf',    'type':   int,          'help': 'buffer of primer location in the read from the start or end of read. If this value is zero, then cutPrimers will search for primer sequence in the region of the longest primer length. Default: 10',                                                          'default':                   10}},
-            {'name': ('--primersCoords',       '-primer'), 'kwargs': {'dest': 'primersCoords',   'type':   str,          'help': 'table with information about amplicon coordinates without column headers: amplicon_number | chromosome | start | end. (Is not required)',                                                                                                                     'required':                False}},
-            {'name': ('--primer3-absent',     '-primer3'), 'kwargs': {'dest': 'primer3absent',   'action': 'store_true', 'help': "if primer at the 3'-end may be absent, use this parameter"                                                                                                                                                                                                                                    }},
-            {'name': ('--coordinates-file',     '-coord'), 'kwargs': {'dest': 'coordsFile',      'type':   str,          'help': 'file with coordinates of amplicons in the BED-format (without column names and locations of primers): chromosome | start | end. It is necessary for cutting primer sequences from BAM-file. Its order should be the same as for files with primer sequences', 'required':                False}},
-            {'name': ('--patientsTable',          '-pat'), 'kwargs': {'dest': 'patientsTable',   'type':   str,          'help': 'table with information about each patient: ngs_num patient_id barcode1 barcode2',                                                                                                                                                                             'required':                False}},
-            {'name': ('--error-number',           '-err'), 'kwargs': {'dest': 'errNumber',       'type':   int,          'help': 'number of errors (substitutions, insertions, deletions) that allowed during searching primer sequence in a read sequence. Default: 3',                                                                                                                         'default':                    3}},
-            {'name': ('--without-joinment',   '-notjoin'), 'kwargs': {'dest': 'notToJoin',       'action': 'store_true', 'help': 'use this parameter if you only want to process patients reads separately without joining them (useful if you have an opportunity to separate processing onto several machines)'                                                                                                               }},
-            {'name': ('--only-join',         '-onlyjoin'), 'kwargs': {'dest': 'onlyJoin',        'action': 'store_true', 'help': 'use this parameter if you only want to join already processed patients reads'                                                                                                                                                                                                                 }},
-            {'name': ('--tool-threads',            '-tt'), 'kwargs': {'dest': 'toolThreads',     'type':   int,          'help': 'number of threads for each tool. Number of --threads multiplied by the number of --tool-threads must not exceed number of CPU cores',                                                                                                                          'default':                    1}},
-            {'name': ('--threads',                 '-th'), 'kwargs': {'dest': 'threads',         'type':   int,          'help': 'number of threads',                                                                                                                                                                                                                                            'default':                    2}},
+        Defines command-line arguments such as log file,
+        output directory, report language, etc.
+    """
+    @staticmethod
+    def parse() -> argparse.Namespace:
+        """
+            Set a list of command line arguments and return
+            a compiled object stored these arguments attributes.
+        """
+        parser = argparse.ArgumentParser(
+            description='This script do all processing of BRCA sequencing data')
+        arguments = [
+            {'name': ('--log-file', '-l'), 'kwargs': {
+                'dest': 'logFilename',
+                'type': str,
+                'default': 'brca_analyzer.log',
+                'help':
+                    'Use non-default logger. '
+                    'Default logger named "./brca_analyzer.log"',
+                }},
+            {'name': ('--output-dir', '-o'), 'kwargs': {
+                'dest': 'outputDir',
+                'type': str,
+                'required': True,
+                'help': 'Directory for output'}},
+            {'name': ('--report-language', '-L'), 'kwargs': {
+                'dest': 'lang',
+                'type': str,
+                'default': 'english',
+                'help':
+                    'Language of report text (russian or english). '
+                    'Default is english'}},
+            {'name': ('--threads', '-th'), 'kwargs': {
+                'dest': 'threads',
+                'type': int,
+                'default': 2,
+                'help': 'Number of threads'}},
+            {'name': ('--demultiplexor', '-de'), 'kwargs': {
+                'dest': 'demultiplexor_flag',
+                'type': bool,
+                'default': False,
+                'help': ''}},
+            {'name': ('--table-manager', '-tm'), 'kwargs': {
+                'dest': 'table_manager_flag',
+                'type': bool,
+                'default': False,
+                'help': ''}}
         ]
-        
+
         for arg in arguments:
-            # TODO: Validate input arguments
             parser.add_argument(*arg['name'], **arg['kwargs'])
         return parser.parse_args()

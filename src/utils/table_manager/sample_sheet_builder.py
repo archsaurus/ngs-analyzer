@@ -1,42 +1,58 @@
-from src.core.base import *
+"""
+    A builder class for constructing a sample sheet text
+    from a container of sections.
 
-from .sample_sheet_container import SampleSheetContainer
+    This module provides a class `SampleSheetBuilder`
+    for assembling a sample sheet from various sections.
+
+    It handles formatting and joining sections into a coherent text representation.
+
+    The class is designed to be used with SampleSheetContainer objects,
+    which hold the individual sections.
+"""
+
+import re
+
+from os import PathLike
+from typing import AnyStr
+
+from src.utils.table_manager.sample_sheet_container import SampleSheetContainer
 
 class SampleSheetBuilder:
     """
-        A builder class for constructing a sample sheet \
-            text from a container of sections.
+        A builder class for constructing a sample sheet
+        text from a container of sections.
 
         Attributes:
-            container (SampleSheetContainer): \
-                The container holding the sections \
-                    to be included in the sample sheet.
-            lines (list): \
-                A list of strings representing each line \
-                    of the constructed sample sheet.
-            separator (str): \
-                The separator used to join values in the output \
-                    (default is comma).
+            container (SampleSheetContainer):
+                The container holding the sections
+                to be included in the sample sheet.
+            lines (list):
+                A list of strings representing each line
+                of the constructed sample sheet.
+            separator (str):
+                The separator used to join values
+                in the output (default is comma).
     """
-
     def __init__(self, container: SampleSheetContainer, separator: str=','):
         """
-            Initializes the SampleSheetBuilder with a container \
-                and optional separator.
+            Initializes the SampleSheetBuilder with a container
+            and optional separator.
 
             Args:
-                container (SampleSheetContainer): \
+                container (SampleSheetContainer):
                     The container with sections to build from.
-                separator (str, optional): \
+                separator (str, optional):
                     The separator string used in the output. Defaults to ','.
 
             Raises:
-                TypeError: \
-                    If the provided container \
-                        is not an instance of SampleSheetContainer.
+                TypeError:
+                    If the provided container is not an instance
+                    of SampleSheetContainer.
         """
-        if not isinstance(container, SampleSheetContainer): raise TypeError
-        
+        if not isinstance(container, SampleSheetContainer):
+            raise TypeError
+
         self.container = container
         self.lines = []
 
@@ -93,6 +109,8 @@ class SampleSheetBuilder:
                     Propagates any exception raised during file operations.
         """
         try:
-            with open(path, 'w') as fd:
-                for line in self.lines: print(line, file=fd)
-        except Exception as e: raise e
+            with open(path, 'w', encoding='utf-8') as fd:
+                for line in self.lines:
+                    print(line, file=fd)
+        except FileNotFoundError as e:
+            raise e

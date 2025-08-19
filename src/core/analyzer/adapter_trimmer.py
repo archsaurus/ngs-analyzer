@@ -1,7 +1,72 @@
-from . import *
+"""
+    This module contains the AdapterTrimmer class,
+    which manages the removal of adapter sequences from sequencing
+    reads using the Trimmomatic program.
+
+    This preprocessing step is crucial for ensuring that primer sequences
+    are positioned close to the read ends,
+    allowing for more accurate downstream analysis.
+
+    Classes:
+        - AdapterTrimmer:
+            Responsible for executing adapter trimming on sequencing reads.
+        Utilizes Trimmomatic, supports both single-end and paired-end modes, and logs
+        the trimming process.
+
+    Main Features:
+        - Validates the existence of input read files.
+        - Constructs and executes the Trimmomatic command with appropriate parameters.
+        - Handles output directories and logging.
+        - Returns paths to the processed, adapter-trimmed read files.
+
+    Dependencies:
+        - os: Standard library for filesystem operations.
+        - src.core.base: Provides logging and command execution utilities.
+        - src.core.sample_data_container: Defines the SampleDataContainer class.
+        - src.core.analyzer.i_data_preparator: Interface for data preparator classes.
+
+    This class is designed to be integrated into sequencing data pipelines, automating
+    the adapter trimming process with configurable options.
+"""
+
+# region Imports
+import os
+
+from os import PathLike
+from typing import Union, AnyStr
+
+from src.core.base import LoggerMixin
+from src.core.base import CommandExecutor
+
+from src.core.base import execute
+from src.core.base import insert_processing_infix
+
+from src.core.sample_data_container import SampleDataContainer
+
+from src.core.analyzer.i_data_preparator import IDataPreparator
+# endregion
 
 class AdapterTrimmer(LoggerMixin, IDataPreparator):
+    """
+        The AdapterTrimmer class is responsible for
+        removing adapter sequences
+        from sequencing reads using the Trimmomatic program.
+        This step is essential to ensure that primer sequences are
+        positioned close to the read ends,
+        enabling more accurate identification.
+        
+        Inherits from LoggerMixin and IDataPreparator,
+        implementing the data preparation interface.
+    """
     def __init__(self, configurator):
+        """
+            Initializes the AdapterTrimmer with a configuration object.
+            
+            Args:
+                configurator (object):
+                    The configuration object containing parameters and settings,
+                    including logger, file paths, and Trimmomatic options.
+        """
         super().__init__(logger=configurator.logger)
         self.configurator = configurator
 
@@ -11,18 +76,24 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
         executor: Union[CommandExecutor, callable]
     ) -> list[PathLike[AnyStr]]:
         """
-            Removal of adapter sequences from reads using the Trimmomatic program.
-            This step is necessary to ensure that primer sequences in the reads \
-                are positioned as close as possible to the ends of the reads.
-            In this way, their identification is more accurate.
+            Executes adapter sequence trimming
+                on the provided sequencing sample.
+            
             Args:
-                sample (SampleDataContainer): \
-                    The container holding sample's sequencing data, \
-                    including raw reads path.
-                output_dir (PathLike[AnyStr]): \
-                    Directory where the trimmed reads and output files will be saved.
+                sample (SampleDataContainer):
+                    The container holding sample sequencing data,
+                    including paths to raw reads.
+                executor (Union[CommandExecutor, callable]):
+                    The command executor or callable
+                    responsible for running system commands.
+            
             Returns:
-                None
+                list[PathLike[AnyStr]]:
+                    A list of paths to the processed (trimmed) read files,
+                    specifically the paired read files.
+            
+            Raises:
+                FileNotFoundError: If any of the input read files are missing.
         """
 
         if not os.path.exists(sample.R1_source):
@@ -35,7 +106,8 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
         os.makedirs(trim_outpath, exist_ok=True)
         os.makedirs(sample.processing_logpath, exist_ok=True)
 
-        trimmer_args = self.configurator.parse_configuration(target_section='Trimmomatic')
+        trimmer_args = self.configurator.parse_configuration(
+            target_section='Trimmomatic')
 
         outpathes = [t for t in [insert_processing_infix(
             infix, os.path.abspath(
@@ -54,7 +126,7 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
         else: # PE
             if not os.path.exists(sample.R2_source):
                 msg = f"R2 reads file '{sample.R2_source}' not found. Abort"
-                
+
                 self.logger.critical(msg)
                 raise FileNotFoundError(msg)
 
@@ -89,10 +161,12 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
             '-summary', trimmer_summary_path,
             '', ' '.join(trimmer_args['basein']),
             '', ' '.join(trimmer_args['baseout']),
-            f"ILLUMINACLIP:{os.path.abspath(trimmer_args['adapters'])}:{trimmer_args['illuminaclip']}",
+            f"ILLUMINACLIP:{
+                os.path.abspath(trimmer_args['adapters'])}:{trimmer_args['illuminaclip']}",
             f"LEADING:{trimmer_args['leading']}" if 'leading' in trimmer_args else '',
             f"TRAILING:{trimmer_args['trailing']}" if 'trailing' in trimmer_args else '',
-            f"SLIDINGWINDOW:{trimmer_args['slightwindow']}" if 'slightwindow' in trimmer_args else '',
+            f"SLIDINGWINDOW:{
+                trimmer_args['slightwindow']}" if 'slightwindow' in trimmer_args else '',
             f"MINLEN:{trimmer_args['minlen']}" if 'minlen' in trimmer_args else '',
             f"CROP:{trimmer_args['crop']}" if 'crop' in trimmer_args else '',
             f"HEADCROP:{trimmer_args['headcrop']}" if 'headcrop' in trimmer_args else '',
@@ -101,15 +175,16 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
             '2>&1',])
 
         self.logger.info("Starting to trim adapters with Trimmomatic")
-        self.logger.debug(f"Command: {trimmer_cmd}")
+        self.logger.debug("Command: %s", trimmer_cmd)
 
         execute(executor, trimmer_cmd)
 
         self.logger.info(
-            f"Adapter trimming completed successfully. "
-            f"See the log at '{trimmer_summary_path}'")
+            "Adapter trimming completed successfully. See the log at '%s'",
+            trimmer_summary_path)
 
         paired_trimmed_reads = []
         for path in trimmer_args['baseout']:
-            if '.paired' in path: paired_trimmed_reads.append(path)
+            if '.paired' in path:
+                paired_trimmed_reads.append(path)
         return paired_trimmed_reads
