@@ -11,7 +11,7 @@
 
     Functions:
         - Various static methods for module loading, installation
-         path verification, and file extension resolution.
+        path verification, and file extension resolution.
 
     Usage:
         Instantiate the DependencyHandler singleton to

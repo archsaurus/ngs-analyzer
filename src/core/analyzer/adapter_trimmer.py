@@ -9,7 +9,7 @@
 
     Classes:
         - AdapterTrimmer:
-            Responsible for executing adapter trimming on sequencing reads.
+        Responsible for executing adapter trimming on sequencing reads.
         Utilizes Trimmomatic, supports both single-end and paired-end modes, and logs
         the trimming process.
 

@@ -4,19 +4,20 @@
 
     Classes:
         - BamGrouper:
-            Converts SAM files to sorted BAM files, adds read group information,
-            and indexes the BAM files using Picard tools.
+            Converts SAM files to sorted BAM files,
+            adds read group information, and indexes
+            the BAM files using Picard tools.
 
     Main Functionality:
         - Takes a sample's SAM file output from mapping.
-        - Uses Picard tools to add read groups,
-        sort the BAM file, and create an index.
+        - Uses Picard tools to add read groups, sort the BAM file, \
+        and create an index.
         - Produces space-efficient, indexed BAM files optimized
         for downstream analysis and fast interaction.
 
     This class is designed to streamline BAM file
-    preparation steps in sequencing pipelines, improving efficiency
-    and facilitating downstream processing.
+    preparation steps in sequencing pipelines,
+    improving efficiency and facilitating downstream processing.
 """
 
 # region Imports

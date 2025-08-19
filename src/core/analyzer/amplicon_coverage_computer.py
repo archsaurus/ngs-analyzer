@@ -4,7 +4,6 @@
     within specified genomic regions.
 
     Modules and Classes:
-    --------------------
     - PositionNotFoundError:
         Custom exception raised when a specific genomic
         position cannot be found in a mpileup file.
@@ -17,24 +16,23 @@
         and IDataPreparator to adhere to a data preparation interface.
 
     Key functionalities:
-    - Generating mpileup files for sample regions using samtools.
-    - Counting coverage over regions based on mpileup data.
-    - Counting variant coverage at specific genomic positions.
-    - Performing the entire process of mpileup generation and coverage calculation.
-    - Managing configuration and executing system commands for data processing.
+        - Generating mpileup files for sample regions using samtools.
+        - Counting coverage over regions based on mpileup data.
+        - Counting variant coverage at specific genomic positions.
+        - Performing the entire process of mpileup generation and coverage calculation.
+        - Managing configuration and executing system commands for data processing.
 
     Usage:
-    ------
-    Instantiate the class with a configuration object and a filter function,
-    then call `perform()` with a sample data container, target regions,
-    and an executor to process coverage analysis for sequencing samples.
+        Instantiate the class with a configuration object and a filter function,
+        then call `perform()` with a sample data container, target regions,
+        and an executor to process coverage analysis for sequencing samples.
 
     Note:
-    -----
-    Ensure that the configuration file contains correct paths
-    and parameters, especially for 'samtools' and 'bedtools'.
-    The class also relies on the presence of mpileup files
-    and the ability to generate them via command-line tools.
+        Ensure that the configuration file contains correct paths
+        and parameters, especially for 'samtools' and 'bedtools'.
+        The class also relies on the presence of mpileup files
+        and the ability to generate them via command-line tools.
+
 """
 
 # region Imports

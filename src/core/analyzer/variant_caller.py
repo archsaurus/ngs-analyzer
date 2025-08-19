@@ -4,8 +4,8 @@
 
     It defines a base class `VariantCaller` and specific implementations
     for different variant calling tools such as
-        Pisces,
-        GATK's UnifiedGenotyper,
+        Pisces, \
+        GATK's UnifiedGenotyper, \
         and FreeBayes.
 
     The classes provide methods to execute variant calling commands,
@@ -19,14 +19,14 @@
     across different tools.
 
     Usage:
-        - Instantiate the specific variant caller class
-        with the configuration.
-        - Call the `call_variant()` method with a sample data container
+        - Instantiate the specific variant caller class with the configuration.
+        - Call the `call_variant()` method with a sample data container \
         and executor to perform variant calling.
 
     Note:
-        - The `UnifiedGenotyperVariantCaller` is deprecated;
+        - The `UnifiedGenotyperVariantCaller` is deprecated; \
         consider updating to newer GATK tools.
+
 """
 
 # region Imports

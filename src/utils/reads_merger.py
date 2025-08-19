@@ -1,11 +1,11 @@
 #!/bin/python
-r"""
+"""
     FAST(A|Q) Reads Merger
 
-    This script consolidates paired-end FASTQ files \
-    from a specified directory by merging multiple files per sample \
-    if necessary, or copying single files directly. \
-    It identifies samples based on a provided pattern, \
+    This script consolidates paired-end FASTQ file
+    from a specified directory by merging multiple files per sample
+    if necessary, or copying single files directly.
+    It identifies samples based on a provided pattern,
     and processes R1 and R2 read files separately.
 
     Usage:
@@ -18,6 +18,7 @@ r"""
         --id_pattern  Regex pattern to extract sample IDs from filenames.
         --r1_pattern  Regex pattern for R1 read files.
         --r2_pattern  Regex pattern for R2 read files.
+
     Example:
         python3.13 read_merger.py \
         --path <workdir>/input_dir \
@@ -25,6 +26,7 @@ r"""
         --id_pattern '<sample_base>_[\d]{4}_([^_]*){1,2}' \
         --r1_pattern '.*R1.*\.fastq\.gz' \
         --r2_pattern '.*R2.*\.fastq\.gz'
+
 """
 
 # region Imports
@@ -40,10 +42,12 @@ import argparse
 
 def parse_args() -> argparse.Namespace:
     """
-        Parses command-line arguments for input and output paths, \
-            and patterns.
+        Parses command-line arguments for input and output paths,
+        and patterns.
+
         Returns:
-            args: Parsed arguments namespace.
+            args:
+                Parsed arguments namespace.
     """
     parser = argparse.ArgumentParser(
         prog="FAST(A|Q) Reads Merger",
@@ -87,7 +91,7 @@ def merge_fastq(
     id_pattern: str=r"(?:russco_[\d]{4}_(?:ffpe_cr|leu))",
     r1_pattern: str=r"[^\s]*R1[^\s]*(?:\.fa(?:st(?:a|q)))(?:\.(?:gz|bz|bgz))?",
     r2_pattern: str=r"[^\s]*R2[^\s]*(?:\.fa(?:st(?:a|q)))(?:\.(?:gz|bz|bgz))?"
-):
+    ):
     """Merges R1 and R2 FASTQ files per sample based on provided patterns."""
     error_msg = "Wrong regexp pattern was given or there are no any " \
         "coincided with the pattern files in input directory.\n" \

@@ -21,30 +21,32 @@ from src.utils.report_agregator.i_report_data_container import IReportDataContai
 class ClinvarVariantAnnotationContainer(IReportDataContainer):
     """
         Here is description of Clinvar database's headers: 
-        SCI:
-            Aggregate somatic clinical impact for this single variant
-        SCIDN:
-            ClinVar’s preferred disease name for the concept
-                specified by disease identifiers in SCIDISDB
-        SCIDISDB:
-            Tag-value pairs of disease database name and identifier
-            submitted for somatic clinical impact classifications,
-                e.g. MedGen: NNNNNN
-        SCIREVSTAT:
-            ClinVar review status of somatic clinical impact
+            SCI:
+                Aggregate somatic clinical impact for this single variant
+            SCIDN:
+                ClinVar’s preferred disease name for the concept
+                    specified by disease identifiers in SCIDISDB
+            SCIDISDB:
+                Tag-value pairs of disease database name and identifier
+                submitted for somatic clinical impact classifications,
+                    e.g. MedGen: NNNNNN
+            SCIREVSTAT:
+                ClinVar review status of somatic clinical impact
+                    for the Variation ID
+            ONC:
+                Aggregate oncogenicity classification for the variant
+            ONCDN:
+                ClinVar’s preferred disease name for the concept
+                    specified by disease identifiers in ONCDISDB
+            ONCDISDB:
+                Tag-value pairs of disease database name and identifier submitted
+                    for oncogenicity classifications, e.g. MedGen: NNNNNN
+            ONCREVSTAT:
+                ClinVar review status of oncogenicity classification
                 for the Variation ID
-        ONC:
-            Aggregate oncogenicity classification for the variant
-        ONCDN:
-            ClinVar’s preferred disease name for the concept
-                specified by disease identifiers in ONCDISDB
-        ONCDISDB:
-            Tag-value pairs of disease database name and identifier submitted
-                for oncogenicity classifications, e.g. MedGen: NNNNNN
-        ONCREVSTAT:
-            ClinVar review status of oncogenicity classification for the Variation ID
-        ONCCONF:
-            Conflicting oncogenicity classifications for the variant
+            ONCCONF:
+                Conflicting oncogenicity classifications for the variant
+
     """
     allele_id: str
     disease_name: str
@@ -71,13 +73,13 @@ class ClinvarVariantAnnotationContainer(IReportDataContainer):
 class VariantDataContainer(IReportDataContainer):
     """
         Represents a container for variant data,
-            inheriting from IReportDataContainer.
+        inheriting from IReportDataContainer.
 
         This class encapsulates the necessary information about a variant,
         including its genomic location, reference and alternate alleles,
         associated gene information, and functional effects.
         It's designed to be used within a reporting system and
-            can likely hold additional attributes.
+        can likely hold additional attributes.
 
         Attributes:
             chromosome (str):

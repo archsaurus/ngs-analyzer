@@ -1,10 +1,12 @@
 """
 This module contains the BQSRPerformer class, which manages
 Base Quality Score Recalibration (BQSR) using GATK's BaseRecalibrator
-and ApplyBQSR tools. It performs the following key steps:
-    1. Generates a recalibration table with BaseRecalibrator.
-    2. Applies the recalibration to produce
-    a recalibrated BAM file with ApplyBQSR.
+and ApplyBQSR tools.
+
+It performs the following key steps:
+    1. Generates a recalibration table with BaseRecalibrator. \
+    2. Applies the recalibration to produce a recalibrated BAM file \
+    with ApplyBQSR.
 
 The process enhances variant calling accuracy by adjusting
 quality scores based on known sites and covariates,
@@ -12,7 +14,7 @@ improving downstream analyses.
 
 Classes:
     - BQSRPerformer:
-        Executes BQSR by running GATK commands, managing logs,
+        Executes BQSR by running GATK commands, managing logs, \
         and handling input/output files.
 
 Main Features:
