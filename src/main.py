@@ -3,6 +3,7 @@
 
 # region Imports
 import os
+import re
 
 from src.configurator import Configurator
 from src.analyzer import Analyzer
@@ -68,21 +69,7 @@ def main():
                 brca1_analyzer.prepare_data(sample)
                 brca1_analyzer.analyze(sample)
 
-                # Need to fetch chromosome's number from reads
-                # before proceed to report generation.
-                target_regions=[
-                    reg_tuple_generator(configurator, 'chr03-interval'),
-                    reg_tuple_generator(configurator, 'chr06-interval'),
-                    reg_tuple_generator(configurator, 'chr10-interval'),
-                    reg_tuple_generator(configurator, 'chr13-interval'),
-                    reg_tuple_generator(configurator, 'chr14-interval'),
-                    reg_tuple_generator(configurator, 'chr17-interval'),
-                    reg_tuple_generator(configurator, 'chr19-interval')
-                ]
-
-                report_agregator.agregate_report(
-                    target_regions=target_regions,
-                    sample=sample)
+                report_agregator.agregate_report(sample=sample)
 
 if __name__ == '__main__':
     main()

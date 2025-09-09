@@ -110,7 +110,6 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def generate_mpileup(
         self,
         sample: SampleDataContainer,
-        regions: list[tuple[str, str]],
         executor: Union[CommandExecutor, callable]
         ) -> list[PathLike[AnyStr]]:
         """
@@ -129,7 +128,9 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         """
         mp_files = []
 
-        for region, out_name in regions:
+        sample.bam_filepath = os.path.join(sample.processing_path, sample.sid+".sorted.read_groups.recalibrated.bam")
+
+        for region, out_name in sample.target_regions:
             out_path = os.path.join(
                 sample.processing_path, f"{sample.sid}.{out_name}")
 
@@ -149,7 +150,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
             depth_filter(
                 filepath=out_path,
-                depth=15,
+                depth=5,
                 logger=self.logger)            
 
             mp_files.append(out_path)
@@ -231,7 +232,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def count_indels(
         self,
         data: str
-        ) -> (int, int, int, int):
+        ) -> dict[str, int]:
         """
             Counts the number of insertions and deletions
             for two replicates (r1 and r2) based on
@@ -244,41 +245,36 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                     where <bases> is a sequence of [ACTGNactgn] characters.
 
             Returns:
-                tuple (int, int, int, int): \\
-                    r1_ins_count:
-                        Number of insertions for replicate r1 \\
-                    r1_del_count:
-                        Number of deletions for replicate r1 \\
-                    r2_ins_count:
-                        Number of insertions for replicate r2 \\
-                    r2_del_count:
-                        Number of deletions for replicate r2
+                dict[str, int]: \\
+                    key:
+                        An indel signature. \\
+                    value:
+                        Count of the key in pileup line
         """
         matches = re.findall(
             r'([+-])(\d+)([ACTGNactgn]+)', data)
 
-        r1_ins_count = 0
-        r1_del_count = 0
-        r2_ins_count = 0
-        r2_del_count = 0
+        if matches:
+            cov_dict = {}
+            for sign, number, bases in matches:
+                var_match = str(sign)+str(number)+str(bases[:int(number)])
+                if var_match:
+                    if var_match in cov_dict:
+                        cov_dict[var_match] += 1
+                    else:
+                        cov_dict[var_match] = 1
+            return cov_dict
 
-        for sign, number, bases in matches:
-            if sign == '+':
-                if bases.islower():
-                    r2_ins_count += 1
-                elif bases.isupper():
-                    r1_ins_count += 1
-            elif sign == '-':
-                if bases.islower():
-                    r2_del_count += 1
-                elif bases.isupper():
-                    r1_del_count += 1
-
-        return (
-            r1_ins_count,
-            r1_del_count,
-            r2_ins_count,
-            r2_del_count)
+    @staticmethod
+    def count_target_char(
+        src: AnyStr,
+        target_char: AnyStr='*') -> int:
+        pattern = re.compile(rf'([+-]\d+[actgnACTGN]*)|({target_char})')
+        count = 0
+        for match in pattern.finditer(src):
+            if match.group(2):
+                count += 1
+        return count
 
     def count_variant_coverage(
         self,
@@ -394,21 +390,38 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             r1_ref_count = pileup_data.count('.')
                             r2_ref_count = pileup_data.count(',')
 
-                            r1_alt_count = pileup_data.count(alt.upper())
-                            r2_alt_count = pileup_data.count(alt.lower())
+                            r1_alt_count = AmpliconCoverageDataPreparator.count_target_char(
+                                src=pileup_data, target_char=alt.upper())
+                            r2_alt_count = AmpliconCoverageDataPreparator.count_target_char(
+                                src=pileup_data, target_char=alt.lower())
 
-                            (r1_ins_count,
-                            r1_del_count,
-                            r2_ins_count,
-                            r2_del_count) = self.count_indels(pileup_data)
+                            indels_dict = self.count_indels(pileup_data)
+                            
+                            r1_ins_count, r1_del_count = 0, 0
+                            r2_ins_count, r2_del_count = 0, 0
+
+                            if indels_dict:
+                                number_regex = re.compile(r"([\+-])(\d+)")
+                                for key, value in indels_dict.items():
+                                    sign, number = number_regex.search(key).groups()
+                                    bases = key[-int(number):]
+
+                                    if sign == '-':
+                                        if bases.isupper():
+                                            r1_del_count += value
+                                        elif bases.islower():
+                                            r2_del_count += value
+
+                                    elif sign == '+':
+                                        if bases.isupper():
+                                            r1_ins_count += value
+                                        elif bases.islower():
+                                            r2_ins_count += value
 
                             total_alt_count = (
-                                r1_alt_count +
-                                r2_alt_count +
-                                r1_ins_count +
-                                r1_del_count +
-                                r2_ins_count +
-                                r2_del_count)
+                                r1_alt_count + r2_alt_count +
+                                r1_ins_count + r1_del_count + 
+                                r2_ins_count + r2_del_count)
 
                             return (
                                 depth,
@@ -440,7 +453,6 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def perform(
         self,
         sample: SampleDataContainer,
-        target_regions: list[tuple[str, str]],
         executor: Union[CommandExecutor, callable]
         ) -> list:
         """
@@ -450,8 +462,6 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
             Args:
                 sample (SampleDataContainer):
                     The sequencing data sample.
-                target_regions (list of tuples):
-                    List of regions as (region_name, out_name).
                 executor (callable):
                     Function or command executor to run system commands.
 
@@ -461,7 +471,6 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         """
         mpileup_data_list = self.generate_mpileup(
             sample=sample,
-            regions=target_regions,
             executor=os.system)
 
         for file_path in mpileup_data_list:

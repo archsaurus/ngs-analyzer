@@ -8,10 +8,15 @@
 
 # region Imports
 import os
+import re
+import logging
 
 from os import PathLike
 from typing import Optional
 from typing import AnyStr
+
+from src.configurator import Configurator
+from src.utils.util import reg_tuple_generator
 # endregion
 
 class SampleDataContainer:
@@ -44,6 +49,7 @@ class SampleDataContainer:
         sid: str='1',
         processing_path: PathLike[AnyStr]=None,
         processing_logpath: PathLike[AnyStr]=None,
+        target_regions: list[tuple[str, str]]=None,
         bam_filepath: Optional[PathLike[AnyStr]]=None,
         vcf_filepath: Optional[PathLike[AnyStr]]=None,
         report_path: PathLike[AnyStr]=None
@@ -64,6 +70,10 @@ class SampleDataContainer:
                 processing_logpath (PathLike[AnyStr], optional):
                     Path to processing logs.
                     Defaults to None, which sets a default path.
+                target_regions (list[tuple[str, str]]):
+                    A list of tuples like (pileup filepath, region name).
+                    Region name must to coincide with the region
+                    field name from configuration file.
                 bam_filepath (Optional[PathLike[AnyStr]], optional):
                     Path to BAM file. Defaults to None.
                 vcf_filepath (Optional[PathLike[AnyStr]], optional):
@@ -86,8 +96,44 @@ class SampleDataContainer:
         self.report_path = report_path or os.path.abspath(
             os.path.join(self.processing_path, "report"))
 
+        self.target_regions = target_regions
+
         self.bam_filepath = bam_filepath
         self.vcf_filepath = vcf_filepath
+    
+    def parse_regions_from_sam_file(
+        self,
+        configurator: Configurator,
+        path: PathLike[AnyStr]=None,
+        logger: logging.Logger=None):
+        target_chromosomes = []
+        try:
+            default_sam_filepath = os.path.abspath(os.path.join(
+                self.processing_path, self.sid+".sam"))
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            if logger is not None:
+                logger.critical(
+                    "Can't access file '%s' because an error '%s' occured", 
+                    path if path is not None else default_sam_filepath, e)
+            raise e
+        try:
+            with open(path if path is not None else default_sam_filepath,
+                'r', encoding='utf-8') as fd:
+                for region in re.finditer(r"@SQ.*\n", fd.read()):
+                    sn_field = region.group().split('\t')[1].strip()
+                    chromosome_number = sn_field.split('chr')[1]
+                    if len(chromosome_number) == 1:
+                        chromosome_number = "0"+str(chromosome_number)
+                    chromosome_number = f"chr{chromosome_number}-interval"
+                    target_chromosomes.append(chromosome_number)
+            self.target_regions = [reg_tuple_generator(
+                configurator, interval) for interval in target_chromosomes]
+        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
+            if logger is not None:
+                logger.critical(
+                    "Can't parse intervals from '%s' because an error '%s' occured", 
+                    path if path is not None else default_sam_filepath, e)
+                raise e
 
     def __str__(self):
         """

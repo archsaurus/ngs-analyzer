@@ -58,8 +58,7 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
     """
     def __init__(
         self,
-        configurator: Configurator,
-        target_regions: list[str]
+        configurator: Configurator
         ):
         """
             Initializes the BQSRPerformer
@@ -68,12 +67,9 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             Args:
                 configurator (Configurator):
                     Contains paths and parameters.
-                target_regions (list[str]):
-                    List of genomic intervals for targeted recalibration.
         """
         super().__init__(logger=configurator.logger)
         self.configurator = configurator
-        self.target_regions = target_regions
 
     def perform(
         self,
@@ -114,7 +110,7 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             '--known-sites', self.configurator.config['annotation-database'],
             ' '.join(
                 [f"--intervals {interval}" for interval in
-                [self.target_regions[i][0] for i in range(len(self.target_regions))]]),
+                [sample.target_regions[i][0] for i in range(len(sample.target_regions))]]),
             '2>', base_recal_logpath,
             '>>', base_recal_logpath])
 

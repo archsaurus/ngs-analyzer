@@ -129,6 +129,9 @@ class GeneDetailsDTO(IReportDataContainer):
             "Exon": self.exon,
             "HGVS_CDS": self.hgvs_cds,
             "HGVS_Protein": self.hgvs_protein}
+    
+    # список [a, b, c, d]
+    # словарь {a: 1, b: 12, c: 3, d: 7}
 
 @dataclass
 class ReportDTO(IReportDataContainer):
@@ -175,7 +178,7 @@ def parse_variant_section(row: str) -> IReportDataContainer:
 
     variant = VariantDataContainer(
         chromosome=var_fields[0],
-        start=var_fields[1],
+        start= var_fields[28], #var_fields[1],
         end=var_fields[2],
         reference=var_fields[3],
         alternate=var_fields[4],
@@ -253,9 +256,7 @@ def parse_annotation_section(row: str) -> IReportDataContainer:
     return annotation
 
 def agregate_report(
-    target_regions: (str, str),
-    sample: SampleDataContainer=None
-    ):
+    sample: SampleDataContainer=None):
     """
         Main processing function.
 
@@ -279,7 +280,7 @@ def agregate_report(
         "Report agregator configuration:\n"
         "Target regions:\n\t(Region, mpileup filepath): "
         f"""{'\n\t(Region, mpileup filepath): '.join(
-            [f"({region}, {path})" for (region, path) in target_regions]
+            [f"({region}, {path})" for (region, path) in sample.target_regions]
             )}\n"""
         f"{'\n\t'.join(
             [str(key)+': '+str(value) for (key, value) in report_conf.items()]
@@ -287,7 +288,15 @@ def agregate_report(
 
     preparator = AmpliconCoverageDataPreparator(
         Configurator(), filter_func=mean)
-    preparator.perform(sample, target_regions, os.system)
+    preparator.perform(sample, os.system)
+    #preparator.mpileup_files = {
+    #    '03': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup03',
+    #    '06': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup06',
+    #    '10': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup10',
+    #    '13': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup13',
+    #    '14': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup14',
+    #    '17': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup17',
+    #    '19': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup19'}
 
     report_list = []
 
@@ -339,3 +348,25 @@ def agregate_report(
 
 if __name__ == '__main__':
     cfg = Configurator()
+
+"""
+    from src.core.sample_data_container import SampleDataContainer
+    agregate_report(
+        target_regions=[
+            reg_tuple_generator(cfg, 'chr03-interval'),
+            reg_tuple_generator(cfg, 'chr06-interval'),
+            reg_tuple_generator(cfg, 'chr10-interval'),
+            reg_tuple_generator(cfg, 'chr13-interval'),
+            reg_tuple_generator(cfg, 'chr14-interval'),
+            reg_tuple_generator(cfg, 'chr17-interval'),
+            reg_tuple_generator(cfg, 'chr19-interval')],
+        sample=SampleDataContainer(
+            r1_source='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu_S16_L001_R1_001.trimmed.fastq.gz',
+            r2_source='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu_S16_L001_R2_001.trimmed.fastq.gz',
+            sid='russco_3968_leu',
+            processing_path='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu',
+            processing_logpath='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/log',
+            bam_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.sorted.read_groups.recalibrated.bam',
+            vcf_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.sorted.read_groups.recalibrated.ann.vcf',
+            report_path='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/report'))
+"""

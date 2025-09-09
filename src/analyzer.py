@@ -20,6 +20,7 @@
 
 # region Imports
 import os
+import re
 
 from typing import Union
 
@@ -100,18 +101,8 @@ class Analyzer(metaclass=SingletonMeta):
                 SampleDataContainer:
                     Updated sample with paths to intermediate and final files.
         """
-        target_regions=[
-            reg_tuple_generator(self.configurator, 'chr03-interval'),
-            reg_tuple_generator(self.configurator, 'chr06-interval'),
-            reg_tuple_generator(self.configurator, 'chr10-interval'),
-            reg_tuple_generator(self.configurator, 'chr13-interval'),
-            reg_tuple_generator(self.configurator, 'chr14-interval'),
-            reg_tuple_generator(self.configurator, 'chr17-interval'),
-            reg_tuple_generator(self.configurator, 'chr19-interval')]
-
         bwa2mem = SequenceAligner(self.configurator)
         picard_group_reads = BamGrouper(self.configurator)
-        gatk4_bqsr = BQSRPerformer(self.configurator, target_regions)
 
         ptrimmer = PrimerCutter.create_primer_cutter(
             configurator = self.configurator,
@@ -135,8 +126,14 @@ class Analyzer(metaclass=SingletonMeta):
             self.configurator.config['reference'],
             executor=self.cmd_caller)
 
+        sample.parse_regions_from_sam_file(
+            configurator=self.configurator,
+            path=sample.bam_filepath)
+
         bam_index_filepath, sample.bam_filepath = picard_group_reads.perform(
             sample, executor=self.cmd_caller)
+
+        gatk4_bqsr = BQSRPerformer(self.configurator)
 
         sample.bam_filepath = gatk4_bqsr.perform(
             sample, executor=self.cmd_caller)

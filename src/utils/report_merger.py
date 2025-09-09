@@ -56,7 +56,6 @@ if __name__ == "__main__":
         args.outputDir, filepath) for filepath in os.listdir(
             args.outputDir) if filepath.endswith('xlsx')]
 
-
     dfs = [pandas.read_excel(file_list[0]),]
 
     for file in file_list[1:]:

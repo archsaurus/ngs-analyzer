@@ -42,6 +42,7 @@ from src.core.base import LoggerMixin
 from src.core.base import CommandExecutor
 
 from src.core.base import execute
+from src.core.base import get_platform
 
 from src.core.sample_data_container import SampleDataContainer
 
@@ -133,6 +134,8 @@ class PiscesVariantCaller(VariantCaller):
         base_logpath = os.path.join(sample.processing_logpath, 'pisces.log')
 
         cmd = ' '.join([
+            'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
+            'LD_LIBRARY_PATH="/usr/local/lib"' if get_platform() == "linux" else '',
             self.configurator.config['pisces'],
             # '--coveragemethod, f'"exact"',
             # '--sbfilter' str(0.1),
