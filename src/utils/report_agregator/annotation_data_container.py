@@ -32,6 +32,27 @@ class AnnotationDataContainer(IReportDataContainer):
             AA.pos / AA.length
             Distance
             ERRORS / WARNINGS / INFO'
+
+            Distance to feature:
+                All items in this field are options,
+                so the field could be empty.
+                * Up/Downstream:
+                    Distance to first / last codon
+                * Intergenic:
+                    Distance to closest gene
+                * Distance to closest Intron boundary
+                in exon (+/- up/downstream).
+                If same, use positive number.
+                * Distance to closest exon boundary
+                in Intron (+/- up/downstream)
+                * Distance to first base in MOTIF
+                * Distance to first base in miRNA
+                * Distance to exon-intron boundary
+                in splice_site or splice _region
+                * ChipSeq peak:
+                    Distance to summit (or peak center)
+                * Histone mark / Histone state:
+                    Distance to summit (or peak center)    
     """
     allele: str
     annotation: str
@@ -49,6 +70,25 @@ class AnnotationDataContainer(IReportDataContainer):
     aminoacid: str
     distance: str
     info: str
+
+    def to_dict(self):
+        return {
+            #"Allele": self.allele,
+            "Annotation": self.annotation,
+            "Impact": self.annotation_impact,
+            #"Gene name": self.gene_name,
+            #"Gene ID": self.gene_id,
+            "Mutation type": self.mutation_type,
+            "Mutation ID": self.mutation_id,
+            "Transcript type": self.transcript_biotype,
+            #"Exon": self.exon,
+            #"HGVS.c": self.hgvs_cds,
+            #"HGVS.p": self.hgvs_protein,
+            "C_DNA": self.c_dna,
+            "CDS": self.cds,
+            "Aminoacid": self.aminoacid,
+            "Distance": self.distance,
+            "Info": self.info}
 
 # Predicted loss of function (LOF) effects for this variant section has fields
 #    Gene_Name

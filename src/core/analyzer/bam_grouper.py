@@ -65,7 +65,7 @@ class BamGrouper(LoggerMixin, IDataPreparator):
         self,
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
-    ) -> (PathLike[AnyStr], PathLike[AnyStr]):
+    ) -> tuple[PathLike[AnyStr], PathLike[AnyStr]]:
         """
             Conversion of the read mapping output on the reference (SAM file)
             to a BAM file, sorting of reads, addition of read group information,
@@ -78,9 +78,9 @@ class BamGrouper(LoggerMixin, IDataPreparator):
                 sample (SampleDataContainer):
                     The container with sample's data,
                     may be used for naming or metadata.
-                input_path (PathLike[AnyStr]):
-                    Path to the input SAM file generated from mapping.
-
+                executor (Union[CommandExecutor, callable]):
+                    The parameter is an external callable object or a
+                    special class to handling or/and wrapping system calls.
             Returns:
                 tuple: A pair of paths -
                     (index_path, bam_path)

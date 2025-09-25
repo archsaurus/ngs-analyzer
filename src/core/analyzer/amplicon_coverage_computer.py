@@ -118,8 +118,6 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
             Args:
                 sample (SampleDataContainer):
                     The sample containing sequencing data.
-                regions (list of tuples):
-                    List of regions specified as (region_name, out_name).
                 executor (callable):
                     The command executor or function to run system commands.
 
@@ -229,10 +227,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                 self.perform.__func__.__name__)
             raise e
 
-    def count_indels(
-        self,
-        data: str
-        ) -> dict[str, int]:
+    @staticmethod
+    def count_indels(data: str) -> dict[str, int]:
         """
             Counts the number of insertions and deletions
             for two replicates (r1 and r2) based on
@@ -254,8 +250,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         matches = re.findall(
             r'([+-])(\d+)([ACTGNactgn]+)', data)
 
+        cov_dict = {}
         if matches:
-            cov_dict = {}
             for sign, number, bases in matches:
                 var_match = str(sign)+str(number)+str(bases[:int(number)])
                 if var_match:
@@ -263,7 +259,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                         cov_dict[var_match] += 1
                     else:
                         cov_dict[var_match] = 1
-            return cov_dict
+        return cov_dict
 
     @staticmethod
     def count_target_char(
@@ -282,7 +278,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         position: Union[int, str],
         ref: str,
         alt: str
-        ) -> (int, int, float):
+        ) -> tuple[int, int, float]:
         """
             Calculates coverage information and variant counts
             at a specific genomic position from mpileup data.
@@ -387,8 +383,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             depth, pileup_data = fd.readlines()[line_number-1].split('\t')[3:5]
                             depth = int(depth)
 
-                            r1_ref_count = pileup_data.count('.')
-                            r2_ref_count = pileup_data.count(',')
+                            #r1_ref_count = pileup_data.count('.')
+                            #r2_ref_count = pileup_data.count(',')
 
                             r1_alt_count = AmpliconCoverageDataPreparator.count_target_char(
                                 src=pileup_data, target_char=alt.upper())
@@ -401,7 +397,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             r2_ins_count, r2_del_count = 0, 0
 
                             if indels_dict:
-                                number_regex = re.compile(r"([\+-])(\d+)")
+                                number_regex = re.compile(r"([+-])(\d+)")
                                 for key, value in indels_dict.items():
                                     sign, number = number_regex.search(key).groups()
                                     bases = key[-int(number):]
@@ -426,18 +422,18 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             return (
                                 depth,
                                 total_alt_count,
-                                round((total_alt_count)/depth, 3))
+                                round(total_alt_count/depth, 3))
 
                         self.logger.warning(
                             "Can't find position '%s' in mpileup data '%s'",
                             position, os.path.basename(self.mpileup_files[chromosome]))
-                        return (-1, -1, -1)
+                        return -1, -1, -1
 
             except (FileNotFoundError, ValueError):
                 self.logger.critical(
                     "File '%s' not found or it is empty",
                     self.mpileup_files[chromosome])
-                return (-1, -1, -1)
+                return -1, -1, -1
 
         else:
             msg = f"The mpileup file for chromosome {chromosome} doesn't exist."
@@ -504,7 +500,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
                     case _:
                         self.logger.warning(
-                            "There is no any native way to build a comand for '%s'." \
+                            "There is no any native way to build a comand for '%s'. "
                             "Please edit '%s' script to execute it properly",
                             self.configurator.config['bedtools'],
                             self.__module__)

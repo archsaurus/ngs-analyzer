@@ -45,16 +45,15 @@ if __name__ == "__main__":
             'dest': 'outputDir',
             'type': str,
             'help': 'directory for output',
-            'required': True}}
-        ]
+            'required': True}}]
 
     for arg in arguments:
         parser.add_argument(*arg['name'], **arg['kwargs'])
     args = parser.parse_args()
 
     file_list = [os.path.join(
-        args.outputDir, filepath) for filepath in os.listdir(
-            args.outputDir) if filepath.endswith('xlsx')]
+        args.inputDir, filepath) for filepath in os.listdir(
+            args.inputDir) if filepath.endswith('xlsx')]
 
     dfs = [pandas.read_excel(file_list[0]),]
 

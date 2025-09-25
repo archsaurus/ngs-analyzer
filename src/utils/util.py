@@ -25,17 +25,21 @@ import tempfile
 from src.configurator import Configurator
 
 from os import PathLike
-from typing import AnyStr, Optional, Union
+from typing import AnyStr, Optional
 # endregion
 
 def reg_tuple_generator(
     configurator: Configurator,
-    chr_interval: str) -> (str, str):
+    chr_interval: str) -> tuple[str, str]:
     """
         Generate a tuple (region, mpileup_filepath) based on the configuration.
     """
+    regions_section = configurator.parse_configuration(
+        base_config_filepath=configurator.args.configFilepath,
+        target_section='Regions')
+
     return (
-        configurator.config[chr_interval].replace('chr', '').strip(),
+        regions_section[chr_interval].replace('chr', '').strip(),
         f"mpileup{chr_interval[3:5]}")
 
 def depth_filter(
@@ -91,7 +95,7 @@ def depth_filter(
                     depth_value = int(fields[3])
                     if depth_value >= depth:
                         temp_fd.write(line)
-                except (ValueError, IndexError):
+                except (ValueError, IndexError) as e:
                     msg = f"An error '{repr(e)}' occured at " \
                         f"'{e.__traceback__.tb_frame.f_lineno}'. " \
                         f"Skip the line '{line}'"

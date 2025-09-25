@@ -90,7 +90,7 @@ class DependencyHandler(metaclass=SingletonMeta):
         """
         def check_for_archive(
             ref_filepath: PathLike[AnyStr],
-            ) -> list[PathLike[AnyStr]]:
+            ) -> Optional[list[PathLike[AnyStr]]]:
             """
                 Checks if the given file path points to an archive
                 file (e.g., ZIP, TAR, GZ).
@@ -140,7 +140,7 @@ class DependencyHandler(metaclass=SingletonMeta):
                     ending, 'e'+ending[-1])
                 self.logger.debug(
                     f"{archive_file_names[0] if files_count == 1 else \
-                        archive_file_names[0]+', '.join( \
+                        archive_file_names[0]+', '.join(
                             archive_file_names[1:-2])+archive_file_names[-1] \
                     }")
 
@@ -149,7 +149,6 @@ class DependencyHandler(metaclass=SingletonMeta):
 
             except (FileNotFoundError, IOError):
                 return None
-            return os.path.abspath(ref_filepath)
 
         def select_reference_option(
             path_list: list[PathLike[AnyStr]],
@@ -267,7 +266,8 @@ class DependencyHandler(metaclass=SingletonMeta):
             Args:
                 module_name (str):
                     Name of the module to install.
-
+                logger (logging.Logger):
+                    A logger for the function call.
             Returns:
                 bool:
                     True if installation succeeded, False otherwise.
@@ -308,7 +308,8 @@ class DependencyHandler(metaclass=SingletonMeta):
             Args:
                 module_name (str):
                     Name of the module to fetch.
-
+                logger (logging.Logger):
+                    A logger for the function call.
             Exits:
                 - Exits with code os.EX_SOFTWARE if installation fails.
                 - Exits with code os.EX_OK if user chooses not to install.
@@ -358,6 +359,8 @@ class DependencyHandler(metaclass=SingletonMeta):
             Args:
                 src (str):
                     The path to the file or directory to check or create.
+                logger (logging.Logger):
+                    A logger for the function call.
             Returns:
                 bool:
                     True if the path exists or was successfully created,
@@ -378,7 +381,7 @@ class DependencyHandler(metaclass=SingletonMeta):
                     return False
             try:
                 touch(src)
-            except (FileNotFoundError, IOError, SyntaxError):
+            except (FileNotFoundError, IOError, SyntaxError) as e:
                 logger.critical(
                     "A fatal error '%s' occured at '%s'",
                     repr(e), e.__traceback__.tb_frame)

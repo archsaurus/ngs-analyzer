@@ -21,7 +21,7 @@
         Create an instance of `ArgumentParser` and call its `parse()` method
         to get an `argparse.Namespace` object with all parsed arguments.
 """
-
+import os
 import argparse
 
 from typing import Protocol
@@ -31,7 +31,9 @@ class IArgumentParser(Protocol):
         Interface for argument parser classes.
         Defines a method parse() that returns parsed command-line arguments.
     """
-    def parse(self):
+
+    @staticmethod
+    def parse() -> argparse.Namespace:
         """
             Parses command-line arguments
             and returns a Namespace object containing the arguments.
@@ -60,25 +62,34 @@ class ArgumentParser(IArgumentParser):
                 'default': 'brca_analyzer.log',
                 'help':
                     'Use non-default logger. '
-                    'Default logger named "./brca_analyzer.log"',
+                    f'Default logger named {os.sep}"brca_analyzer.log"',
                 }},
             {'name': ('--output-dir', '-o'), 'kwargs': {
                 'dest': 'outputDir',
                 'type': str,
                 'required': True,
                 'help': 'Directory for output'}},
-            {'name': ('--report-language', '-L'), 'kwargs': {
-                'dest': 'lang',
-                'type': str,
-                'default': 'english',
-                'help':
-                    'Language of report text (russian or english). '
-                    'Default is english'}},
+            #{'name': ('--report-language', '-L'), 'kwargs': {
+            #    'dest': 'lang',
+            #    'type': str,
+            #    'default': 'english',
+            #    'help':
+            #        'Language of report text (russian or english). '
+            #        'Default is english'}},
             {'name': ('--threads', '-th'), 'kwargs': {
                 'dest': 'threads',
                 'type': int,
                 'default': 2,
                 'help': 'Number of threads'}},
+            {'name': ('--configuration', '-c'), 'kwargs': {
+                'dest': 'configFilepath',
+                'type': str,
+                'required': False,
+                'default': os.path.abspath(os.path.join(
+                    os.curdir, 'src', 'conf', 'config.ini')),
+                'help': 'This is a path to a single configuration file '
+                'for a certain run or a list of pathes to configuration files, '
+                'that maps to a list of library types using with the current run.'}},
             {'name': ('--demultiplexor', '-de'), 'kwargs': {
                 'dest': 'demultiplexor_flag',
                 'type': bool,

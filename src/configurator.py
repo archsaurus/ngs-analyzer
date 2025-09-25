@@ -24,7 +24,7 @@ import argparse
 import logging
 
 from os import PathLike
-from typing import AnyStr
+from typing import AnyStr, Optional
 
 from src.core.base import SingletonMeta
 
@@ -72,8 +72,7 @@ class Configurator(metaclass=SingletonMeta):
         args: argparse.Namespace = None,
         config_path: PathLike[AnyStr] = None,
         log_path: PathLike[AnyStr] = None,
-        output_dir: PathLike[AnyStr] = None
-        ):
+        output_dir: PathLike[AnyStr] = None):
         """
             Initializes the Configurator, setting up logging,
             output directory, and configuration.
@@ -93,12 +92,15 @@ class Configurator(metaclass=SingletonMeta):
 
         self.args = args or self._parse_args()
 
-        self.output_dir = self._setup_output_directory(output_dir or self.args.outputDir)
+        self.output_dir = self._setup_output_directory(
+            output_dir or self.args.outputDir)
 
         self.config = self.parse_configuration(
+            base_config_filepath=self.args.configFilepath,
             target_section='Pathes')
 
-    def _parse_args(self) -> argparse.Namespace:
+    @staticmethod
+    def _parse_args() -> argparse.Namespace:
         """
             Parses command-line arguments using argparse.
 
@@ -110,10 +112,9 @@ class Configurator(metaclass=SingletonMeta):
         parser = ArgumentParser()
         return parser.parse()
 
-    def _setup_logger(
-        self,
-        log_filename: PathLike[AnyStr]
-        ) -> (PathLike[AnyStr], logging.Logger):
+    @staticmethod
+    def _setup_logger(log_filename: PathLike[AnyStr]
+        ) -> tuple[PathLike[AnyStr], logging.Logger]:
         """
             Sets up the logging system with the specified log file.
 
@@ -133,8 +134,7 @@ class Configurator(metaclass=SingletonMeta):
 
     def _setup_output_directory(
         self,
-        output_dir: PathLike[AnyStr]
-        ) -> PathLike[AnyStr]:
+        output_dir: PathLike[AnyStr]) -> PathLike[AnyStr]:
         """
             Validates the output directory path,
             creates it if it doesn't exist,
@@ -172,10 +172,9 @@ class Configurator(metaclass=SingletonMeta):
 
     def parse_configuration(
         self,
-        base_config_filepath: PathLike[AnyStr]=os.path.abspath(os.path.join(
-            os.path.curdir, 'src', 'conf', 'config.ini')),
-        target_section: AnyStr='Pathes'
-        ) -> dict:
+        base_config_filepath: Optional[PathLike[AnyStr]]=os.path.abspath(
+            os.path.join('src', 'conf', 'config.ini')),
+        target_section: AnyStr='Pathes') -> dict:
         """
             Loads a specific section of the configuration
             from a base configuration file.
@@ -194,5 +193,8 @@ class Configurator(metaclass=SingletonMeta):
                     Dictionary of configuration parameters
                     from the specified section.
         """
+        if base_config_filepath is None:
+            base_config_filepath = self.args.configFilepath
+
         return ConfigLoader(logger=self.logger).load(
             base_config_filepath, target_section)

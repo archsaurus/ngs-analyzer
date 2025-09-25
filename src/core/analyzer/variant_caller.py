@@ -26,7 +26,6 @@
     Note:
         - The `UnifiedGenotyperVariantCaller` is deprecated; \
         consider updating to newer GATK tools.
-
 """
 
 # region Imports
@@ -64,8 +63,7 @@ class VariantCaller(LoggerMixin, IVariantCaller):
     def __init__(
         self,
         configurator: Configurator,
-        logger: Optional[logging.Logger]=None
-        ):
+        logger: Optional[logging.Logger]=None):
         """
             Initializes the VariantCaller with
                 configuration and optional logger.
@@ -77,13 +75,13 @@ class VariantCaller(LoggerMixin, IVariantCaller):
                     Logger for logging.
         """
         self.configurator = configurator
-        super().__init__(logger=self.configurator.logger or None)
+        super().__init__(
+            logger=logger if logger else self.configurator.logger)
 
     def call_variant(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
-        ):
+        executor: Union[CommandExecutor, callable]):
         """
             Method to perform variant calling.
             To be implemented in subclasses.
@@ -104,8 +102,7 @@ class PiscesVariantCaller(VariantCaller):
     """
     def __init__(self,
         configurator: Configurator,
-        logger: Optional[logging.Logger]=None
-        ):
+        logger: Optional[logging.Logger]=None):
         if configurator:
             super().__init__(configurator, logger)
         else:
@@ -114,8 +111,7 @@ class PiscesVariantCaller(VariantCaller):
     def call_variant(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
-        ):
+        executor: Union[CommandExecutor, callable]):
         """
             Executes variant calling using Pisces.
 
@@ -131,7 +127,7 @@ class PiscesVariantCaller(VariantCaller):
         """
         self.logger.info("Starting variant calling with Pisces")
 
-        base_logpath = os.path.join(sample.processing_logpath, 'pisces.log')
+        base_logpath = os.path.join(sample.processing_logpath, 'PiscesLogs')
 
         cmd = ' '.join([
             'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
@@ -149,9 +145,6 @@ class PiscesVariantCaller(VariantCaller):
             '--bampaths', sample.bam_filepath,
             '--genomefolders', os.path.dirname(
                 self.configurator.config['reference']),
-            '--outfolder', sample.processing_path,
-            '--baselogname', base_logpath,
-            '>>', base_logpath,
             '2>&1'])
 
         self.logger.info("Executing Pisces command")
@@ -185,23 +178,6 @@ class UnifiedGenotyperVariantCaller(VariantCaller):
             "GATK UnifiedGenotyper depricated since version 4.0.0. "
             "Configure older versions for using it")
 
-            # cmd=[ # for 3.x.x versions
-            #    self.configurator.config['java'], '-jar',
-            #    self.configurator.config['gatk'], 'UnifiedGenotyper',
-            #    ' -R'+configs[7],
-            #    ' -I '+outDir+'patient_'+patNum+'/patient_'+patNum+
-            #        '.sorted.read_groups.realigned.recal.'+cutPrimers+
-            #            'bam',
-            #    ' -o '+outDir+'patient_'+patNum+'/patient_'+patNum+
-            #        '.sorted.read_groups.realigned.recal.'+cutPrimers+
-            #            'unifiedGenotyper.vcf',
-            #    ' -dfrac 1',
-            #    ' -glm BOTH',
-            #    ' -minIndelFrac 0.01',
-            #    ' -mbq 10',
-            #    ' -L chr13:32889617-32973809',
-            #    ' -L chr17:41196312-41279700 -nt '+threads]
-
 class FreebayesVariantCaller(VariantCaller):
     """
         Variant caller implementation using FreeBayes.
@@ -234,21 +210,10 @@ class FreebayesVariantCaller(VariantCaller):
             '--standard-filters',
             '--min-alternate-fraction', str(0.01), # default value is 0.05
             '--no-population-priors',
-            '--region', self.configurator.config['chr13-interval'],
-            '--region', self.configurator.config['chr17-interval'],
+            ' '.join([
+                f"--region {interval}" for interval in
+                [sample.target_regions[i][0] for i in range(len(sample.target_regions))]]),
             '--bam', sample.bam_filepath, # input file
             '--vcf', sample.vcf_filepath]) # output file
-
-        # alternate_cmd = ' '.join([
-        #    self.configurator.config['freebayes'],
-        #    '--fasta-reference', self.configurator.config['reference'],
-        #    '--ploidy', str(4),
-        #    '--standard-filters',
-        #    '--min-alternate-fraction', str(0.01), # default value is 0.05
-        #    '--no-population-priors',
-        #    '--region', self.configurator.config['chr13-interval'],
-        #    '--region', self.configurator.config['chr17-interval'],
-        #    '--bam', sample.bam_filepath, # input file
-        #    '|', 'vcfallelicprimitives', '-kg', '>', sample.vcf_filepath])
 
         execute(executor, cmd)

@@ -52,7 +52,7 @@ class CutPrimers(LoggerMixin, IDataPreparator):
         self,
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
-        ) -> (PathLike[AnyStr], PathLike[AnyStr]):
+        ) -> tuple[PathLike[AnyStr], PathLike[AnyStr]]:
         """
             Executes the primer cutting process on the provided sample data.
 
@@ -141,7 +141,7 @@ class CutPrimers(LoggerMixin, IDataPreparator):
             "cutPrimers completed successfully. See the log at '%s'",
             primer_cutter_logpath)
 
-        return (tr1, tr2)
+        return tr1, tr2
 
 class PTrimmer(LoggerMixin, IDataPreparator):
     """
@@ -158,7 +158,7 @@ class PTrimmer(LoggerMixin, IDataPreparator):
         self,
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
-        ) -> (PathLike[AnyStr], PathLike[AnyStr]):
+        ) -> tuple[PathLike[AnyStr], PathLike[AnyStr]]:
         """
             Performs primer trimming on the sample's read files.
 
@@ -214,7 +214,7 @@ class PTrimmer(LoggerMixin, IDataPreparator):
             "pTrimmer completed successfully. See the log at '%s'",
             primer_cutter_logpath)
 
-        return (r1_trimmed, r2_trimmed)
+        return r1_trimmed, r2_trimmed
 
 class PrimerCutter(LoggerMixin):
     """
@@ -253,3 +253,6 @@ class PrimerCutter(LoggerMixin):
                 return CutPrimers(configurator)
             case 'ptrimmer':
                 return PTrimmer(configurator)
+            case _:
+                raise NotImplementedError(
+                    "There is no any cutter with name %s", cutter_name)

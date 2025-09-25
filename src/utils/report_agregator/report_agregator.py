@@ -38,7 +38,6 @@
 
 # region Imports
 import os
-from dataclasses import dataclass
 
 from statistics import mean
 
@@ -50,107 +49,16 @@ from src.configurator import Configurator
 
 from src.utils.report_agregator.i_report_data_container import IReportDataContainer
 from src.utils.report_agregator.variant_data_container import VariantDataContainer
+
+from src.utils.report_agregator.variant_coverage_dto import VariantCoverageDTO
+from src.utils.report_agregator.gene_details_dto import GeneDetailsDTO
+from src.utils.report_agregator.report_dto import ReportDTO
+
 from src.utils.report_agregator.variant_data_container import ClinvarVariantAnnotationContainer
 from src.utils.report_agregator.annotation_data_container import AnnotationDataContainer
 
 from src.utils.util import reg_tuple_generator
 # endregion
-
-@dataclass
-class VariantCoverageDTO(IReportDataContainer):
-    """
-        Represents the coverage information for a variant.
-
-        Attributes:
-            chromosome (str):
-                The chromosome the variant is located on.
-            start (str):
-                The starting position of the variant on the chromosome.
-            reference (str):
-                The reference allele.
-            alternate (str):
-                The alternate allele.
-            ref_count (str):
-                The count of the reference allele.
-                Should ideally be a numeric type.
-            alt_count (str):
-                The count of the alternate allele.
-                Should ideally be a numeric type.
-            alt_coverage (str):
-                The coverage of the alternate allele.
-                Should ideally be a numeric type.
-    """
-    chromosome: str
-    start: str
-    reference: str
-    alternate: str
-    ref_count: str
-    alt_count: str
-    alt_coverage: str
-
-    def to_dict(self):
-        return {
-            "Chromosome": self.chromosome,
-            "Start": self.start,
-            "Reference": self.reference,
-            "Alternate": self.alternate,
-            "Reference count": self.ref_count,
-            "Alternate  count": self.alt_count,
-            "Alternate coverage": self.alt_coverage}
-
-@dataclass
-class GeneDetailsDTO(IReportDataContainer):
-    """
-        Represents detailed information about a gene, including its
-            name, transcript, exon, and HGVS annotations.
-
-        Attributes:
-            gene_name (str):
-                The official name of the gene.
-            gene_detail (str):
-                Additional details about the gene, such as transcript ID.
-            exon (str):
-                The exon number or identifier within the gene.
-            hgvs_cds (str):
-                HGVS nomenclature for the coding DNA sequence (c. notation).
-            hgvs_protein (str):
-                HGVS nomenclature for the protein change (p. notation).
-    """
-    gene_name: str
-    gene_detail: str # transcript id
-    exon: str
-    hgvs_cds: str
-    hgvs_protein: str
-
-    def to_dict(self):
-        return {
-            "Gene name": self.gene_name,
-            "Gene detail": self.gene_detail,
-            "Exon": self.exon,
-            "HGVS_CDS": self.hgvs_cds,
-            "HGVS_Protein": self.hgvs_protein}
-    
-    # список [a, b, c, d]
-    # словарь {a: 1, b: 12, c: 3, d: 7}
-
-@dataclass
-class ReportDTO(IReportDataContainer):
-    """Data container for report entries."""
-    id: str
-    variant_coverage: VariantCoverageDTO
-    annotation: str
-    gene_details: GeneDetailsDTO
-    one_thousand_genomics: str
-    clinvar_clinical_sign: str
-
-    def to_dict(self):
-        result_dict = {"Sample ID": self.id}
-        result_dict.update(self.variant_coverage.to_dict())
-        result_dict.update({"Annotation": self.annotation})
-        result_dict.update(self.gene_details.to_dict())
-        result_dict.update({"Clinical sign": self.clinvar_clinical_sign})
-
-        return result_dict
 
 def parse_variant_section(row: str) -> IReportDataContainer:
     """
@@ -209,7 +117,28 @@ def parse_variant_section(row: str) -> IReportDataContainer:
 
     return variant
 
-def parse_annotation_section(row: str) -> IReportDataContainer:
+class FirstAnnotation(AnnotationDataContainer):
+    def to_dict(self):
+        return {
+            "Gene name": self.gene_name,
+            "Annotation": self.annotation,
+            "Mutation ID": self.mutation_id,
+            "Transcript type": self.transcript_biotype,
+            "Exon": self.exon,
+            "HGVS.c": self.hgvs_cds,
+            "HGVS.p": self.hgvs_protein}
+
+class NextAnnotation(AnnotationDataContainer):
+    def to_dict(self):
+        return {
+            "Gene name": self.gene_name,
+            "Mutation ID": self.mutation_id,
+            "Transcript type": self.transcript_biotype,
+            "Exon": self.exon,
+            "HGVS.c": self.hgvs_cds,
+            "HGVS.p": self.hgvs_protein}
+
+def parse_annotation_section(row: str) -> list[IReportDataContainer]:
     """
         Parses an annotation section string
         into an AnnotationDataContainer object.
@@ -233,30 +162,44 @@ def parse_annotation_section(row: str) -> IReportDataContainer:
 
             annotation = parse_annotation_section(row)
     """
-    ann_fields = row.split(";LOF=")[0].split('|')[:16]
+    annotations = []
+    sub_annotations = row.split(";LOF=")[0].split('|,')
 
-    annotation = AnnotationDataContainer(
-        allele=ann_fields[0],
-        annotation=ann_fields[1],
-        annotation_impact=ann_fields[2],
-        gene_name=ann_fields[3],
-        gene_id=ann_fields[4],
-        mutation_type=ann_fields[5],
-        mutation_id=ann_fields[6],
-        transcript_biotype=ann_fields[7],
-        exon=ann_fields[8],
-        hgvs_cds=ann_fields[9],
-        hgvs_protein=ann_fields[10],
-        c_dna=ann_fields[11],
-        cds=ann_fields[12],
-        aminoacid=ann_fields[13],
-        distance=ann_fields[14],
-        info=ann_fields[15].split(',')[0])
+    for ann_fields in sub_annotations:
+        annotations_count = 0
 
-    return annotation
+        ann_fields = ann_fields.split('|')
+        filends_count = len(ann_fields)
+        if filends_count < 16:
+            for i in range(filends_count, 16):
+                ann_fields.append('')
 
-def agregate_report(
-    sample: SampleDataContainer=None):
+        if annotations_count > 0:
+            Annotation = NextAnnotation
+        else:
+            Annotation = FirstAnnotation
+
+        annotations.append(Annotation(
+            allele=ann_fields[0],
+            annotation=ann_fields[1],
+            annotation_impact=ann_fields[2],
+            gene_name=ann_fields[3],
+            gene_id=ann_fields[4],
+            mutation_type=ann_fields[5],
+            mutation_id=ann_fields[6],
+            transcript_biotype=ann_fields[7],
+            exon=ann_fields[8],
+            hgvs_cds=ann_fields[9],
+            hgvs_protein=ann_fields[10],
+            c_dna=ann_fields[11],
+            cds=ann_fields[12],
+            aminoacid=ann_fields[13],
+            distance=ann_fields[14],
+            info=ann_fields[15]))
+
+    return annotations
+
+def agregate_report(sample: SampleDataContainer=None):
     """
         Main processing function.
 
@@ -265,8 +208,6 @@ def agregate_report(
         and generates a report.
     """
     logger = Configurator().logger
-    report_conf = Configurator().parse_configuration(
-        target_section='Report')
 
     txt_path = os.path.abspath(os.path.join(
         sample.processing_path, sample.sid+".ann.hg19_multianno.txt"))
@@ -281,29 +222,18 @@ def agregate_report(
         "Target regions:\n\t(Region, mpileup filepath): "
         f"""{'\n\t(Region, mpileup filepath): '.join(
             [f"({region}, {path})" for (region, path) in sample.target_regions]
-            )}\n"""
-        f"{'\n\t'.join(
-            [str(key)+': '+str(value) for (key, value) in report_conf.items()]
-            )}")
+            )}\n""")
 
     preparator = AmpliconCoverageDataPreparator(
         Configurator(), filter_func=mean)
     preparator.perform(sample, os.system)
-    #preparator.mpileup_files = {
-    #    '03': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup03',
-    #    '06': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup06',
-    #    '10': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup10',
-    #    '13': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup13',
-    #    '14': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup14',
-    #    '17': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup17',
-    #    '19': '/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.mpileup19'}
 
     report_list = []
 
     with open(txt_path, 'r', encoding='utf-8') as fd:
         for line in fd.readlines()[1:]:
             if ";ANN=" in line:
-                variant, annotation = map(
+                variant, annotations = map(
                     lambda s, parser: parser(s),
                     line.split(";ANN="),
                     [parse_variant_section, parse_annotation_section])
@@ -320,22 +250,15 @@ def agregate_report(
 
                 report_list.append(ReportDTO(
                     sample.sid,
-                    # barcode7, barcode5,
                     VariantCoverageDTO(
                         variant.chromosome,
                         variant.start,
                         variant.reference,
                         variant.alternate,
-                        depth - alt_count if depth != -1 else -1, # ref_count
+                        depth - alt_count if depth != -1 else -1,
                         alt_count,
                         alt_coverage),
-                    annotation.annotation,
-                    GeneDetailsDTO(
-                        variant.gene_name,
-                        variant.gene_detail, # transcript id
-                        annotation.exon,
-                        annotation.hgvs_cds,
-                        annotation.hgvs_protein),
+                    GeneDetailsDTO(annotations),
                     variant.one_thousand_genomics,
                     variant.clinvar.clinical_sign))
 
@@ -344,29 +267,28 @@ def agregate_report(
 
     report_dataframe.to_excel(excel_writer=f"{
             os.path.join(sample.report_path, sample.sid+'.report.xlsx')}",
-        sheet_name="main")
+        sheet_name="main", index=False)
 
 if __name__ == '__main__':
     cfg = Configurator()
 
-"""
     from src.core.sample_data_container import SampleDataContainer
+
     agregate_report(
-        target_regions=[
-            reg_tuple_generator(cfg, 'chr03-interval'),
-            reg_tuple_generator(cfg, 'chr06-interval'),
-            reg_tuple_generator(cfg, 'chr10-interval'),
-            reg_tuple_generator(cfg, 'chr13-interval'),
-            reg_tuple_generator(cfg, 'chr14-interval'),
-            reg_tuple_generator(cfg, 'chr17-interval'),
-            reg_tuple_generator(cfg, 'chr19-interval')],
         sample=SampleDataContainer(
-            r1_source='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu_S16_L001_R1_001.trimmed.fastq.gz',
-            r2_source='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu_S16_L001_R2_001.trimmed.fastq.gz',
-            sid='russco_3968_leu',
-            processing_path='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu',
-            processing_logpath='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/log',
-            bam_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.sorted.read_groups.recalibrated.bam',
-            vcf_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/russco_3968_leu.sorted.read_groups.recalibrated.ann.vcf',
-            report_path='/home/archsaurus/Documents/code/BRCA-analyzer/BRCA_Analyzer/output/russco_3968_leu/report'))
-"""
+            r1_source='rerun4/russco_4555_leu/russco_4555_leu_S36_L001_R1_001.trimmed.fastq.gz',
+            r2_source='rerun4/russco_4555_leu/russco_4555_leu_S36_L001_R1_002.trimmed.fastq.gz',
+            sid='russco_4555_leu',
+            target_regions=[
+                reg_tuple_generator(cfg, 'chr03-interval'),
+                reg_tuple_generator(cfg, 'chr06-interval'),
+                reg_tuple_generator(cfg, 'chr10-interval'),
+                reg_tuple_generator(cfg, 'chr13-interval'),
+                reg_tuple_generator(cfg, 'chr14-interval'),
+                reg_tuple_generator(cfg, 'chr17-interval'),
+                reg_tuple_generator(cfg, 'chr19-interval')],
+            processing_path='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu',
+            processing_logpath='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/log',
+            bam_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/russco_4555_leu.sorted.read_groups.recalibrated.bam',
+            vcf_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/russco_4555_leu.sorted.read_groups.recalibrated.ann.vcf',
+            report_path='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/report'))

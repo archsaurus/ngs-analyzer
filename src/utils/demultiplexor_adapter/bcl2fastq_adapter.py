@@ -56,9 +56,10 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
         super().__init__()
 
         if not callable(cmd_caller):
-            raise TypeError(
-                "'cmd_caller' should be callable, "
-                f"got {type(cmd_caller)}")
+            msg = f"'cmd_caller' should be callable, got {type(cmd_caller)}"
+            if logger:
+                logger.error(msg)
+            raise TypeError(msg)
 
         self.cmd_caller = cmd_caller
 
@@ -69,7 +70,8 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
 
         self.config = config
 
-    def _check_config(self, config: dict[str, str],) -> (bool, str):
+    @staticmethod
+    def _check_config(config: dict[str, str],) -> tuple[bool, str]:
         """
             Validates the provided configuration dictionary.
 
@@ -100,7 +102,7 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             return (
                 False, f"Missing required configuration keys: {missing_keys}")
 
-        return (True, "OK")
+        return True, "OK"
 
     def _add_param(
         self,

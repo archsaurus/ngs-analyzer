@@ -52,8 +52,7 @@ class SampleDataContainer:
         target_regions: list[tuple[str, str]]=None,
         bam_filepath: Optional[PathLike[AnyStr]]=None,
         vcf_filepath: Optional[PathLike[AnyStr]]=None,
-        report_path: PathLike[AnyStr]=None
-    ):
+        report_path: PathLike[AnyStr]=None):
         """
             Initializes a sample data container.
 
@@ -72,7 +71,7 @@ class SampleDataContainer:
                     Defaults to None, which sets a default path.
                 target_regions (list[tuple[str, str]]):
                     A list of tuples like (pileup filepath, region name).
-                    Region name must to coincide with the region
+                    Region name must coincide with the region
                     field name from configuration file.
                 bam_filepath (Optional[PathLike[AnyStr]], optional):
                     Path to BAM file. Defaults to None.
@@ -107,15 +106,8 @@ class SampleDataContainer:
         path: PathLike[AnyStr]=None,
         logger: logging.Logger=None):
         target_chromosomes = []
-        try:
-            default_sam_filepath = os.path.abspath(os.path.join(
-                self.processing_path, self.sid+".sam"))
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            if logger is not None:
-                logger.critical(
-                    "Can't access file '%s' because an error '%s' occured", 
-                    path if path is not None else default_sam_filepath, e)
-            raise e
+        default_sam_filepath = os.path.abspath(os.path.join(
+            self.processing_path, self.sid + ".sam"))
         try:
             with open(path if path is not None else default_sam_filepath,
                 'r', encoding='utf-8') as fd:
@@ -128,10 +120,11 @@ class SampleDataContainer:
                     target_chromosomes.append(chromosome_number)
             self.target_regions = [reg_tuple_generator(
                 configurator, interval) for interval in target_chromosomes]
+
         except (FileNotFoundError, PermissionError, IOError, OSError) as e:
             if logger is not None:
                 logger.critical(
-                    "Can't parse intervals from '%s' because an error '%s' occured", 
+                    "Can't parse intervals from '%s' because an error '%s' occured",
                     path if path is not None else default_sam_filepath, e)
                 raise e
 
@@ -143,10 +136,7 @@ class SampleDataContainer:
                 str:
                     String with sample ID and file paths for R1 and R2.
         """
-        return "{id: '%s', r1: ''%s'', r2: '%s'}".format(
-            self.sid,
-            self.r1_source,
-            self.r2_source)
+        return '{'f"id: '{self.sid}', r1: '{self.r1_source}', r2: '{self.r2_source}"'}'
 
     def __repr__(self):
         """

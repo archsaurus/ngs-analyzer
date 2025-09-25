@@ -66,7 +66,7 @@ class SampleDataFactory(LoggerMixin, ISampleDataFactory):
                 logger (logging.Logger, optional):
                     Logger instance. Defaults to None.
         """
-        super().__init__()
+        super().__init__(logger=logger)
 
     def parse_sample_data(
         self, path:

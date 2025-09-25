@@ -52,8 +52,8 @@ class ExcelTableManager(LoggerMixin, ITableManager):
         super().__init__()
         self.set_logger(logger)
 
-
-    def determine_idx_type(self, idx_type_candidates: list) -> str:
+    @staticmethod
+    def determine_idx_type(idx_type_candidates: list) -> str:
         """Determines the index type based on given candidates."""
         if not idx_type_candidates:
             return 'Unknown'
@@ -157,12 +157,12 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                 adapter_sid, adapter_seq = adapter_row[1:3]
 
                 idx_marks = re.findall(
-                    r"[\d]{3}", adapter_sid)
+                    r"\d{3}", adapter_sid)
 
                 # region Name mapping
                 try:
                     idx_type_candidates = re.findall(
-                        r"([a-zA-Z]{2,})|(D[\d]{3})", adapter_sid)
+                        r"([a-zA-Z]{2,})|(D\d{3})", adapter_sid)
                     idx_type = self.determine_idx_type(idx_type_candidates)
 
                 except re.PatternError as e:
@@ -261,7 +261,7 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                     True if the sample sheet was successfully created,
                     raises exceptions otherwise.
         """
-        sh, sh_builder = None, None
+
         try:
             sh = SampleSheetContainer()
             sh.add_section(Section("Header", {
@@ -288,17 +288,16 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
             counter = 1
 
-            sh_data_dict = {}
-            sh_data_dict['Sample_ID'] = [
+            sh_data_dict = {'Sample_ID': [
                 'Sample_Name',
                 'Index',
                 'I7_Index_ID',
                 'index2',
-                'I5_Index_ID']
+                'I5_Index_ID']}
 
             for row in data.itertuples():
                 if counter not in sh_data_dict:
-                    sh_data_dict[counter] = [
+                    sh_data_dict[str(counter)] = [
                         f"{row[1]}",
                         f"{row[9]}",
                         f"{row[4]}",

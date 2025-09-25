@@ -29,7 +29,6 @@
 """
 
 # region Imports
-import os
 import sys
 import platform
 import logging
@@ -41,6 +40,8 @@ import tarfile
 import gzip
 import zipfile
 # endregion
+
+import os
 
 class SingletonMeta(type):
     """
@@ -64,7 +65,7 @@ class LoggerMixin:
 
         Attributes:
             logger (logging.Logger):
-                Logger instance used for logging.
+                Custom logger instance.
     """
     def __init__(self, logger: logging.Logger=None):
         """
@@ -104,7 +105,9 @@ class ICommandExecutor(Protocol):
 
         Defines the interface for executing system commands.
     """
-    def run(self, command):
+    def run(
+        self,
+        command: Union[list[str], str, dict[str, str]]) -> bool:
         """
             Executes a command.
 
@@ -147,8 +150,7 @@ class CommandExecutor(LoggerMixin, ICommandExecutor):
 
     def run(
         self,
-        command: Union[list[str], str,
-        dict[str, str]]
+        command: Union[list[str], str, dict[str, str]]
     ) -> bool:
         """
             Executes the given command.

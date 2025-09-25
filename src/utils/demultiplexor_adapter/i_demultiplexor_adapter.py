@@ -21,12 +21,12 @@ class IDemultiplexorAdapter(Protocol):
             This should handle all aspects of the demultiplexing process, \
             including configuration, command execution, and error handling.
         """
+        raise NotImplementedError
 
     def extract_barcodes(
         self,
         r1_path: PathLike[AnyStr],
-        r2_path: Optional[PathLike[AnyStr]]=None
-    ) -> PathLike[AnyStr]:
+        r2_path: Optional[PathLike[AnyStr]]=None) -> PathLike[AnyStr]:
         """
             Extract barcode subsequences from input sequence file(s).
 
@@ -52,3 +52,4 @@ class IDemultiplexorAdapter(Protocol):
                 Various exceptions depending on file processing errors \
                     (not explicitly documented here).
         """
+        raise NotImplementedError

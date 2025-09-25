@@ -20,7 +20,6 @@
 
 # region Imports
 import os
-import re
 
 from typing import Union
 
@@ -71,8 +70,7 @@ class Analyzer(metaclass=SingletonMeta):
     def __init__(
         self,
         configurator: Configurator,
-        cmd_caller: Union[CommandExecutor, callable]=None
-        ):
+        cmd_caller: Union[CommandExecutor, callable]=None):
         self.configurator = configurator
 
         if isinstance(cmd_caller, CommandExecutor):
@@ -87,8 +85,7 @@ class Analyzer(metaclass=SingletonMeta):
 
     def prepare_data(
         self,
-        sample: SampleDataContainer
-        ) -> SampleDataContainer:
+        sample: SampleDataContainer) -> SampleDataContainer:
         """
             Prepares raw sequencing data for analysis, including alignment,
             read grouping, and recalibration.
@@ -102,6 +99,7 @@ class Analyzer(metaclass=SingletonMeta):
                     Updated sample with paths to intermediate and final files.
         """
         bwa2mem = SequenceAligner(self.configurator)
+        # TODO: picard BuildBamIndex          Generates a BAM index ".bai" file.  
         picard_group_reads = BamGrouper(self.configurator)
 
         ptrimmer = PrimerCutter.create_primer_cutter(
@@ -143,8 +141,7 @@ class Analyzer(metaclass=SingletonMeta):
 
     def analyze(
         self,
-        sample: SampleDataContainer
-        ) -> SampleDataContainer:
+        sample: SampleDataContainer) -> SampleDataContainer:
         """
             Performs variant calling, annotation, and format conversion.
 
@@ -198,13 +195,12 @@ class Analyzer(metaclass=SingletonMeta):
         table_annovar_cmd = ' '.join([
             self.configurator.config['table_annovar'],
             '--buildver', 'hg19',
-            '--operation', ','.join([
-                'g', 'f', 'f']),
+            '--operation', ','.join(['g', 'f', 'f']),
             '--protocol', ','.join([
                 'refGene', 'clinvar_20250721', 'ALL.sites.2015_08']),
             '--outfile', os.path.join(
                 sample.processing_path, sample.sid+".ann"),
-            '--remove',
+            #'--remove',
             '--otherinfo',
             outpath,
             self.configurator.config['annovar_humandb'],

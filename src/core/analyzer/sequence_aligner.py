@@ -71,9 +71,9 @@ class SequenceAligner(LoggerMixin, IDataPreparator):
                 reference_source (PathLike[AnyStr]):
                     Path to the reference genome file to which reads
                     will be aligned.
-                output_path (PathLike[AnyStr]):
-                    Path where the alignment results,
-                    including CIGAR strings, will be saved.
+                executor (Union[CommandExecutor, callable]):
+                    The parameter is an external callable object or a
+                    special class to handling or/and wrapping system calls.
             Returns:
                 PathLike[AnyStr]:
                     A path to mapped reads file

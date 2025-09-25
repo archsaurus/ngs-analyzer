@@ -3,7 +3,6 @@
 
 # region Imports
 import os
-import re
 
 from src.configurator import Configurator
 from src.analyzer import Analyzer
@@ -26,8 +25,7 @@ def main():
     """
     configurator = Configurator(
         config_path=os.path.abspath(os.path.join(
-            os.path.curdir, 'src', 'conf', 'config.ini')
-            ))
+            os.path.curdir, 'src', 'conf', 'config.ini')))
 
     main_logger = configurator.logger
 
@@ -42,6 +40,7 @@ def main():
 
     sample_factory = SampleDataFactory(logger=main_logger)
     tm_config = configurator.parse_configuration(
+        base_config_filepath=configurator.args.configFilepath,
         target_section='TableManager')
 
     if 'dump-file' in tm_config:

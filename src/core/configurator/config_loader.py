@@ -45,14 +45,6 @@ class IConfigLoader(Protocol):
         """
             Loads configuration from a file.
 
-            Args:
-                base_config_filepath:
-                    Path to the configuration file.
-                    Defaults to 'src/conf/config.ini'.
-                target_section:
-                    Section in the config file to load.
-                    Defaults to 'Pathes'.
-
             Returns:
                 A dictionary containing the loaded configuration.
                 Returns an empty dictionary if the file doesn't exist
@@ -61,6 +53,7 @@ class IConfigLoader(Protocol):
             Raises:
                 FileNotFoundError: if loading fails.
         """
+        raise NotImplementedError
 
 class ConfigLoader(LoggerMixin, IConfigLoader):
     """Loads configuration data from an INI file, with logging support."""
@@ -69,10 +62,9 @@ class ConfigLoader(LoggerMixin, IConfigLoader):
 
     def load(
         self,
-        base_config_filepath: PathLike[AnyStr]=os.path.join(
-            os.path.curdir, 'src', 'conf', 'config.ini'),
-        target_section: AnyStr='Pathes'
-    ) -> dict:
+        base_config_filepath: Optional[PathLike[AnyStr]]=os.path.abspath(
+            os.path.join('src', 'conf', 'config.ini')),
+        target_section: AnyStr='Pathes') -> dict:
         """
             Loads configuration from the specified INI file and section.
 
@@ -107,6 +99,7 @@ class ConfigLoader(LoggerMixin, IConfigLoader):
                     "See the project config documentation")
 
             return config_dict
+
         self.logger.critical(
             "Can't find configuration file under path '%s'",
             base_config_filepath)

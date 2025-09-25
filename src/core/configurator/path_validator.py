@@ -47,7 +47,7 @@ class IPathValidator(Protocol):
             Verifies the existence of the specified path.
 
             Args:
-                path (PathLike[AnyStr]):
+                src (PathLike[AnyStr]):
                     The file or directory path to verify.
                 create_if_missing (bool, optional):
                     If True, creates the path if it does not exist.
