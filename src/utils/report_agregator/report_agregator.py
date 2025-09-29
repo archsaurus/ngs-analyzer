@@ -271,24 +271,3 @@ def agregate_report(sample: SampleDataContainer=None):
 
 if __name__ == '__main__':
     cfg = Configurator()
-
-    from src.core.sample_data_container import SampleDataContainer
-
-    agregate_report(
-        sample=SampleDataContainer(
-            r1_source='rerun4/russco_4555_leu/russco_4555_leu_S36_L001_R1_001.trimmed.fastq.gz',
-            r2_source='rerun4/russco_4555_leu/russco_4555_leu_S36_L001_R1_002.trimmed.fastq.gz',
-            sid='russco_4555_leu',
-            target_regions=[
-                reg_tuple_generator(cfg, 'chr03-interval'),
-                reg_tuple_generator(cfg, 'chr06-interval'),
-                reg_tuple_generator(cfg, 'chr10-interval'),
-                reg_tuple_generator(cfg, 'chr13-interval'),
-                reg_tuple_generator(cfg, 'chr14-interval'),
-                reg_tuple_generator(cfg, 'chr17-interval'),
-                reg_tuple_generator(cfg, 'chr19-interval')],
-            processing_path='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu',
-            processing_logpath='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/log',
-            bam_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/russco_4555_leu.sorted.read_groups.recalibrated.bam',
-            vcf_filepath='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/russco_4555_leu.sorted.read_groups.recalibrated.ann.vcf',
-            report_path='/home/archsaurus/Documents/code/BRCA-analyzer/ngs-analyzer/rerun4/russco_4555_leu/report'))
