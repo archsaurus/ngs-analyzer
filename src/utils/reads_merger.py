@@ -1,35 +1,32 @@
 #!/bin/python
-"""
-    FAST(A|Q) Reads Merger
+r"""FAST(A|Q) Reads Merger
 
-    This script consolidates paired-end FASTQ file
-    from a specified directory by merging multiple files per sample
-    if necessary, or copying single files directly.
-    It identifies samples based on a provided pattern,
-    and processes R1 and R2 read files separately.
+This script consolidates paired-end FASTQ file
+from a specified directory by merging multiple files per sample
+if necessary, or copying single files directly.
+It identifies samples based on a provided pattern,
+and processes R1 and R2 read files separately.
 
-    Usage:
-        python script_name.py -i <input> -o <output> \
-            -id <id_regex> -r1 <r1_pattern> -r2 <r2_pattern>
+Usage:
+    python script_name.py -i <input> -o <output> \
+        -id <id_regex> -r1 <r1_pattern> -r2 <r2_pattern>
 
-    Options:
-        --path        Input directory containing FASTQ files.
-        --outpath     Output directory for merged FASTQ files.
-        --id_pattern  Regex pattern to extract sample IDs from filenames.
-        --r1_pattern  Regex pattern for R1 read files.
-        --r2_pattern  Regex pattern for R2 read files.
+Options:
+    --path        Input directory containing FASTQ files.
+    --outpath     Output directory for merged FASTQ files.
+    --id_pattern  Regex pattern to extract sample IDs from filenames.
+    --r1_pattern  Regex pattern for R1 read files.
+    --r2_pattern  Regex pattern for R2 read files.
 
-    Example:
-        python3.13 read_merger.py \
-        --path <workdir>/input_dir \
-        --outpath <workdir>/output_dir \
-        --id_pattern '<sample_base>_[\d]{4}_([^_]*){1,2}' \
-        --r1_pattern '.*R1.*\.fastq\.gz' \
-        --r2_pattern '.*R2.*\.fastq\.gz'
-
+Example:
+    python3.13 read_merger.py \
+    --path <workdir>/input_dir \
+    --outpath <workdir>/output_dir \
+    --id_pattern '<sample_base>_[\d]{4}_([^_]*){1,2}' \
+    --r1_pattern '.*R1.*\.fastq\.gz' \
+    --r2_pattern '.*R2.*\.fastq\.gz'
 """
 
-# region Imports
 import os
 import sys
 import re
@@ -38,20 +35,20 @@ from os import PathLike
 from typing import AnyStr
 
 import argparse
-# endregion
+
 
 def parse_args() -> argparse.Namespace:
-    """
-        Parses command-line arguments for input and output paths,
-        and patterns.
+    """Parses command-line arguments for input and output paths,
+    and patterns.
 
-        Returns:
-            args:
-                Parsed arguments namespace.
+    Returns:
+        args:
+            Parsed arguments namespace.
     """
     parser = argparse.ArgumentParser(
         prog="FAST(A|Q) Reads Merger",
-        description="Merges paired-end FASTQ files from a specified directory.")
+        description="Merges paired-end FASTQ files "
+                    "from a specified directory.")
 
     arguments = [
         {'name': ('--path', '-i'), 'kwargs': {
@@ -85,13 +82,17 @@ def parse_args() -> argparse.Namespace:
         parser.add_argument(*arg['name'], **arg['kwargs'])
     return parser.parse_args()
 
+
 def merge_fastq(
     path: PathLike[AnyStr],
     outpath: PathLike[AnyStr],
-    id_pattern: str=r"(?:russco_[\d]{4}_(?:ffpe_cr|leu))",
-    r1_pattern: str=r"[^\s]*R1[^\s]*(?:\.fa(?:st(?:a|q)))(?:\.(?:gz|bz|bgz))?",
-    r2_pattern: str=r"[^\s]*R2[^\s]*(?:\.fa(?:st(?:a|q)))(?:\.(?:gz|bz|bgz))?"
-    ):
+    id_pattern:
+        str = r"(?:russco_[\d]{4}_(?:ffpe_cr|leu))",
+    r1_pattern:
+        str = r"[^\s]*R1[^\s]*(?:\.fa(?:st(?:a|q)))(?:\.(?:gz|bz|bgz))?",
+    r2_pattern:
+        str = r"[^\s]*R2[^\s]*(?:\.fa(?:st(?:a|q)))(?:\.(?:gz|bz|bgz))?"
+):
     """Merges R1 and R2 FASTQ files per sample based on provided patterns."""
     error_msg = "Wrong regexp pattern was given or there are no any " \
         "coincided with the pattern files in input directory.\n" \
@@ -111,10 +112,10 @@ def merge_fastq(
 
             for cursor in [r1_cursor, r2_cursor]:
                 files = [f"{sample}{file}"
-                    for file in cursor.findall(dir_content)]
+                         for file in cursor.findall(dir_content)]
                 if len(files) > 1:
                     cat_list = [f"{sample}_{file[file.index('R'):]}"
-                        for file in files]
+                                for file in files]
 
                     cmd = ' '.join([
                         'cat', ' '.join([os.path.join(
@@ -122,7 +123,8 @@ def merge_fastq(
                         '>',
                         os.path.abspath(os.path.join(
                             outpath,
-                            f"{sample}_{'R1' if 'R1' in cat_list[0] else 'R2'}.fastq.gz"))
+                            f"{sample}_{'R1' if 'R1' in cat_list[0] else 'R2'}"
+                            ".fastq.gz"))
                         ])
                     os.system(cmd)
 
@@ -134,6 +136,7 @@ def merge_fastq(
     except re.PatternError:
         print(error_msg)
         sys.exit(os.EX_USAGE)
+
 
 if __name__ == '__main__':
     args = parse_args()

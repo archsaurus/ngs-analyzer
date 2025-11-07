@@ -1,24 +1,23 @@
-"""
-    This module defines the ExcelTableManager class,
-    which manages table data  imported from Excel files,
-    processes and merges the data, and provides methods
-    to save the processed data to CSV files or generate
-    sample sheets.
-    
-    It extends the LoggerMixin for logging capabilities
-    and implements the ITableManager interface.
+"""This module defines the ExcelTableManager class,
+which manages table data  imported from Excel files,
+processes and merges the data, and provides methods
+to save the processed data to CSV files or generate
+sample sheets.
 
-    Functions include:
-    - aggregate_data:
-        Reads multiple Excel files, merges data,
-        and returns a DataFrame.
-    - save_dump:
-        Saves the DataFrame to a CSV file with optional overwrite.
-    - create_sample_sheet:
-        Generates a sample sheet file based on the data.
+It extends the LoggerMixin for logging capabilities
+and implements the ITableManager interface.
 
-    Note: Ensure all dependencies such as pandas,
-    and project-specific modules are properly imported and available.
+Functions include:
+- aggregate_data:
+    Reads multiple Excel files, merges data,
+    and returns a DataFrame.
+- save_dump:
+    Saves the DataFrame to a CSV file with optional overwrite.
+- create_sample_sheet:
+    Generates a sample sheet file based on the data.
+
+Note: Ensure all dependencies such as pandas,
+and project-specific modules are properly imported and available.
 """
 
 # region Imports
@@ -42,13 +41,14 @@ from src.utils.table_manager.sample_sheet_container import Section
 from src.utils.table_manager.sample_sheet_builder import SampleSheetBuilder
 # endregion
 
+
 class ExcelTableManager(LoggerMixin, ITableManager):
+    """Manages Excel table data for sample sheets,
+    including merging data from multiple Excel files,
+    saving data to CSV, and creating sample sheets.
     """
-        Manages Excel table data for sample sheets,
-        including merging data from multiple Excel files,
-        saving data to CSV, and creating sample sheets.
-    """
-    def __init__(self, logger: logging.Logger=None):
+
+    def __init__(self, logger: logging.Logger = None):
         super().__init__()
         self.set_logger(logger)
 
@@ -80,22 +80,21 @@ class ExcelTableManager(LoggerMixin, ITableManager):
         adapters_filepath: PathLike[AnyStr],
         indexes_filepath: PathLike[AnyStr],
         samples_filepath: PathLike[AnyStr]
-        ) -> Optional[pandas.DataFrame]:
-        """
-            Merges data from three Excel files into a single DataFrame.
+    ) -> Optional[pandas.DataFrame]:
+        """Merges data from three Excel files into a single DataFrame.
 
-            Args:
-                adapters_filepath (PathLike[AnyStr]):
-                    Path to the adapters Excel file.
-                indexes_filepath (PathLike[AnyStr]):
-                    Path to the indexes Excel file.
-                samples_filepath (PathLike[AnyStr]):
-                    Path to the samples Excel file.
+        Args:
+            adapters_filepath (PathLike[AnyStr]):
+                Path to the adapters Excel file.
+            indexes_filepath (PathLike[AnyStr]):
+                Path to the indexes Excel file.
+            samples_filepath (PathLike[AnyStr]):
+                Path to the samples Excel file.
 
-            Returns:
-                pandas.DataFrame:
-                    The merged DataFrame, or None if errors occur.
-                Prints informative error messages if a logger is not provided.
+        Returns:
+            pandas.DataFrame:
+                The merged DataFrame, or None if errors occur.
+            Prints informative error messages if a logger is not provided.
         """
         try:
             adapters_book = pandas.read_excel(adapters_filepath)
@@ -104,18 +103,18 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
         except (ParserError, EmptyDataError, DataError) as e:
             self.logger.critical(
-                "A fatal error '%s' occured at '%s'",
+                "A fatal error '%s' occurred at '%s'",
                 repr(e), e.__traceback__.tb_frame)
 
             return None
 
         table = pandas.DataFrame({
             'sample_id': [],
-            'lib_type':  [], 'index_type':[],
-            'i7_mark':   [], 'i5_mark':   [],
-            'p7':        [], 'p5':        [],
-            'i7':        [], 'i7_compl':  [],
-            'i5':        [], 'i5_compl':  []
+            'lib_type':  [], 'index_type': [],
+            'i7_mark':   [], 'i5_mark':    [],
+            'p7':        [], 'p5':         [],
+            'i7':        [], 'i7_compl':   [],
+            'i5':        [], 'i5_compl':   []
             }, dtype=str)
 
         table['i7_mark'] = table['i7_mark'].astype(int)
@@ -134,9 +133,11 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                     'i5_mark': [i5_mark]
                 })], ignore_index=True)
 
-         # Add i7, i7_compl, i5 and i5_compl to table
+        # Add i7, i7_compl, i5 and i5_compl to table
         for index_row in indexes_book.itertuples():
-            index_type = 'BridgeV1' if 'Bridge' in str(index_row[1]) else index_row[1]
+            index_type = 'BridgeV1' if 'Bridge' in str(
+                index_row[1]
+            ) else index_row[1]
 
             sid, index_norm, index_compl = index_row[2:5]
             sid_str = str(sid)[-3:]
@@ -167,7 +168,8 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
                 except re.PatternError as e:
                     print(f"Raise '{e}' with data "
-                    f"'{e.__traceback__.tb_frame.f_trace}'")
+                          f"'{e.__traceback__.tb_frame.f_trace}'")
+
                     return None
                 # endregion
 
@@ -177,10 +179,10 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
                     mask7 = (
                         table['i7_mark'].astype(str) == str(idx_marks[0])) & \
-                            mask_idx_type
+                        mask_idx_type
                     mask5 = (
                         table['i5_mark'].astype(str) == str(idx_marks[0])) & \
-                            mask_idx_type
+                        mask_idx_type
 
                     table.loc[mask7, 'p7'] = str(adapter_seq).upper()
                     table.loc[mask5, 'p5'] = str(adapter_seq).upper()
@@ -190,23 +192,22 @@ class ExcelTableManager(LoggerMixin, ITableManager):
         self,
         path: PathLike[AnyStr],
         data: pandas.DataFrame
-        ) -> bool:
-        """
-            Saves data from a Pandas DataFrame to a CSV file.
+    ) -> bool:
+        """Saves data from a Pandas DataFrame to a CSV file.
 
-            Args:
-                path:
-                    The path to the output CSV file.
-                data:
-                    The Pandas DataFrame containing the data to save.
+        Args:
+            path:
+                The path to the output CSV file.
+            data:
+                The Pandas DataFrame containing the data to save.
 
-            Returns:
-                True if the data was successfully saved, False otherwise.
-                Raises an exception if the file cannot be created or written to.
+        Returns:
+            True if the data was successfully saved, False otherwise.
+            Raises an exception if the file cannot be created or written to.
 
-            Raises:
-                TypeError:
-                    If input data is not a Pandas DataFrame.
+        Raises:
+            TypeError:
+                If input data is not a Pandas DataFrame.
         """
         if not isinstance(data, pandas.DataFrame):
             raise TypeError("Input data must be a Pandas DataFrame.")
@@ -218,11 +219,11 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                 print(header, file=sample_sheet_fd)
 
                 for i in data.itertuples():
-                    print(';'.join((map(str,i[1:]))), file=sample_sheet_fd)
+                    print(';'.join((map(str, i[1:]))), file=sample_sheet_fd)
 
             return True
 
-        except FileExistsError as _:
+        except FileExistsError:
             self.logger.warning("File '%s' already exists.", path)
             while True:
                 response = input(
@@ -238,7 +239,7 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                     print(header, file=sample_sheet_fd)
                     for i in data.itertuples():
                         print(';'.join(
-                            (map(str,i[1:]))), file=sample_sheet_fd)
+                            (map(str, i[1:]))), file=sample_sheet_fd)
 
                 return True
             return False
@@ -246,20 +247,20 @@ class ExcelTableManager(LoggerMixin, ITableManager):
     def create_sample_sheet(
         self,
         path: PathLike[AnyStr],
-        data: pandas.DataFrame) -> bool:
-        """
-            Creates a sample sheet CSV file based on provided data.
+        data: pandas.DataFrame
+    ) -> bool:
+        """Creates a sample sheet CSV file based on provided data.
 
-            Args:
-                path (PathLike[AnyStr]):
-                    Path to save the sample sheet.
-                data (pandas.DataFrame):
-                    DataFrame with sample data.
+        Args:
+            path (PathLike[AnyStr]):
+                Path to save the sample sheet.
+            data (pandas.DataFrame):
+                DataFrame with sample data.
 
-            Returns:
-                bool:
-                    True if the sample sheet was successfully created,
-                    raises exceptions otherwise.
+        Returns:
+            bool:
+                True if the sample sheet was successfully created,
+                raises exceptions otherwise.
         """
 
         try:
@@ -282,7 +283,7 @@ class ExcelTableManager(LoggerMixin, ITableManager):
             #    row[10] - i5 forward,    row[11] - i5 compl
 
             # Writing [Data] Section with format:
-            #       Sample_ID   Sample_Name Index   I7_Index_ID index2  I5_Index_ID
+            #   Sample_ID   Sample_Name Index   I7_Index_ID index2  I5_Index_ID
             # This header is required for [Data] section.
             # For more details see documentation provided by Illumina
 
@@ -319,6 +320,6 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
         except Exception as e:
             self.logger.critical(
-                "An error '%s' occured at '%s'",
+                "An error '%s' occurred at '%s'",
                 repr(e), e.__traceback__.tb_frame.f_trace)
             raise e

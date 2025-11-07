@@ -1,5 +1,4 @@
-"""
-This module contains the BQSRPerformer class, which manages
+"""This module contains the BQSRPerformer class, which manages
 Base Quality Score Recalibration (BQSR) using GATK's BaseRecalibrator
 and ApplyBQSR tools.
 
@@ -44,29 +43,29 @@ from src.core.sample_data_container import SampleDataContainer
 from src.core.analyzer.i_data_preparator import IDataPreparator
 # endregion
 
+
 class BQSRPerformer(LoggerMixin, IDataPreparator):
-    """
-        Handles Base Quality Score Recalibration (BQSR) using GATK's tools.
+    """Handles Base Quality Score Recalibration (BQSR) using GATK's tools.
 
-        Performs two main steps:
-            1. Generates a recalibration table with BaseRecalibrator.
-            2. Applies the recalibration with ApplyBQSR
-            to produce a corrected BAM file.
+    Performs two main steps:
+        1. Generates a recalibration table with BaseRecalibrator.
+        2. Applies the recalibration with ApplyBQSR
+        to produce a corrected BAM file.
 
-        This process improves the accuracy of variant calling
-        by adjusting quality scores based on known sites and covariates.
+    This process improves the accuracy of variant calling
+    by adjusting quality scores based on known sites and covariates.
     """
+
     def __init__(
         self,
         configurator: Configurator
-        ):
-        """
-            Initializes the BQSRPerformer
-            with configuration and target regions.
+    ):
+        """Initializes the BQSRPerformer
+        with configuration and target regions.
 
-            Args:
-                configurator (Configurator):
-                    Contains paths and parameters.
+        Args:
+            configurator (Configurator):
+                Contains paths and parameters.
         """
         super().__init__(logger=configurator.logger)
         self.configurator = configurator
@@ -75,23 +74,22 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
         self,
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
-        ) -> PathLike[AnyStr]:
-        """
-            Executes BQSR using GATK's BaseRecalibrator and ApplyBQSR.
+    ) -> PathLike[AnyStr]:
+        """Executes BQSR using GATK's BaseRecalibrator and ApplyBQSR.
 
-            Args:
-                sample (SampleDataContainer):
-                    The sample data to process.
-                executor (Union[CommandExecutor, callable]):
-                    Function or object to run commands.
+        Args:
+            sample (SampleDataContainer):
+                The sample data to process.
+            executor (Union[CommandExecutor, callable]):
+                Function or object to run commands.
 
-            Returns:
-                PathLike[AnyStr]:
-                    Path to the recalibrated BAM file.
+        Returns:
+            PathLike[AnyStr]:
+                Path to the recalibrated BAM file.
 
-            Raises:
-                Propagates exceptions from command execution
-                or file operations.
+        Raises:
+            Propagates exceptions from command execution
+            or file operations.
         """
         base_recal_logpath = os.path.abspath(os.path.join(
             sample.processing_logpath,
@@ -110,7 +108,8 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             '--known-sites', self.configurator.config['annotation-database'],
             ' '.join(
                 [f"--intervals {interval}" for interval in
-                [sample.target_regions[i][0] for i in range(len(sample.target_regions))]]),
+                    [sample.target_regions[i][0] for i in range(
+                        len(sample.target_regions))]]),
             '2>', base_recal_logpath,
             '>>', base_recal_logpath])
 
@@ -160,9 +159,10 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             IOError,
             SystemError,
             FileNotFoundError,
-            PermissionError) as e:
+            PermissionError
+        ) as e:
             self.logger.critical(
-                "Error '%s' occured at line '%s' during BQSR",
+                "Error '%s' occurred at line '%s' during BQSR",
                 repr(e),
                 e.__traceback__.tb_frame.f_lineno)
 

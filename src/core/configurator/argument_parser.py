@@ -1,60 +1,61 @@
+"""This module provides command-line argument parsing functionality
+for a sequencing data processing script.
+
+It defines:
+    - `IArgumentParser`:
+        An interface (via Protocol) specifying a `parse()` method
+        that returns parsed arguments.
+    - `ArgumentParser`:
+        Implements `IArgumentParser` using Python's `argparse` module
+        to define and parse command-line arguments.
+
+Main features:
+    - Supports arguments for log file, output directory,
+    report language, number of threads,
+    and flags for demultiplexor and table manager.
+    - Provides a clear and extendable way to
+    handle command-line inputs for the script.
+
+Usage:
+    Create an instance of `ArgumentParser` and call its `parse()` method
+    to get an `argparse.Namespace` object with all parsed arguments.
 """
-    This module provides command-line argument parsing functionality
-    for a sequencing data processing script.
 
-    It defines:
-        - `IArgumentParser`:
-            An interface (via Protocol) specifying a `parse()` method
-            that returns parsed arguments.
-        - `ArgumentParser`:
-            Implements `IArgumentParser` using Python's `argparse` module
-            to define and parse command-line arguments.
-
-    Main features:
-        - Supports arguments for log file, output directory,
-        report language, number of threads,
-        and flags for demultiplexor and table manager.
-        - Provides a clear and extendable way to
-        handle command-line inputs for the script.
-
-    Usage:
-        Create an instance of `ArgumentParser` and call its `parse()` method
-        to get an `argparse.Namespace` object with all parsed arguments.
-"""
 import os
 import argparse
 
 from typing import Protocol
 
+
 class IArgumentParser(Protocol):
-    """
-        Interface for argument parser classes.
-        Defines a method parse() that returns parsed command-line arguments.
+    """Interface for argument parser classes.
+    Defines a method parse() that returns parsed command-line arguments.
     """
 
     @staticmethod
     def parse() -> argparse.Namespace:
+        """Parses command-line arguments
+        and returns a Namespace object containing the arguments.
         """
-            Parses command-line arguments
-            and returns a Namespace object containing the arguments.
-        """
+
 
 class ArgumentParser(IArgumentParser):
-    """
-        Implements argument parsing using argparse
-        for sequencing data processing.
+    """Implements argument parsing using argparse
+    for sequencing data processing.
 
-        Defines command-line arguments such as log file,
-        output directory, report language, etc.
+    Defines command-line arguments such as log file,
+    output directory, report language, etc.
     """
+
     @staticmethod
     def parse() -> argparse.Namespace:
-        """
-            Set a list of command line arguments and return
-            a compiled object stored these arguments attributes.
+        """Set a list of command line arguments and return
+        a compiled object stored these arguments attributes.
         """
         parser = argparse.ArgumentParser(
-            description='This script do all processing of BRCA sequencing data')
+            description="This script does all processing "
+                        "of BRCA sequencing data")
+
         arguments = [
             {'name': ('--log-file', '-l'), 'kwargs': {
                 'dest': 'logFilename',
@@ -69,7 +70,7 @@ class ArgumentParser(IArgumentParser):
                 'type': str,
                 'required': True,
                 'help': 'Directory for output'}},
-            #{'name': ('--report-language', '-L'), 'kwargs': {
+            # {'name': ('--report-language', '-L'), 'kwargs': {
             #    'dest': 'lang',
             #    'type': str,
             #    'default': 'english',
@@ -88,8 +89,9 @@ class ArgumentParser(IArgumentParser):
                 'default': os.path.abspath(os.path.join(
                     os.curdir, 'src', 'conf', 'config.ini')),
                 'help': 'This is a path to a single configuration file '
-                'for a certain run or a list of pathes to configuration files, '
-                'that maps to a list of library types using with the current run.'}},
+                'for a certain run or a list of pathes '
+                'to configuration files, that maps to a list '
+                'of library types using with the current run.'}},
             {'name': ('--demultiplexor', '-de'), 'kwargs': {
                 'dest': 'demultiplexor_flag',
                 'type': bool,

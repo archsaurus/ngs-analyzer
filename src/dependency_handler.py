@@ -1,22 +1,21 @@
-"""
-    This module provides the DependencyHandler class, which is responsible
-    for managing dependencies, checking the existence of reference files
-    or archives, extracting archives, verifying module installation,
-    attempting to install missing modules via pip,
-    and verifying or creating paths.
+"""This module provides the DependencyHandler class, which is responsible
+for managing dependencies, checking the existence of reference files
+or archives, extracting archives, verifying module installation,
+attempting to install missing modules via pip,
+and verifying or creating paths.
 
-    Classes:
-        - DependencyHandler:
-            Singleton class to handle dependencies and reference files.
+Classes:
+    - DependencyHandler:
+        Singleton class to handle dependencies and reference files.
 
-    Functions:
-        - Various static methods for module loading, installation
-        path verification, and file extension resolution.
+Functions:
+    - Various static methods for module loading, installation
+    path verification, and file extension resolution.
 
-    Usage:
-        Instantiate the DependencyHandler singleton to
-        perform dependency management tasks, such as checking reference files,
-        installing modules, and verifying paths.
+Usage:
+    Instantiate the DependencyHandler singleton to
+    perform dependency management tasks, such as checking reference files,
+    installing modules, and verifying paths.
 """
 
 # region Imports
@@ -34,33 +33,33 @@ from src.core.base import extract_archive
 from src.core.base import touch
 # endregion
 
-class DependencyHandler(metaclass=SingletonMeta):
-    """
-        Singleton class to manage dependencies and reference files.
 
-        Provides methods to set loggers, check and resolve
-        reference files (including archives), verify and install modules,
-        and verify or create filesystem paths.
+class DependencyHandler(metaclass=SingletonMeta):
+    """Singleton class to manage dependencies and reference files.
+
+    Provides methods to set loggers, check and resolve
+    reference files (including archives), verify and install modules,
+    and verify or create filesystem paths.
     """
-    def __init__(self, logger: logging.Logger=None):
+
+    def __init__(self, logger: logging.Logger = None):
         self.logger = logger or logging.getLogger(
             name=self.__class__.__name__)
 
     def set_logger(
         self,
         new_logger: logging.Logger
-        ) -> None:
-        """
-            Sets a new logger for the handler, replacing the current one.
+    ) -> None:
+        """Sets a new logger for the handler, replacing the current one.
 
-            Args:
-                new_logger (logging.Logger):
-                    The new logger to set.
+        Args:
+            new_logger (logging.Logger):
+                The new logger to set.
 
-            Raises:
-                RuntimeError:
-                    If the current logger is not set
-                    or if the new logger is None.
+        Raises:
+            RuntimeError:
+                If the current logger is not set
+                or if the new logger is None.
         """
         if self.logger is None:
             raise RuntimeError(
@@ -78,10 +77,9 @@ class DependencyHandler(metaclass=SingletonMeta):
     def check_reference(
         self,
         ref_filepath: PathLike[AnyStr],
-        ref_dirpath: PathLike[AnyStr]=os.path.curdir
-        ) -> PathLike[AnyStr]:
-        """
-            Check that file or archive with reference sequence exists.
+        ref_dirpath: PathLike[AnyStr] = os.path.curdir
+    ) -> PathLike[AnyStr]:
+        """Check that file or archive with reference sequence exists.
             If there is only an archive, extract it to the current
             reference directory.
 
@@ -90,34 +88,33 @@ class DependencyHandler(metaclass=SingletonMeta):
         """
         def check_for_archive(
             ref_filepath: PathLike[AnyStr],
-            ) -> Optional[list[PathLike[AnyStr]]]:
-            """
-                Checks if the given file path points to an archive
-                file (e.g., ZIP, TAR, GZ).
+        ) -> Optional[list[PathLike[AnyStr]]]:
+            """Checks if the given file path points to an archive
+            file (e.g., ZIP, TAR, GZ).
 
-                If so, extracts its contents and returns a list
-                of absolute paths to the extracted files.
+            If so, extracts its contents and returns a list
+            of absolute paths to the extracted files.
 
-                The method performs the following:
-                    - Resolves the file path by checking
-                    for common archive extensions.
-                    - Logs the identified archive and initiates extraction.
-                    - Extracts archive contents and logs
-                    the list of extracted files.
-                    - Returns a list of absolute paths to the extracted files,
-                    or the original file path if no archive is found
-                    or an error occurs.
+            The method performs the following:
+                - Resolves the file path by checking
+                for common archive extensions.
+                - Logs the identified archive and initiates extraction.
+                - Extracts archive contents and logs
+                the list of extracted files.
+                - Returns a list of absolute paths to the extracted files,
+                or the original file path if no archive is found
+                or an error occurs.
 
-                Args:
-                    ref_filepath (PathLike[AnyStr]):
-                        The path to the file to check.
+            Args:
+                ref_filepath (PathLike[AnyStr]):
+                    The path to the file to check.
 
-                Returns:
-                    list[PathLike[AnyStr]]:
-                        List of absolute paths to the extracted files
-                        if extraction occurs successfully; otherwise,
-                        returns a list containing the absolute path
-                        of the original file.
+            Returns:
+                list[PathLike[AnyStr]]:
+                    List of absolute paths to the extracted files
+                    if extraction occurs successfully; otherwise,
+                    returns a list containing the absolute path
+                    of the original file.
             """
             try:
                 archive_path = self.resolve_file_path_by_extensions(
@@ -126,7 +123,8 @@ class DependencyHandler(metaclass=SingletonMeta):
                 )
 
                 self.logger.debug(
-                    "The file '%s' identified as an archive. Execute '%s' extraction",
+                    "The file '%s' identified as an archive. "
+                    "Execute '%s' extraction",
                     archive_path, archive_path)
 
                 archive_file_names = extract_archive(archive_path)
@@ -139,10 +137,10 @@ class DependencyHandler(metaclass=SingletonMeta):
                     "Path%s to extracted fil%s: ",
                     ending, 'e'+ending[-1])
                 self.logger.debug(
-                    f"{archive_file_names[0] if files_count == 1 else \
+                    f"{archive_file_names[0] if files_count == 1 else
                         archive_file_names[0]+', '.join(
-                            archive_file_names[1:-2])+archive_file_names[-1] \
-                    }")
+                            archive_file_names[1:-2])+archive_file_names[-1]}"
+                )
 
                 return list(map(
                     os.path.abspath, archive_file_names))
@@ -152,17 +150,16 @@ class DependencyHandler(metaclass=SingletonMeta):
 
         def select_reference_option(
             path_list: list[PathLike[AnyStr]],
-            ) -> PathLike[AnyStr]:
-            """
-                Prompts the user to select a reference file from a list.
+        ) -> PathLike[AnyStr]:
+            """Prompts the user to select a reference file from a list.
 
-                Args:
-                    path_list (list[PathLike[AnyStr]]):
-                        List of candidate files.
+            Args:
+                path_list (list[PathLike[AnyStr]]):
+                    List of candidate files.
 
-                Returns:
-                    PathLike[AnyStr]:
-                        The selected reference file path.
+            Returns:
+                PathLike[AnyStr]:
+                    The selected reference file path.
             """
             self.logger.info(
                 "There were some files in the archive. "
@@ -242,35 +239,33 @@ class DependencyHandler(metaclass=SingletonMeta):
 
     @staticmethod
     def is_module_loaded(module_name: AnyStr) -> bool:
-        r"""
-            Checks if a module is loaded in the current environment.
+        """Checks if a module is loaded in the current environment.
 
-            Args:
-                module_name (str):
-                    Name of the module to check.
+        Args:
+            module_name (str):
+                Name of the module to check.
 
-            Returns:
-                bool:
-                    True if the module is loaded, False otherwise.
+        Returns:
+            bool:
+                True if the module is loaded, False otherwise.
         """
         return bool(find_spec(module_name))
 
     @staticmethod
     def try_to_install_module(
         module_name: AnyStr,
-        logger: Optional[logging.Logger]=None
-        ) -> bool:
-        """
-            Attempts to install a module via pip.
+        logger: Optional[logging.Logger] = None
+    ) -> bool:
+        """Attempts to install a module via pip.
 
-            Args:
-                module_name (str):
-                    Name of the module to install.
-                logger (logging.Logger):
-                    A logger for the function call.
-            Returns:
-                bool:
-                    True if installation succeeded, False otherwise.
+        Args:
+            module_name (str):
+                Name of the module to install.
+            logger (logging.Logger):
+                A logger for the function call.
+        Returns:
+            bool:
+                True if installation succeeded, False otherwise.
         """
         if not logger:
             logger = logging.getLogger(__name__)
@@ -289,7 +284,7 @@ class DependencyHandler(metaclass=SingletonMeta):
                 return False
             except (OSError, SystemError, SystemExit) as e:
                 logger.critical(
-                    "A critical error '%s' occured at '%s'",
+                    "A critical error '%s' occurred at '%s'",
                     repr(e), e.__traceback__.tb_frame)
                 raise e
 
@@ -299,26 +294,26 @@ class DependencyHandler(metaclass=SingletonMeta):
     @staticmethod
     def fetch_dependency(
         module_name: AnyStr,
-        logger: Optional[logging.Logger]=None
-        ) -> None:
-        """
-            Attempts to fetch a dependency module from pip,
-            prompting the user if needed.
+        logger: Optional[logging.Logger] = None
+    ) -> None:
+        """Attempts to fetch a dependency module from pip,
+        prompting the user if needed.
 
-            Args:
-                module_name (str):
-                    Name of the module to fetch.
-                logger (logging.Logger):
-                    A logger for the function call.
-            Exits:
-                - Exits with code os.EX_SOFTWARE if installation fails.
-                - Exits with code os.EX_OK if user chooses not to install.
-                - Exits with code os.EX_USAGE if command is unrecognized.
+        Args:
+            module_name (str):
+                Name of the module to fetch.
+            logger (logging.Logger):
+                A logger for the function call.
+        Exits:
+            - Exits with code os.EX_SOFTWARE if installation fails.
+            - Exits with code os.EX_OK if user chooses not to install.
+            - Exits with code os.EX_USAGE if command is unrecognized.
         """
         if not logger:
             logger = logging.getLogger(__name__)
         logger.warning(
-            "Can't import '%s' module. Is it installed with current interpreter?",
+            "Can't import '%s' module."
+            " Is it installed with current interpreter?",
             module_name)
 
         ans = input(
@@ -347,24 +342,23 @@ class DependencyHandler(metaclass=SingletonMeta):
     @staticmethod
     def verify_path(
         src: str,
-        logger: Optional[logging.Logger]=None
-        ) -> bool:
-        """
-            Checks the existence of the file
-            or directory at the given path src.
+        logger: Optional[logging.Logger] = None
+    ) -> bool:
+        """Checks the existence of the file
+        or directory at the given path src.
 
-            If the path does not exist,
-            creates the necessary directories and the file.
+        If the path does not exist,
+        creates the necessary directories and the file.
 
-            Args:
-                src (str):
-                    The path to the file or directory to check or create.
-                logger (logging.Logger):
-                    A logger for the function call.
-            Returns:
-                bool:
-                    True if the path exists or was successfully created,
-                    otherwise False.
+        Args:
+            src (str):
+                The path to the file or directory to check or create.
+            logger (logging.Logger):
+                A logger for the function call.
+        Returns:
+            bool:
+                True if the path exists or was successfully created,
+                otherwise False.
         """
         if not logger:
             logger = logging.getLogger(__name__)
@@ -376,14 +370,14 @@ class DependencyHandler(metaclass=SingletonMeta):
                     os.makedirs(src_dirname, exist_ok=True)
                 except (IOError, SystemError, OSError) as e:
                     logger.critical(
-                        "A fatal error '%s' occured at '%s'",
+                        "A fatal error '%s' occurred at '%s'",
                         repr(e), e.__traceback__.tb_frame)
                     return False
             try:
                 touch(src)
             except (FileNotFoundError, IOError, SyntaxError) as e:
                 logger.critical(
-                    "A fatal error '%s' occured at '%s'",
+                    "A fatal error '%s' occurred at '%s'",
                     repr(e), e.__traceback__.tb_frame)
                 return False
 
@@ -393,30 +387,32 @@ class DependencyHandler(metaclass=SingletonMeta):
     def resolve_file_path_by_extensions(
         base_name: PathLike[AnyStr],
         extension_list: list[str]
-        ) -> PathLike[AnyStr]:
+    ) -> PathLike[AnyStr]:
+        """Searches for the first existing file that matches
+            the base name with any of the provided extensions.
+
+        Args:
+            base_name (PathLike[AnyStr]):
+                The base file path without extension.
+            extension_list (list[str]):
+                A list of file extensions to check
+                    (including the dot, e.g., '.txt').
+
+        Returns:
+            PathLike[AnyStr]:
+                The full path to the first existing file
+                    that matches the base name with one of the extensions.
+
+        Raises:
+            FileNotFoundError:
+                If no file matching the base name
+                    with any of the provided extensions is found.
         """
-            Searches for the first existing file that matches
-                the base name with any of the provided extensions.
-
-            Args:
-                base_name (PathLike[AnyStr]):
-                    The base file path without extension.
-                extension_list (list[str]):
-                    A list of file extensions to check
-                        (including the dot, e.g., '.txt').
-
-            Returns:
-                PathLike[AnyStr]:
-                    The full path to the first existing file
-                        that matches the base name with one of the extensions.
-
-            Raises:
-                FileNotFoundError:
-                    If no file matching the base name
-                        with any of the provided extensions is found.
-        """
-        for path in [os.path.abspath(os.path.join(
-            base_name + ext)) for ext in extension_list]:
+        for path in [
+            os.path.abspath(os.path.join(base_name + ext))
+            for ext in extension_list
+        ]:
             if os.path.exists(path):
                 return path
+
         raise FileNotFoundError()

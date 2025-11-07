@@ -1,15 +1,14 @@
-"""
-    This module defines the BclToFastqAdapter class, \
-    which is a demultiplexer adapter for converting BCL files to FASTQ \
-    format using the Illumina bcl2fastq tool.
-    
-    It inherits from LoggerMixin and IDemultiplexorAdapter, \
-    providing logging capabilities and adhering to the \
-        demultiplexer adapter interface.
+"""This module defines the BclToFastqAdapter class, \
+which is a demultiplexer adapter for converting BCL files to FASTQ \
+format using the Illumina bcl2fastq tool.
 
-    The adapter handles configuration validation, \
-    command construction, \
-    and execution of the bcl2fastq command.
+It inherits from LoggerMixin and IDemultiplexorAdapter, \
+providing logging capabilities and adhering to the \
+    demultiplexer adapter interface.
+
+The adapter handles configuration validation, \
+command construction, \
+and execution of the bcl2fastq command.
 """
 
 import os
@@ -25,33 +24,34 @@ from src.core.configurator.configuration_error import ConfigurationError
 
 from .i_demultiplexor_adapter import IDemultiplexorAdapter
 
+
 class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
-    """
-        Adapter class to convert BCL files to FASTQ \
-            format by Illumina bcl2fastq tool.
+    """Adapter class to convert BCL files to FASTQ \
+        format by Illumina bcl2fastq tool.
 
-        This class manages the construction and \
-            execution of a demultiplexing command
-        based on provided configuration parameters. \
-            It validates the configuration,
-        constructs command-line arguments accordingly, \
-            and executes the demultiplexing \
-        process via a specified command caller.
+    This class manages the construction and \
+        execution of a demultiplexing command
+    based on provided configuration parameters. \
+        It validates the configuration,
+    constructs command-line arguments accordingly, \
+        and executes the demultiplexing \
+    process via a specified command caller.
 
-        Attributes:
-            config (dict[str, str]): \
-                Configuration parameters used for demultiplexing.
-            cmd_caller (callable): \
-                Function used to execute system commands.
-            logger (logging.Logger): \
-                Logger instance for logging messages \
-                    (inherited from LoggerMixin).
+    Attributes:
+        config (dict[str, str]): \
+            Configuration parameters used for demultiplexing.
+        cmd_caller (callable): \
+            Function used to execute system commands.
+        logger (logging.Logger): \
+            Logger instance for logging messages \
+                (inherited from LoggerMixin).
     """
+
     def __init__(
         self,
         config: dict[str, str],
-        cmd_caller: Optional[callable]=os.system,
-        logger: logging.Logger=None
+        cmd_caller: Optional[callable] = os.system,
+        logger: logging.Logger = None
     ):
         super().__init__()
 
@@ -72,18 +72,17 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
 
     @staticmethod
     def _check_config(config: dict[str, str],) -> tuple[bool, str]:
-        """
-            Validates the provided configuration dictionary.
+        """Validates the provided configuration dictionary.
 
-            Args:
-                config (dict[str, str]): \
-                    The configuration dictionary to validate.
-            Returns: tuple[bool, str] contains
-                flag (bool): \
-                    True if the configuration is valid, False otherwise.
-                message (str): \
-                    A message indicating the validation result \
-                        or describing missing keys.
+        Args:
+            config (dict[str, str]): \
+                The configuration dictionary to validate.
+        Returns: tuple[bool, str] contains
+            flag (bool): \
+                True if the configuration is valid, False otherwise.
+            message (str): \
+                A message indicating the validation result \
+                    or describing missing keys.
         """
         if not isinstance(config, dict):
             return (
@@ -109,31 +108,30 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
         arguments: list,
         arg_name: str,
         config_key=None,
-        is_flag=False
+        is_flag: bool = False
     ):
-        """
-            Adds a command-line argument to the list \
-                based on configuration and parameters.
-            
-            Args:
-                arguments (list): \
-                    The list of command-line arguments to \
-                        which new arguments will be appended.
-                arg_name (str): \
-                    The argument name, e.g., '--min-log-level'.
-                config_key (str, optional): \
-                    The key to look up in the configuration dictionary. \
-                    Defaults to None, in which case the argument name \
-                        without '--' is used.
-                is_flag (bool, optional): \
-                    If True, adds only the flag (without a value) if \
-                    the corresponding config is True. Defaults to False.
-            Note:
-                If 'is_flag' is True and the configuration value \
-                    for the key is True, appends 'arg_name' to the arguments list.
-                Otherwise, if a value exists in the configuration for the key, \
-                    appends both 'arg_name' and the string representation \
-                        of the value to the list.
+        """Adds a command-line argument to the list \
+            based on configuration and parameters.
+
+        Args:
+            arguments (list): \
+                The list of command-line arguments to \
+                    which new arguments will be appended.
+            arg_name (str): \
+                The argument name, e.g., '--min-log-level'.
+            config_key (str, optional): \
+                The key to look up in the configuration dictionary. \
+                Defaults to None, in which case the argument name \
+                    without '--' is used.
+            is_flag (bool, optional): \
+                If True, adds only the flag (without a value) if \
+                the corresponding config is True. Defaults to False.
+        Note:
+            If 'is_flag' is True and the configuration value \
+                for the key is True, appends 'arg_name' to the arguments list.
+            Otherwise, if a value exists in the configuration for the key, \
+                appends both 'arg_name' and the string representation \
+                    of the value to the list.
         """
         key = config_key or arg_name.lstrip('-')
 
@@ -146,16 +144,15 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
                 arguments.extend([arg_name, str(val)])
 
     def demultiplex(self) -> None:
-        """
-            Constructs and executes the demultiplexing command \
-                based on the current configuration.
+        """Constructs and executes the demultiplexing command \
+            based on the current configuration.
 
-            Note:
-                Relies on the '_add_param' method to append arguments \
-                    based on configuration values.
-                Assumes 'self.config' contains all necessary configuration entries.
-                Uses 'self.cmd_caller' to execute the command \
-                    with the constructed arguments.
+        Note:
+            Relies on the '_add_param' method to append arguments \
+                based on configuration values.
+            Assumes 'self.config' contains all necessary configuration entries.
+            Uses 'self.cmd_caller' to execute the command \
+                with the constructed arguments.
         """
 
         cmd_args = [self.config['demultiplexor']]
@@ -199,21 +196,23 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'find-adapters-with-sliding-window',
             'no-bgzf-compression',
             'no-lane-splitting'
-        ]: self._add_param(
-            cmd_args,
-            arg_name=f"--{flag}",
-            config_key=flag,
-            is_flag=True)
+        ]:
+            self._add_param(
+                cmd_args,
+                arg_name=f"--{flag}",
+                config_key=flag,
+                is_flag=True)
 
         for other_optional in [
             'intensities-dir',
             'stats-dir',
             'interop-dir',
             'reports-dir'
-        ]: self._add_param(
-            cmd_args,
-            arg_name=f"--{other_optional}",
-            config_key=other_optional)
+        ]:
+            self._add_param(
+                cmd_args,
+                arg_name=f"--{other_optional}",
+                config_key=other_optional)
 
         _ = [print(arg) for arg in cmd_args]
 
@@ -222,6 +221,6 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
     def extract_barcodes(
         self,
         r1_path: PathLike[AnyStr],
-        r2_path: Optional[PathLike[AnyStr]]=None
+        r2_path: Optional[PathLike[AnyStr]] = None
     ) -> PathLike[AnyStr]:
         return None

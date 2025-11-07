@@ -1,9 +1,8 @@
-"""
-    Module responsible for loading and aggregating data from
-    various input files specified in a configuration file.
-    It utilizes the TableManagerFactory to create and interact
-    with a suitable TableManager instance, processing and saving
-    the aggregated data.
+"""Module responsible for loading and aggregating data from
+various input files specified in a configuration file.
+It utilizes the TableManagerFactory to create and interact
+with a suitable TableManager instance, processing and saving
+the aggregated data.
 """
 
 # region Imports
@@ -13,19 +12,14 @@ from src.configurator import Configurator
 from src.utils.table_manager.table_manager_factory import TableManagerFactory
 # endregion
 
+
 def main():
-    """
-        Loads configuration, creates a TableManager instance,
-        aggregates data from specified files (adapters, indexes, samples),
-        and saves the aggregated data to a file.
+    """Loads configuration, creates a TableManager instance,
+    aggregates data from specified files (adapters, indexes, samples),
+    and saves the aggregated data to a file.
 
-        Raises:
-            Exception:
-            If any error occurs during configuration parsing,
-            TableManager creation, data aggregation, or saving.
-
-        Returns:
-            None. Prints success message or error message to console.
+    Returns:
+        None. Prints success message or error message to console.
     """
     configurator = Configurator()
 
@@ -47,6 +41,7 @@ def main():
 
     excel_tm.create_sample_sheet(
         tm_config['sample-sheet'], data=demultiplexing_table)
+
 
 if __name__ == '__main__':
     main()

@@ -1,21 +1,20 @@
-"""
-    This module defines the Analyzer class,
-    responsible for orchestrating
-    the entire genomic data analysis pipeline.
+"""This module defines the Analyzer class,
+responsible for orchestrating
+the entire genomic data analysis pipeline.
 
-    It manages data preparation, alignment, variant calling,
-    annotation, and conversion steps, using various
-    components like SequenceAligner, BamGrouper, BQSRPerformer,
-    and variant callers. It also handles command execution,
-    logging, and file management throughout the process.
+It manages data preparation, alignment, variant calling,
+annotation, and conversion steps, using various
+components like SequenceAligner, BamGrouper, BQSRPerformer,
+and variant callers. It also handles command execution,
+logging, and file management throughout the process.
 
-    Main Features:
-    - Initializes with a configurator and command caller.
-    - Prepares data by performing sequence alignment, grouping reads,
-    and recalibration.
-    - Analyzes samples by calling variants, annotating them,
-    converting formats, and generating reports.
-    - Manages paths, logs, and subprocess execution.
+Main Features:
+- Initializes with a configurator and command caller.
+- Prepares data by performing sequence alignment, grouping reads,
+and recalibration.
+- Analyzes samples by calling variants, annotating them,
+converting formats, and generating reports.
+- Manages paths, logs, and subprocess execution.
 """
 
 # region Imports
@@ -37,9 +36,8 @@ from src.core.analyzer.primer_cutter import PrimerCutter
 from src.core.analyzer.sequence_aligner import SequenceAligner
 from src.core.analyzer.annotation_adapter import SnpEffAnnotationAdapter
 from src.core.analyzer.variant_caller_factory import VariantCallerFactory
-
-from src.utils.util import reg_tuple_generator
 # endregion
+
 
 class Analyzer(metaclass=SingletonMeta):
     """
@@ -67,10 +65,12 @@ class Analyzer(metaclass=SingletonMeta):
                 Performs variant calling, annotation,
                 and converts formats for reporting.
     """
+
     def __init__(
         self,
         configurator: Configurator,
-        cmd_caller: Union[CommandExecutor, callable]=None):
+        cmd_caller: Union[CommandExecutor, callable] = None
+    ):
         self.configurator = configurator
 
         if isinstance(cmd_caller, CommandExecutor):
@@ -79,32 +79,33 @@ class Analyzer(metaclass=SingletonMeta):
             self.cmd_caller = CommandExecutor(cmd_caller)
         elif cmd_caller is None:
             self.cmd_caller = os.system
-        else: raise TypeError(
-            "Command caller must be callable, "
-            f"'{type(cmd_caller)}' given")
+        else:
+            raise TypeError(
+                "Command caller must be callable, "
+                f"'{type(cmd_caller)}' given")
 
     def prepare_data(
         self,
-        sample: SampleDataContainer) -> SampleDataContainer:
-        """
-            Prepares raw sequencing data for analysis, including alignment,
-            read grouping, and recalibration.
+        sample: SampleDataContainer
+    ) -> SampleDataContainer:
+        """Prepares raw sequencing data for analysis, including alignment,
+        read grouping, and recalibration.
 
-            Args:
-                sample (SampleDataContainer):
-                    Sample with raw data and metadata.
+        Args:
+            sample (SampleDataContainer):
+                Sample with raw data and metadata.
 
-            Returns:
-                SampleDataContainer:
-                    Updated sample with paths to intermediate and final files.
+        Returns:
+            SampleDataContainer:
+                Updated sample with paths to intermediate and final files.
         """
         bwa2mem = SequenceAligner(self.configurator)
-        # TODO: picard BuildBamIndex          Generates a BAM index ".bai" file.  
+        # TODO: picard BuildBamIndex      Generates a BAM index ".bai" file.
         picard_group_reads = BamGrouper(self.configurator)
 
         ptrimmer = PrimerCutter.create_primer_cutter(
-            configurator = self.configurator,
-            cutter_name  = 'ptrimmer')
+            configurator=self.configurator,
+            cutter_name='ptrimmer')
 
         # cutPrimers = PrimerCutter.create_primer_cutter(
         #     configurator = self.configurator,
@@ -140,18 +141,17 @@ class Analyzer(metaclass=SingletonMeta):
         return sample
 
     def analyze(
-        self,
-        sample: SampleDataContainer) -> SampleDataContainer:
-        """
-            Performs variant calling, annotation, and format conversion.
+        self, sample: SampleDataContainer
+    ) -> SampleDataContainer:
+        """Performs variant calling, annotation, and format conversion.
 
-            Args:
-                sample (SampleDataContainer):
-                    Sample with aligned data.
+        Args:
+            sample (SampleDataContainer):
+                Sample with aligned data.
 
-            Returns:
-                SampleDataContainer:
-                    Updated sample with annotated variants and reports.
+        Returns:
+            SampleDataContainer:
+                Updated sample with annotated variants and reports.
         """
         pisces_variant_caller = VariantCallerFactory.create_caller(
             caller_config={'name': 'pisces'}, configurator=self.configurator)
@@ -172,7 +172,7 @@ class Analyzer(metaclass=SingletonMeta):
             self.configurator.config['convert2annovar'],
             '-format', 'vcf4',
             '-includeinfo',
-            #'-allsample',
+            # '-allsample',
             '-withfreq',
             '2>', convert2annovar_logpath,
             annotated_sample_filepath,
@@ -186,7 +186,7 @@ class Analyzer(metaclass=SingletonMeta):
         execute(self.cmd_caller, convert2annovar_cmd)
 
         self.configurator.logger.info(
-            "Convertation to avinput format successfully done. "
+            "Convertion to avinput format successfully done. "
             "See it's output on %s", outpath)
 
         table_annovar_logpath = os.path.join(
@@ -200,7 +200,7 @@ class Analyzer(metaclass=SingletonMeta):
                 'refGene', 'clinvar_20250721', 'ALL.sites.2015_08']),
             '--outfile', os.path.join(
                 sample.processing_path, sample.sid+".ann"),
-            #'--remove',
+            # '--remove',
             '--otherinfo',
             outpath,
             self.configurator.config['annovar_humandb'],

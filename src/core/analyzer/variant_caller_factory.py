@@ -1,9 +1,8 @@
-"""
-    This module defines a factory class for creating variant caller instances.
-    It provides a way to select a specific variant calling tool (e.g., Pisces,
-    GATK UnifiedGenotyper, FreeBayes) based on configuration settings.
-    The factory ensures that the correct variant caller is instantiated
-    and initialized with the appropriate configuration parameters.
+"""This module defines a factory class for creating variant caller instances.
+It provides a way to select a specific variant calling tool (e.g., Pisces,
+GATK UnifiedGenotyper, FreeBayes) based on configuration settings.
+The factory ensures that the correct variant caller is instantiated
+and initialized with the appropriate configuration parameters.
 """
 
 # region Imports
@@ -22,30 +21,30 @@ from src.core.analyzer.variant_caller import UnifiedGenotyperVariantCaller
 from src.core.analyzer.variant_caller import FreebayesVariantCaller
 # endregion
 
+
 class VariantCallerFactory(LoggerMixin):
+    """Factory class for creating variant caller instances
+    based on configuration.
+
+    Supports multiple variant calling tools such as
+        Pisces,
+        GATK UnifiedGenotyper,
+        and FreeBayes.
+
+    The factory uses the provided configuration to determine
+    which variant caller to instantiate.
+
+    This promotes code modularity and allows
+    for easy addition or removal of variant calling tools without
+    affecting other parts of the application.
     """
-        Factory class for creating variant caller instances
-        based on configuration.
 
-        Supports multiple variant calling tools such as
-            Pisces,
-            GATK UnifiedGenotyper,
-            and FreeBayes.
+    def __init__(self, logger: Optional[logging.Logger] = None):
+        """Initializes the factory with an optional logger.
 
-        The factory uses the provided configuration to determine
-        which variant caller to instantiate.
-
-        This promotes code modularity and allows
-        for easy addition or removal of variant calling tools without
-        affecting other parts of the application.
-    """
-    def __init__(self, logger: Optional[logging.Logger]=None):
-        """
-            Initializes the factory with an optional logger.
-
-            Args:
-                logger (Optional[logging.Logger]):
-                    Logger instance for logging messages.
+        Args:
+            logger (Optional[logging.Logger]):
+                Logger instance for logging messages.
         """
         super().__init__(logger=logger)
 
@@ -54,24 +53,23 @@ class VariantCallerFactory(LoggerMixin):
         caller_config: dict[str, str],
         configurator: Configurator
      ) -> IVariantCaller:
-        """
-            Creates an instance of a variant caller
-                based on the provided configuration.
+        """Creates an instance of a variant caller
+            based on the provided configuration.
 
-            Args:
-                caller_config (Dict[str, str]):
-                    Dictionary containing at least the 'name' key
-                    specifying the caller type.
-                configurator (Configurator):
-                    Configuration object containing parameters and logger.
+        Args:
+            caller_config (Dict[str, str]):
+                Dictionary containing at least the 'name' key
+                specifying the caller type.
+            configurator (Configurator):
+                Configuration object containing parameters and logger.
 
-            Returns:
-                IVariantCaller:
-                    An instance of the selected variant caller class.
+        Returns:
+            IVariantCaller:
+                An instance of the selected variant caller class.
 
-            Raises:
-                ConfigurationError:
-                    If the caller type is not recognized.
+        Raises:
+            ConfigurationError:
+                If the caller type is not recognized.
         """
         match caller_config['name']:
             case 'pisces':

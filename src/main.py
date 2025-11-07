@@ -8,20 +8,19 @@ from src.configurator import Configurator
 from src.analyzer import Analyzer
 from src.core.sample_data_factory import SampleDataFactory
 
-from src.utils.util import reg_tuple_generator
-from src.utils.report_agregator import report_agregator
+from src.utils.report_aggregator import report_aggregator
 
 from src import demultiplexor_adapter
 from src import table_manager
 # endregion
 
-def main():
-    """
-        Main function to initiate and run the data analysis pipeline.
 
-        Loads configuration, initializes logging, dependency handler,  \
-        and the BRCA1 analyzer.  Optionally runs additional modules \
-        (e.g., table management or demultiplexing).
+def main():
+    """Main function to initiate and run the data analysis pipeline.
+
+    Loads configuration, initializes logging, dependency handler,
+    and the BRCA1 analyzer.  Optionally runs additional modules
+    (e.g., table management or demultiplexing).
     """
     configurator = Configurator(
         config_path=os.path.abspath(os.path.join(
@@ -30,7 +29,8 @@ def main():
     main_logger = configurator.logger
 
     brca1_analyzer = Analyzer(
-        configurator = configurator, cmd_caller = os.system)
+        configurator=configurator,
+        cmd_caller=os.system)
 
     if configurator.args.table_manager_flag:
         table_manager.main()
@@ -39,6 +39,7 @@ def main():
         demultiplexor_adapter.main()
 
     sample_factory = SampleDataFactory(logger=main_logger)
+
     tm_config = configurator.parse_configuration(
         base_config_filepath=configurator.args.configFilepath,
         target_section='TableManager')
@@ -62,13 +63,14 @@ def main():
                 sample.processing_logpath = os.path.join(
                     sample_base_outpath, "log")
                 sample.processing_path = sample_base_outpath
-                sample.report_path =  os.path.join(
+                sample.report_path = os.path.join(
                     sample_base_outpath, "report")
 
                 brca1_analyzer.prepare_data(sample)
                 brca1_analyzer.analyze(sample)
 
-                report_agregator.agregate_report(sample=sample)
+                report_aggregator.aggregate_report(sample=sample)
+
 
 if __name__ == '__main__':
     main()

@@ -1,20 +1,19 @@
-"""
-    This module contains the implementation of the Configurator class,
-    which manages the configuration setup for an analysis pipeline.
+"""This module contains the implementation of the Configurator class,
+which manages the configuration setup for an analysis pipeline.
 
-    It handles command-line argument parsing, logging configuration,
-    output directory validation/creation, and loading configuration
-    parameters from a configuration file.
+It handles command-line argument parsing, logging configuration,
+output directory validation/creation, and loading configuration
+parameters from a configuration file.
 
-    The Configurator class is designed as a singleton to ensure
-    a single point of configuration management throughout the application.
+The Configurator class is designed as a singleton to ensure
+a single point of configuration management throughout the application.
 
-    It utilizes other components such as PathValidator,
-    LoggingConfigurator, and ConfigLoader to perform its tasks.
+It utilizes other components such as PathValidator,
+LoggingConfigurator, and ConfigLoader to perform its tasks.
 
-    Usage:
-        Instantiate the Configurator class to initialize configuration,
-        logging, and output directories.
+Usage:
+    Instantiate the Configurator class to initialize configuration,
+    logging, and output directories.
 """
 
 # region Imports
@@ -34,58 +33,59 @@ from src.core.configurator.config_loader import ConfigLoader
 from src.core.configurator.logging_configurator import LoggingConfigurator
 # endregion
 
+
 class Configurator(metaclass=SingletonMeta):
+    """Singleton class responsible for managing configuration,
+    logging, and output directory setup for the analysis pipeline.
+
+    This class handles parsing command-line arguments,
+    setting up logging, validating and creating the output directory,
+    and loading configuration parameters from a configuration file.
+
+    Attributes:
+        args (argparse.Namespace):
+            Parsed command-line arguments.
+        log_path (str):
+            Absolute path to the log file.
+        logger (logging.Logger):
+            Logger instance for logging messages.
+        output_dir (str):
+            Path to the output directory where results will be stored.
+        config (dict):
+            Dictionary containing configuration parameters.
+
+    Methods:
+        _parse_args():
+            Parses command-line arguments.
+        _setup_logger(log_filename):
+            Sets up the logging configuration.
+        _setup_output_directory(output_dir):
+            Validates or creates the output directory.
+        _load_configuration(config_path):
+            Loads configuration parameters.
+        parse_configuration(base_config_filepath, target_section):
+            Loads specific configuration sections.
     """
-        Singleton class responsible for managing configuration,
-        logging, and output directory setup for the analysis pipeline.
 
-        This class handles parsing command-line arguments,
-        setting up logging, validating and creating the output directory,
-        and loading configuration parameters from a configuration file.
-
-        Attributes:
-            args (argparse.Namespace):
-                Parsed command-line arguments.
-            log_path (str):
-                Absolute path to the log file.
-            logger (logging.Logger):
-                Logger instance for logging messages.
-            output_dir (str):
-                Path to the output directory where results will be stored.
-            config (dict):
-                Dictionary containing configuration parameters.
-
-        Methods:
-            _parse_args():
-                Parses command-line arguments.
-            _setup_logger(log_filename):
-                Sets up the logging configuration.
-            _setup_output_directory(output_dir):
-                Validates or creates the output directory.
-            _load_configuration(config_path):
-                Loads configuration parameters.
-            parse_configuration(base_config_filepath, target_section):
-                Loads specific configuration sections.
-    """
     def __init__(
         self,
         args: argparse.Namespace = None,
         config_path: PathLike[AnyStr] = None,
         log_path: PathLike[AnyStr] = None,
-        output_dir: PathLike[AnyStr] = None):
-        """
-            Initializes the Configurator, setting up logging,
-            output directory, and configuration.
+        output_dir: PathLike[AnyStr] = None
+    ):
+        """Initializes the Configurator, setting up logging,
+        output directory, and configuration.
 
-            Args:
-                args (argparse.Namespace, optional):
-                    Parsed command-line arguments. If None, parsed internally.
-                config_path (PathLike[AnyStr], optional):
-                    Path to configuration file. Defaults to None.
-                log_path (PathLike[AnyStr], optional):
-                    Path to log file. Defaults to None.
-                output_dir (PathLike[AnyStr], optional):
-                    Path to output directory. Defaults to None.
+        Args:
+            args (argparse.Namespace, optional):
+                Parsed command-line arguments. If None, parsed internally.
+            config_path (PathLike[AnyStr], optional):
+                Path to configuration file. Defaults to None.
+            log_path (PathLike[AnyStr], optional):
+                Path to log file. Defaults to None.
+            output_dir (PathLike[AnyStr], optional):
+                Path to output directory. Defaults to None.
         """
         self.log_path, self.logger = self._setup_logger(
             log_path or 'default.log')
@@ -101,30 +101,29 @@ class Configurator(metaclass=SingletonMeta):
 
     @staticmethod
     def _parse_args() -> argparse.Namespace:
-        """
-            Parses command-line arguments using argparse.
+        """Parses command-line arguments using argparse.
 
-            Returns:
-                argparse.Namespace:
-                    Parsed arguments object containing
-                    command-line parameters.
+        Returns:
+            argparse.Namespace:
+                Parsed arguments object containing
+                command-line parameters.
         """
         parser = ArgumentParser()
         return parser.parse()
 
     @staticmethod
-    def _setup_logger(log_filename: PathLike[AnyStr]
-        ) -> tuple[PathLike[AnyStr], logging.Logger]:
-        """
-            Sets up the logging system with the specified log file.
+    def _setup_logger(
+        log_filename: PathLike[AnyStr]
+    ) -> tuple[PathLike[AnyStr], logging.Logger]:
+        """Sets up the logging system with the specified log file.
 
-            Args:
-                log_filename (PathLike[AnyStr]): Path to the log file.
+        Args:
+            log_filename (PathLike[AnyStr]): Path to the log file.
 
-            Returns:
-                tuple:
-                    A tuple containing the absolute path
-                    to the log file and the configured Logger object.
+        Returns:
+            tuple:
+                A tuple containing the absolute path
+                to the log file and the configured Logger object.
         """
         logger = LoggingConfigurator(
             path_validator=PathValidator())
@@ -134,24 +133,24 @@ class Configurator(metaclass=SingletonMeta):
 
     def _setup_output_directory(
         self,
-        output_dir: PathLike[AnyStr]) -> PathLike[AnyStr]:
-        """
-            Validates the output directory path,
-            creates it if it doesn't exist,
-            and handles existing directory conflicts based on user input.
+        output_dir: PathLike[AnyStr]
+    ) -> PathLike[AnyStr]:
+        """Validates the output directory path,
+        creates it if it doesn't exist,
+        and handles existing directory conflicts based on user input.
 
-            Args:
-                output_dir (PathLike[AnyStr]):
-                    Path to the desired output directory.
+        Args:
+            output_dir (PathLike[AnyStr]):
+                Path to the desired output directory.
 
-            Returns:
-                PathLike[AnyStr]:
-                    Absolute path to the validated or created
-                    output directory.
+        Returns:
+            PathLike[AnyStr]:
+                Absolute path to the validated or created
+                output directory.
         """
         output_dir = os.path.abspath(os.path.normpath(output_dir))
 
-        if os.path.exists(output_dir): # Create output directory
+        if os.path.exists(output_dir):  # Create output directory
             if not os.path.isdir(output_dir):
                 os.mkdir(output_dir)
             else:
@@ -159,11 +158,13 @@ class Configurator(metaclass=SingletonMeta):
                 self.logger.warning(msg)
                 match input(
                     f"Do you want to use existing directory '{output_dir}'"
-                    f" as the current output directory [y/n]: ").lower():
+                    f" as the current output directory [y/n]: "
+                ).lower():
                     case 'n':
                         sys.exit(os.EX_OK)
-                    case  _ :
+                    case _:
                         pass
+
         else:
             os.mkdir(output_dir)
 
@@ -172,26 +173,26 @@ class Configurator(metaclass=SingletonMeta):
 
     def parse_configuration(
         self,
-        base_config_filepath: Optional[PathLike[AnyStr]]=os.path.abspath(
+        base_config_filepath: Optional[PathLike[AnyStr]] = os.path.abspath(
             os.path.join('src', 'conf', 'config.ini')),
-        target_section: AnyStr='Pathes') -> dict:
-        """
-            Loads a specific section of the configuration
-            from a base configuration file.
+        target_section: AnyStr = 'Pathes'
+    ) -> dict:
+        """Loads a specific section of the configuration
+        from a base configuration file.
 
-            Args:
-                base_config_filepath (PathLike[AnyStr], optional):
-                    Path to the base configuration file.
-                    Defaults to 'src/conf/config.ini'
-                    relative to current directory.
-                target_section (str, optional):
-                    The section within the configuration file to load.
-                    Defaults to 'Pathes'.
+        Args:
+            base_config_filepath (PathLike[AnyStr], optional):
+                Path to the base configuration file.
+                Defaults to 'src/conf/config.ini'
+                relative to current directory.
+            target_section (str, optional):
+                The section within the configuration file to load.
+                Defaults to 'Pathes'.
 
-            Returns:
-                dict:
-                    Dictionary of configuration parameters
-                    from the specified section.
+        Returns:
+            dict:
+                Dictionary of configuration parameters
+                from the specified section.
         """
         if base_config_filepath is None:
             base_config_filepath = self.args.configFilepath

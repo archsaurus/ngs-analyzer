@@ -1,39 +1,42 @@
-"""
-    This script aggregates individual sample reports
-    into a single consolidated table.
+#!/bin/python
+"""This script aggregates individual sample reports
+into a single consolidated table.
 
-    Usage:
-        python script_name.py \
-            --input <input_directory> \
-            --output <output_directory>
+Usage:
+    python script_name.py \
+        --input <input_directory> \
+        --output <output_directory>
 
-    Description:
-        The script takes as input a directory containing per-sample report
-        files in Excel format.
-        It reads all '.xlsx' files from the specified output directory,
-        concatenates their data into one combined DataFrame, and saves
-        the result as 'report.xlsx' in the same output directory.
+Description:
+    The script takes as input a directory containing per-sample report
+    files in Excel format.
+    It reads all '.xlsx' files from the specified output directory,
+    concatenates their data into one combined DataFrame, and saves
+    the result as 'report.xlsx' in the same output directory.
 
-    Arguments:
-        --input / -i: Path to the directory containing per-sample reports.
-        --output / -o: Directory for the output consolidated report.
+Arguments:
+    --input / -i: Path to the directory containing per-sample reports.
+    --output / -o: Directory for the output consolidated report.
 
-    Note:
-        - Ensure that the specified output directory contains \
-        the report files in '.xlsx' format.
-        - The script uses pandas for reading \
-        and concatenating Excel files.
+Note:
+    - Ensure that the specified output directory contains \
+    the report files in '.xlsx' format.
+    - The script uses pandas for reading \
+    and concatenating Excel files.
 
 """
 
 import argparse
 import os
 
+
 import pandas
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=
-        'This script agregate per sample processed reports to one table')
+    parser = argparse.ArgumentParser(
+        description='This script aggregates per sample '
+                    'processed reports to one table')
 
     arguments = [
         {'name': ('--input', '-i'), 'kwargs': {

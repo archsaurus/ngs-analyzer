@@ -1,5 +1,6 @@
 """Description: Implements XmlTableManager for managing XML table data."""
 
+# region Imports
 import logging
 
 from os import PathLike
@@ -10,13 +11,15 @@ import pandas
 from src.core.base import LoggerMixin
 
 from src.utils.table_manager.i_table_manager import ITableManager
+# endregion
+
 
 class XmlTableManager(LoggerMixin, ITableManager):
+    """Manages XML file operations for tabular data,
+    including reading and saving.
     """
-        Manages XML file operations for tabular data,
-        including reading and saving.
-    """
-    def __init__(self, logger: logging.Logger=None):
+
+    def __init__(self, logger: logging.Logger = None):
         super().__init__(logger=logger)
 
     def aggregate_data(self, *args, **kwargs) -> pandas.DataFrame:
@@ -26,5 +29,5 @@ class XmlTableManager(LoggerMixin, ITableManager):
         self,
         path: PathLike[AnyStr],
         data: pandas.DataFrame
-        ) -> bool:
+    ) -> bool:
         """Save the DataFrame to an XML file at the specified path."""
