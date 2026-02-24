@@ -8,7 +8,7 @@ Subpackages
    :maxdepth: 4
 
    src.utils.demultiplexor_adapter
-   src.utils.report_agregator
+   src.utils.report_aggregator
    src.utils.table_manager
 
 Submodules

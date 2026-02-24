@@ -19,7 +19,7 @@ def main():
     """Main function to initiate and run the data analysis pipeline.
 
     Loads configuration, initializes logging, dependency handler,
-    and the BRCA1 analyzer.  Optionally runs additional modules
+    and the BRCA1 analyzer. Optionally runs additional modules
     (e.g., table management or demultiplexing).
     """
     configurator = Configurator(
@@ -46,7 +46,7 @@ def main():
 
     if 'dump-file' in tm_config:
         with open(tm_config['dump-file'], 'r', encoding='utf-8') as dump_fd:
-            for dump_string in dump_fd.readlines()[1:]:
+            for dump_string in dump_fd.readlines():
                 sample_id = dump_string.split(';')[0].strip()
 
                 sample = sample_factory.parse_sample_data(

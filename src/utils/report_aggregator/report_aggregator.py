@@ -1,4 +1,4 @@
-"""This module processes genetic variant data and
+"""This module processes genetic variant data and \
 generates a comprehensive report.
 
 Overview:
@@ -64,7 +64,7 @@ from src.utils.report_aggregator.annotation_data_container import \
 
 
 def parse_variant_section(row: str) -> IReportDataContainer:
-    """Parses a variant section string into a VariantDataContainer object.
+    r"""Parse a variant section string into a VariantDataContainer object.
 
     Args:
         row (str):
@@ -148,7 +148,7 @@ class FirstAnnotation(AnnotationDataContainer):
 
 
 class NextAnnotation(AnnotationDataContainer):
-    """Represents a simplified annotation of a genetic mutation
+    """Represent a simplified annotation of a genetic mutation \
     focusing on core transcript information.
 
     This class includes essential annotation details such as gene name,
