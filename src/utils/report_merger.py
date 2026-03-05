@@ -1,4 +1,5 @@
-#!/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """This script aggregates individual sample reports
 into a single consolidated table.
 

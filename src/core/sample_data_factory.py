@@ -1,14 +1,14 @@
 """This module defines an interface for a sample data factory
-and a base class for sample data containers.
+    and a base class for sample data containers.
 
-It provides a way to parse sample data from various sources,
-storing the information in a structured manner.
+    It provides a way to parse sample data from various sources,
+    storing the information in a structured manner.
 
-The `ISampleDataFactory` protocol defines the required method
-for parsing sample data, and `SampleDataContainer` provides a common
-structure for storing sample data paths and identifiers.
+    The `ISampleDataFactory` protocol defines the required method
+    for parsing sample data, and `SampleDataContainer` provides a common
+    structure for storing sample data paths and identifiers.
 
-The module utilizes the `logging` module for logging operations.
+    The module utilizes the `logging` module for logging operations.
 """
 
 # region Imports
@@ -16,11 +16,14 @@ import logging
 import os
 import re
 
-from os import PathLike
-from typing import Protocol
-from typing import AnyStr
+from pathlib import Path
 
-from src.core.base import LoggerMixin
+from os import PathLike
+
+from typing import AnyStr
+from typing import Protocol
+
+from src.core.base import LoggerMixin, get_unique_path
 from src.core.sample_data_container import SampleDataContainer
 # endregion
 
@@ -55,15 +58,24 @@ class ISampleDataFactory(Protocol):
 class SampleDataFactory(LoggerMixin, ISampleDataFactory):
     """Concrete implementation of the ISampleDataFactory interface.
 
-    Uses logging for error reporting and parsing sample data from files.
+        Uses logging for error reporting and parsing sample data from files.
     """
-    def __init__(self, logger: logging.Logger = None):
+    def __init__(
+        self,
+        logger: logging.Logger = None,
+        outpath: PathLike[AnyStr] = None,
+    ):
         """Initializes the factory with an optional custom logger.
 
-        Args:
-            logger (logging.Logger, optional):
-                Logger instance. Defaults to None.
+            Args:
+                logger (logging.Logger, optional):
+                    Logger instance. Defaults to None.
         """
+        if outpath is not None:
+            self.outpath = Path(outpath)
+        else:
+            self.outpath = get_unique_path()
+
         super().__init__(logger=logger)
 
     def parse_sample_data(
@@ -73,19 +85,19 @@ class SampleDataFactory(LoggerMixin, ISampleDataFactory):
     ) -> SampleDataContainer:
         """Parses sample data files from a directory based on the sample ID.
 
-        Looks for files containing
-            the sample ID and 'R1' or 'R2' in their names.
+            Looks for files containing
+                the sample ID and 'R1' or 'R2' in their names.
 
-        Args:
-            path (PathLike[AnyStr]):
-                Directory path containing sample files.
-            sample_id (AnyStr):
-                Identifier for the sample.
+            Args:
+                path (PathLike[AnyStr]):
+                    Directory path containing sample files.
+                sample_id (AnyStr):
+                    Identifier for the sample.
 
-        Returns:
-            SampleDataContainer:
-                An instance with source paths for R1 and R2,
-                or None if files are not found.
+            Returns:
+                SampleDataContainer:
+                    An instance with source paths for R1 and R2,
+                    or None if files are not found.
         """
         regexp_filter = re.compile(rf"^.*{sample_id}.*")
         sample_reads_source_pathes = filter(
@@ -100,18 +112,30 @@ class SampleDataFactory(LoggerMixin, ISampleDataFactory):
                 sample_r2_path = read
                 continue
 
-        if all((sample_r1_path is not None,
-                sample_r2_path is not None)):
+        if sample_r1_path is not None and sample_r2_path is not None:
+            processing_path = os.path.abspath(os.path.join(
+                self.outpath, sample_id
+            ))
+
+            processing_logpath = os.path.join(processing_path, "log")
+            report_path = os.path.join(processing_path, "report")
+
             sample_data = SampleDataContainer(
-                sid=sample_id,
                 r1_source=os.path.join(path, sample_r1_path),
-                r2_source=os.path.join(path, sample_r2_path))
+                r2_source=os.path.join(path, sample_r2_path),
+                sid=sample_id,
+                processing_path=processing_path,
+                processing_logpath=processing_logpath,
+                report_path=report_path
+            )
 
             return sample_data
 
-        self.logger.critical(
-            "Can't find '%s' file for sample '%s'",
-            'R1' if sample_r1_path is None else 'R2',
-            sample_id.strip())
+        else:
+            self.logger.critical(
+                "Can't find '%s' file for sample '%s'",
+                'R1' if sample_r1_path is None else 'R2',
+                sample_id.strip()
+            )
 
         return None

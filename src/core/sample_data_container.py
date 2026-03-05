@@ -1,14 +1,16 @@
 """This module defines a container class for storing
-sample-related data paths and identifiers.
+    sample-related data paths and identifiers.
 
-It includes attributes for R1 and R2 file paths,
-patient identifiers, and processing log paths.
+    It includes attributes for R1 and R2 file paths,
+    patient identifiers, and processing log paths.
 """
 
 # region Imports
 import os
 import re
 import logging
+
+from warnings import deprecated
 
 from os import PathLike
 from typing import Optional
@@ -23,23 +25,23 @@ class SampleDataContainer:
     """A container class for storing sample-related
         data paths and identifiers.
 
-    Attributes:
-        r1_source (PathLike[AnyStr]):
-            Path to the R1 file.
-        r2_source (Optional[PathLike[AnyStr]]):
-            Path to the R2 file (optional).
-        id (str):
-            Patient identifier.
-        processing_path (PathLike[AnyStr]):
-            Path for storing processing logs.
-        processing_logpath (PathLike[AnyStr]):
-            Path to processing logs.
-        bam_filepath (Optional[PathLike[AnyStr]]):
-            Path to BAM file (optional).
-        vcf_filepath (Optional[PathLike[AnyStr]]):
-            Path to VCF file (optional).
-        report_path (PathLike[AnyStr]):
-            Path to the report directory.
+        Attributes:
+            r1_source (PathLike[AnyStr]):
+                Path to the R1 file.
+            r2_source (Optional[PathLike[AnyStr]]):
+                Path to the R2 file (optional).
+            id (str):
+                Patient identifier.
+            processing_path (PathLike[AnyStr]):
+                Path for storing processing logs.
+            processing_logpath (PathLike[AnyStr]):
+                Path to processing logs.
+            bam_filepath (Optional[PathLike[AnyStr]]):
+                Path to BAM file (optional).
+            vcf_filepath (Optional[PathLike[AnyStr]]):
+                Path to VCF file (optional).
+            report_path (PathLike[AnyStr]):
+                Path to the report directory.
         """
 
     def __init__(
@@ -56,30 +58,30 @@ class SampleDataContainer:
     ):
         """Initializes a sample data container.
 
-        Args:
-            r1_source (PathLike[AnyStr]):
-                Path to the R1 file.
-            r2_source (PathLike[AnyStr], optional):
-                Path to the R2 file. Defaults to None.
-            id (str, optional):
-                Sample identifier. Defaults to '1'.
-            processing_path (PathLike[AnyStr], optional):
-                Path for processing logs.
-                Defaults to None, which sets a default path.
-            processing_logpath (PathLike[AnyStr], optional):
-                Path to processing logs.
-                Defaults to None, which sets a default path.
-            target_regions (list[tuple[str, str]]):
-                A list of tuples like (pileup filepath, region name).
-                Region name must coincide with the region
-                field name from configuration file.
-            bam_filepath (Optional[PathLike[AnyStr]], optional):
-                Path to BAM file. Defaults to None.
-            vcf_filepath (Optional[PathLike[AnyStr]], optional):
-                Path to VCF file. Defaults to None.
-            report_path (PathLike[AnyStr], optional):
-                Path to report directory.
-                Defaults to None, which sets a default path.
+            Args:
+                r1_source (PathLike[AnyStr]):
+                    Path to the R1 file.
+                r2_source (PathLike[AnyStr], optional):
+                    Path to the R2 file. Defaults to None.
+                id (str, optional):
+                    Sample identifier. Defaults to '1'.
+                processing_path (PathLike[AnyStr], optional):
+                    Path for processing logs.
+                    Defaults to None, which sets a default path.
+                processing_logpath (PathLike[AnyStr], optional):
+                    Path to processing logs.
+                    Defaults to None, which sets a default path.
+                target_regions (list[tuple[str, str]]):
+                    A list of tuples like (pileup filepath, region name).
+                    Region name must coincide with the region
+                    field name from configuration file.
+                bam_filepath (Optional[PathLike[AnyStr]], optional):
+                    Path to BAM file. Defaults to None.
+                vcf_filepath (Optional[PathLike[AnyStr]], optional):
+                    Path to VCF file. Defaults to None.
+                report_path (PathLike[AnyStr], optional):
+                    Path to report directory.
+                    Defaults to None, which sets a default path.
         """
         self.r1_source = r1_source
         self.r2_source = r2_source
@@ -100,6 +102,7 @@ class SampleDataContainer:
         self.bam_filepath = bam_filepath
         self.vcf_filepath = vcf_filepath
 
+    @deprecated('Dont work with GRCv38 cause change in read headers structure')
     def parse_regions_from_sam_file(
         self,
         configurator: Configurator,
@@ -107,34 +110,34 @@ class SampleDataContainer:
         logger: logging.Logger = None
     ):
         """Parses target regions from a SAM file
-        and updates the object's target_regions attribute.
+            and updates the object's target_regions attribute.
 
-        This method reads a SAM file (defaulting to a path
-        based on the object's processing_path and sid) and extracts chromosome
-        information from sequence headers (@SQ lines).
-        It formats the chromosome identifiers into interval
-        strings (e.g., 'chr01-interval') and generates corresponding region
-        tuples using the provided configurator.
+            This method reads a SAM file (defaulting to a path
+            based on the object's processing_path and sid) and extracts
+            chromosome information from sequence headers (@SQ lines).
+            It formats the chromosome identifiers into interval
+            strings (e.g., 'chr01-interval') and generates corresponding region
+            tuples using the provided configurator.
 
-        Args:
-            configurator (Configurator):
-                An instance used to generate region tuples
-                from interval strings.
-            path (PathLike[AnyStr], optional):
-                Path to the SAM file. If None, a default path based on the
-                object's processing_path and sid is used.
-            logger (logging.Logger, optional):
-                Logger for logging critical errors encountered
-                during file processing.
+            Args:
+                configurator (Configurator):
+                    An instance used to generate region tuples
+                    from interval strings.
+                path (PathLike[AnyStr], optional):
+                    Path to the SAM file. If None, a default path based on the
+                    object's processing_path and sid is used.
+                logger (logging.Logger, optional):
+                    Logger for logging critical errors encountered
+                    during file processing.
 
-        Raises:
-            FileNotFoundError, PermissionError, IOError, OSError:
-                If the file cannot be opened or read, an exception is raised
-                after logging the error if a logger is provided.
+            Raises:
+                FileNotFoundError, PermissionError, IOError, OSError:
+                    If the file cannot be opened or read, an exception
+                    is raised after logging the error if a logger is provided.
 
-        Side Effects:
-            Updates the object's `target_regions` attribute with a list
-            of region tuples generated from parsed chromosome intervals.
+            Side Effects:
+                Updates the object's `target_regions` attribute with a list
+                of region tuples generated from parsed chromosome intervals.
         """
         target_chromosomes = []
         default_sam_filepath = os.path.abspath(os.path.join(

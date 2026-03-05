@@ -1,58 +1,61 @@
 """This module provides utility classes and functions for
-system command execution, file management, archive extraction,
-platform detection, and logging.
+    system command execution, file management, archive extraction,
+    platform detection, and logging.
 
-Main components include:
-    - SingletonMeta:
-        A metaclass implementing the singleton pattern.
-    - LoggerMixin:
-        A mixin class to add logging capabilities to other classes.
-    - ICommandExecutor:
-        Protocol defining an interface for command execution.
-    - CommandExecutor:
-        A class to execute system commands via a callable.
-    - execute:
-        Utility function to run commands with an executor.
-    - touch:
-        Creates or updates the timestamp of a file.
-    - insert_processing_infix:
-        Inserts a string into a filename before its extension.
-    - extract_archive:
-        Extracts various archive formats (zip, tar, gzip).
-    - get_platform:
-        Detects the current operating system platform.
+    Main components include:
+        - SingletonMeta:
+            A metaclass implementing the singleton pattern.
+        - LoggerMixin:
+            A mixin class to add logging capabilities to other classes.
+        - ICommandExecutor:
+            Protocol defining an interface for command execution.
+        - CommandExecutor:
+            A class to execute system commands via a callable.
+        - execute:
+            Utility function to run commands with an executor.
+        - touch:
+            Creates or updates the timestamp of a file.
+        - insert_processing_infix:
+            Inserts a string into a filename before its extension.
+        - extract_archive:
+            Extracts various archive formats (zip, tar, gzip).
+        - get_platform:
+            Detects the current operating system platform.
 
-This module facilitates building robust scripts and applications
-that require system command execution, file handling,
-archive processing, and environment detection.
+    This module facilitates building robust scripts and applications
+    that require system command execution, file handling,
+    archive processing, and environment detection.
 """
 
 # region Imports
 import os
 import sys
-import platform
+import time
 import logging
-
-from os import PathLike
-from typing import Protocol, AnyStr, Optional, Union
+import platform
 
 import tarfile
-import gzip
 import zipfile
+import gzip
+
+from os import PathLike
+from pathlib import Path
+from typing import Protocol, AnyStr, Optional, Union
 # endregion
 
 
 class SingletonMeta(type):
     """Metaclass implementing the Singleton pattern.
 
-    Ensures that only one instance of a class is created.
+        Ensures that only one instance of a class is created.
     """
 
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
         """Returns the singleton instance of the class.
-        Creates one if it does not exist.
+
+            Creates one if it does not exist.
         """
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
@@ -62,9 +65,9 @@ class SingletonMeta(type):
 class LoggerMixin:
     """Mixin class providing logging capabilities.
 
-    Attributes:
-        logger (logging.Logger):
-            Custom logger instance.
+        Attributes:
+            logger (logging.Logger):
+                Custom logger instance.
     """
 
     def __init__(self, logger: logging.Logger = None):
@@ -120,11 +123,11 @@ class ICommandExecutor(Protocol):
 class CommandExecutor(LoggerMixin, ICommandExecutor):
     """Executes system commands using a provided callable.
 
-    Attributes:
-        caller (callable):
-            Function that executes commands, defaults to os.system.
-        logger (logging.Logger):
-            Logger instance for logging.
+        Attributes:
+            caller (callable):
+                Function that executes commands, defaults to os.system.
+            logger (logging.Logger):
+                Logger instance for logging.
     """
 
     def __init__(
@@ -134,11 +137,11 @@ class CommandExecutor(LoggerMixin, ICommandExecutor):
     ):
         """Initializes the CommandExecutor.
 
-        Args:
-            caller (callable):
-                Callable that executes commands.
-            logger (Optional[logging.Logger]):
-                Logger instance.
+            Args:
+                caller (callable):
+                    Callable that executes commands.
+                logger (Optional[logging.Logger]):
+                    Logger instance.
         """
         super().__init__(logger)
 
@@ -155,13 +158,13 @@ class CommandExecutor(LoggerMixin, ICommandExecutor):
     ) -> bool:
         """Executes the given command.
 
-        Args:
-            command (Union[list[str], str, dict[str, str]]):
-                Command to run.
+            Args:
+                command (Union[list[str], str, dict[str, str]]):
+                    Command to run.
 
-        Returns:
-            bool:
-                True if command executed successfully, False otherwise.
+            Returns:
+                bool:
+                    True if command executed successfully, False otherwise.
         """
         if isinstance(command, list):
             self.caller(' '.join(command))
@@ -192,11 +195,11 @@ class CommandExecutor(LoggerMixin, ICommandExecutor):
 def execute(executor, command) -> None:
     """Executes a command using the provided executor.
 
-    Args:
-        executor (Union[ICommandExecutor, callable]):
-            Executor object or callable.
-        command (Union[list[str], str, dict[str, str]]):
-            Command to execute.
+        Args:
+            executor (Union[ICommandExecutor, callable]):
+                Executor object or callable.
+            command (Union[list[str], str, dict[str, str]]):
+                Command to execute.
     """
     if hasattr(executor, 'run'):
         executor.run(command)
@@ -209,9 +212,9 @@ def execute(executor, command) -> None:
 def touch(path: PathLike[AnyStr]) -> None:
     """Creates an empty file or updates the timestamp if it exists.
 
-    Args:
-        path (PathLike[AnyStr]):
-            Path to the file.
+        Args:
+            path (PathLike[AnyStr]):
+                Path to the file.
     """
     with open(path, 'a', encoding='utf-8'):
         os.utime(path, None)
@@ -223,15 +226,15 @@ def insert_processing_infix(
 ) -> PathLike:
     """Inserts an infix string into a filename before its extension.
 
-    Args:
-        infix_str (str):
-            String to insert.
-        filename (PathLike[AnyStr]):
-            Original filename.
+        Args:
+            infix_str (str):
+                String to insert.
+            filename (PathLike[AnyStr]):
+                Original filename.
 
-    Returns:
-        PathLike:
-            Modified filename with infix inserted.
+        Returns:
+            PathLike:
+                Modified filename with infix inserted.
     """
     base, ext = os.path.splitext(filename)
     if ext in [".gz", ".zip"]:
@@ -243,19 +246,19 @@ def insert_processing_infix(
 def extract_archive(archive_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
     """Extracts an archive file (zip, tar, gzip).
 
-    Args:
-        archive_filepath (PathLike[AnyStr]):
-            Path to archive file.
+        Args:
+            archive_filepath (PathLike[AnyStr]):
+                Path to archive file.
 
-    Returns:
-        PathLike:
-            List of extracted file names or extracted filename for gzip.
+        Returns:
+            PathLike:
+                List of extracted file names or extracted filename for gzip.
 
-    Raises:
-        FileNotFoundError:
-            If the archive file does not exist.
-        IOError:
-            If the archive format is unsupported or extraction fails.
+        Raises:
+            FileNotFoundError:
+                If the archive file does not exist.
+            IOError:
+                If the archive format is unsupported or extraction fails.
     """
     archive_absolute_filepath = os.path.abspath(archive_filepath)
 
@@ -335,3 +338,20 @@ def get_platform() -> str:
     if sys_platform.startswith('win') or sys_platform.startswith('cygwin'):
         return 'windows'
     return 'unknown'
+
+
+def get_unique_path(parent_dir: PathLike[AnyStr] = '.') -> Path:
+    """Produce a Path object with directory name based on timestamp."""
+    default_outpath = Path(os.path.abspath(os.path.curdir))
+
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    unique_outpath = default_outpath / f"output_{timestamp}"
+
+    cnt = 1
+    while unique_outpath.exists():
+        unique_outpath = default_outpath / f"output_{timestamp}_{cnt}"
+        cnt += 1
+
+    os.makedirs(unique_outpath)
+
+    return unique_outpath

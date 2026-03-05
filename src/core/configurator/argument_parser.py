@@ -1,30 +1,32 @@
 """This module provides command-line argument parsing functionality
-for a sequencing data processing script.
+    for a sequencing data processing script.
 
-It defines:
-    - `IArgumentParser`:
-        An interface (via Protocol) specifying a `parse()` method
-        that returns parsed arguments.
-    - `ArgumentParser`:
-        Implements `IArgumentParser` using Python's `argparse` module
-        to define and parse command-line arguments.
+    It defines:
+        - `IArgumentParser`:
+            An interface (via Protocol) specifying a `parse()` method
+            that returns parsed arguments.
+        - `ArgumentParser`:
+            Implements `IArgumentParser` using Python's `argparse` module
+            to define and parse command-line arguments.
 
-Main features:
-    - Supports arguments for log file, output directory,
-    report language, number of threads,
-    and flags for demultiplexor and table manager.
-    - Provides a clear and extendable way to
-    handle command-line inputs for the script.
+    Main features:
+        - Supports arguments for log file, output directory,
+        report language, number of threads,
+        and flags for demultiplexor and table manager.
+        - Provides a clear and extendable way to
+        handle command-line inputs for the script.
 
-Usage:
-    Create an instance of `ArgumentParser` and call its `parse()` method
-    to get an `argparse.Namespace` object with all parsed arguments.
+    Usage:
+        Create an instance of `ArgumentParser` and call its `parse()` method
+        to get an `argparse.Namespace` object with all parsed arguments.
 """
 
 import os
 import argparse
 
 from typing import Protocol
+
+from src.core.base import get_unique_path
 
 
 class IArgumentParser(Protocol):
@@ -41,16 +43,16 @@ class IArgumentParser(Protocol):
 
 class ArgumentParser(IArgumentParser):
     """Implements argument parsing using argparse
-    for sequencing data processing.
+        for sequencing data processing.
 
-    Defines command-line arguments such as log file,
-    output directory, report language, etc.
+        Defines command-line arguments such as log file,
+        output directory, report language, etc.
     """
 
     @staticmethod
     def parse() -> argparse.Namespace:
         """Set a list of command line arguments and return
-        a compiled object stored these arguments attributes.
+            a compiled object stored these arguments attributes.
         """
         parser = argparse.ArgumentParser(
             description="This script does all processing "
@@ -60,15 +62,15 @@ class ArgumentParser(IArgumentParser):
             {'name': ('--log-file', '-l'), 'kwargs': {
                 'dest': 'logFilename',
                 'type': str,
-                'default': 'brca_analyzer.log',
+                'default': 'ngs-analyzer.log',
                 'help':
                     'Use non-default logger. '
-                    f'Default logger named {os.sep}"brca_analyzer.log"',
+                    f'Default logger named {os.sep}"ngs-analyzer.log"',
                 }},
             {'name': ('--output-dir', '-o'), 'kwargs': {
                 'dest': 'outputDir',
                 'type': str,
-                'required': True,
+                'default': None,
                 'help': 'Directory for output'}},
             # {'name': ('--report-language', '-L'), 'kwargs': {
             #    'dest': 'lang',
@@ -85,9 +87,7 @@ class ArgumentParser(IArgumentParser):
             {'name': ('--configuration', '-c'), 'kwargs': {
                 'dest': 'configFilepath',
                 'type': str,
-                'required': False,
-                'default': os.path.abspath(os.path.join(
-                    os.curdir, 'src', 'conf', 'config.ini')),
+                'default': None,
                 'help': 'This is a path to a single configuration file '
                 'for a certain run or a list of pathes '
                 'to configuration files, that maps to a list '
@@ -106,4 +106,15 @@ class ArgumentParser(IArgumentParser):
 
         for arg in arguments:
             parser.add_argument(*arg['name'], **arg['kwargs'])
-        return parser.parse_args()
+
+        namespace = parser.parse_args()
+
+        if namespace.outputDir is None:
+            namespace.outputDir = get_unique_path()
+
+        if namespace.configFilepath is None:
+            namespace.configFilepath = os.path.abspath(os.path.join(
+                os.curdir, 'src', 'conf', 'config.ini'
+            ))
+
+        return namespace

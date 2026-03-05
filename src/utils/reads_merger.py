@@ -1,4 +1,5 @@
-#!/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 r"""FAST(A|Q) Reads Merger
 
 This script consolidates paired-end FASTQ file

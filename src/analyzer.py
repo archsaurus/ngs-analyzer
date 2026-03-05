@@ -1,20 +1,20 @@
 """This module defines the Analyzer class,
-responsible for orchestrating
-the entire genomic data analysis pipeline.
+    responsible for orchestrating
+    the entire genomic data analysis pipeline.
 
-It manages data preparation, alignment, variant calling,
-annotation, and conversion steps, using various
-components like SequenceAligner, BamGrouper, BQSRPerformer,
-and variant callers. It also handles command execution,
-logging, and file management throughout the process.
+    It manages data preparation, alignment, variant calling,
+    annotation, and conversion steps, using various
+    components like SequenceAligner, BamGrouper, BQSRPerformer,
+    and variant callers. It also handles command execution,
+    logging, and file management throughout the process.
 
-Main Features:
-- Initializes with a configurator and command caller.
-- Prepares data by performing sequence alignment, grouping reads,
-and recalibration.
-- Analyzes samples by calling variants, annotating them,
-converting formats, and generating reports.
-- Manages paths, logs, and subprocess execution.
+    Main Features:
+    - Initializes with a configurator and command caller.
+    - Prepares data by performing sequence alignment, grouping reads,
+    and recalibration.
+    - Analyzes samples by calling variants, annotating them,
+    converting formats, and generating reports.
+    - Manages paths, logs, and subprocess execution.
 """
 
 # region Imports
@@ -40,9 +40,7 @@ from src.core.analyzer.variant_caller_factory import VariantCallerFactory
 
 
 class Analyzer(metaclass=SingletonMeta):
-    """
-        Singleton class that manages the entire
-        genomic data analysis pipeline.
+    """Singleton class that manages the entire genomic data analysis pipeline.
 
         This class orchestrates the steps involved
         in processing sequencing data, including data preparation,
@@ -75,29 +73,33 @@ class Analyzer(metaclass=SingletonMeta):
 
         if isinstance(cmd_caller, CommandExecutor):
             self.cmd_caller = cmd_caller
+
         elif callable(cmd_caller):
             self.cmd_caller = CommandExecutor(cmd_caller)
+
         elif cmd_caller is None:
             self.cmd_caller = os.system
+
         else:
             raise TypeError(
                 "Command caller must be callable, "
-                f"'{type(cmd_caller)}' given")
+                f"'{type(cmd_caller)}' given"
+            )
 
     def prepare_data(
         self,
         sample: SampleDataContainer
     ) -> SampleDataContainer:
         """Prepares raw sequencing data for analysis, including alignment,
-        read grouping, and recalibration.
+            read grouping, and recalibration.
 
-        Args:
-            sample (SampleDataContainer):
-                Sample with raw data and metadata.
+            Args:
+                sample (SampleDataContainer):
+                    Sample with raw data and metadata.
 
-        Returns:
-            SampleDataContainer:
-                Updated sample with paths to intermediate and final files.
+            Returns:
+                SampleDataContainer:
+                    Updated sample with paths to intermediate and final files.
         """
         bwa2mem = SequenceAligner(self.configurator)
         # TODO: picard BuildBamIndex      Generates a BAM index ".bai" file.
@@ -105,8 +107,10 @@ class Analyzer(metaclass=SingletonMeta):
 
         ptrimmer = PrimerCutter.create_primer_cutter(
             configurator=self.configurator,
-            cutter_name='ptrimmer')
+            cutter_name='ptrimmer'
+        )
 
+        # region deprecated cutPrimers call
         # cutPrimers = PrimerCutter.create_primer_cutter(
         #     configurator = self.configurator,
         #     cutter_name  = 'cutprimers')
@@ -116,26 +120,33 @@ class Analyzer(metaclass=SingletonMeta):
         # trimmomatic = AdapterTrimmer(self.configurator)
         # sample.r1_source, sample.r2_source = trimmomatic.perform(
         #     sample, executor=self.cmd_caller)
+        # endregion
 
         sample.r1_source, sample.r2_source = ptrimmer.perform(
-            sample, executor=self.cmd_caller)
+            sample, executor=self.cmd_caller
+        )
 
         sample.bam_filepath = bwa2mem.perform(
             sample,
             self.configurator.config['reference'],
-            executor=self.cmd_caller)
+            executor=self.cmd_caller
+        )
 
         sample.parse_regions_from_sam_file(
             configurator=self.configurator,
-            path=sample.bam_filepath)
+            path=sample.bam_filepath
+        )
 
         bam_index_filepath, sample.bam_filepath = picard_group_reads.perform(
-            sample, executor=self.cmd_caller)
+            sample, executor=self.cmd_caller
+        )
 
         gatk4_bqsr = BQSRPerformer(self.configurator)
 
         sample.bam_filepath = gatk4_bqsr.perform(
-            sample, executor=self.cmd_caller)
+            sample, executor=self.cmd_caller
+        )
+
         os.rename(bam_index_filepath, sample.bam_filepath+".bai")
 
         return sample
@@ -145,26 +156,30 @@ class Analyzer(metaclass=SingletonMeta):
     ) -> SampleDataContainer:
         """Performs variant calling, annotation, and format conversion.
 
-        Args:
-            sample (SampleDataContainer):
-                Sample with aligned data.
+            Args:
+                sample (SampleDataContainer):
+                    Sample with aligned data.
 
-        Returns:
-            SampleDataContainer:
-                Updated sample with annotated variants and reports.
+            Returns:
+                SampleDataContainer:
+                    Updated sample with annotated variants and reports.
         """
         pisces_variant_caller = VariantCallerFactory.create_caller(
-            caller_config={'name': 'pisces'}, configurator=self.configurator)
+            caller_config={'name': 'pisces'}, configurator=self.configurator
+        )
         snpeff = SnpEffAnnotationAdapter(self.configurator)
 
         sample.vcf_filepath = pisces_variant_caller.call_variant(
-            sample, executor=self.cmd_caller)
+            sample, executor=self.cmd_caller
+        )
 
         annotated_sample_filepath = snpeff.annotate(
-            sample, 'hg19', executor=self.cmd_caller)
+            sample, 'hg19', executor=self.cmd_caller
+        )
 
         convert2annovar_logpath = os.path.join(
-            sample.processing_logpath, "convert2annovar.log")
+            sample.processing_logpath, "convert2annovar.log"
+        )
 
         outpath = annotated_sample_filepath+'.avinput'
 
@@ -176,21 +191,22 @@ class Analyzer(metaclass=SingletonMeta):
             '-withfreq',
             '2>', convert2annovar_logpath,
             annotated_sample_filepath,
-            '>', outpath])
+            '>', outpath
+        ])
 
-        self.configurator.logger.info(
-            "Starting to execute convert2annovar")
-        self.configurator.logger.debug(
-            "Command: %s", convert2annovar_cmd)
+        self.configurator.logger.info("Starting to execute convert2annovar")
+        self.configurator.logger.debug("Command: %s", convert2annovar_cmd)
 
         execute(self.cmd_caller, convert2annovar_cmd)
 
         self.configurator.logger.info(
             "Convertion to avinput format successfully done. "
-            "See it's output on %s", outpath)
+            "See it's output on %s", outpath
+        )
 
         table_annovar_logpath = os.path.join(
-            sample.processing_logpath, "table_annovar.log")
+            sample.processing_logpath, "table_annovar.log"
+        )
 
         table_annovar_cmd = ' '.join([
             self.configurator.config['table_annovar'],
@@ -210,18 +226,20 @@ class Analyzer(metaclass=SingletonMeta):
         self.configurator.logger.info(
             "Starting to execute annotation with table_annovar")
         self.configurator.logger.debug(
-            "Command: %s",
-            table_annovar_cmd)
+            "Command: %s", table_annovar_cmd
+        )
 
         execute(self.cmd_caller, table_annovar_cmd)
 
         annotation_result_filepath = os.path.join(
-            sample.processing_path, sample.sid+".ann.hg19_multianno.csv")
+            sample.processing_path, sample.sid+".ann.hg19_multianno.csv"
+        )
 
         self.configurator.logger.info(
             "Annotation with annovar successfully done. "
             "See it's output on %s",
-            annotation_result_filepath)
+            annotation_result_filepath
+        )
 
         return sample
 
