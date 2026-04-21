@@ -139,17 +139,17 @@ class Configurator(metaclass=SingletonMeta):
         output_dir: PathLike[AnyStr]
     ) -> PathLike[AnyStr]:
         """Validates the output directory path,
-        creates it if it doesn't exist,
-        and handles existing directory conflicts based on user input.
+            creates it if it doesn't exist,
+            and handles existing directory conflicts based on user input.
 
-        Args:
-            output_dir (PathLike[AnyStr]):
-                Path to the desired output directory.
+            Args:
+                output_dir (PathLike[AnyStr]):
+                    Path to the desired output directory.
 
-        Returns:
-            PathLike[AnyStr]:
-                Absolute path to the validated or created
-                output directory.
+            Returns:
+                PathLike[AnyStr]:
+                    Absolute path to the validated or created
+                    output directory.
         """
         output_dir = os.path.abspath(os.path.normpath(output_dir))
 

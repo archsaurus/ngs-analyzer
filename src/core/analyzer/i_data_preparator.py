@@ -19,7 +19,7 @@ class IDataPreparator(Protocol):
     with a specific signature.
     """
 
-    def perform(self) -> Any:
+    def perform(self, *args, **kwargs) -> Any:
         """Performs the data preparation steps.
 
         Raises:

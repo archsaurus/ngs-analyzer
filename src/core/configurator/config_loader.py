@@ -103,9 +103,10 @@ class ConfigLoader(LoggerMixin, IConfigLoader):
                     config_dict[path_value] = conf[target_section][path_value]
             else:
                 raise ConfigurationError(
-                    "Can't parse configuration file under path '%s'. "
-                    "See the project config documentation",
-                    base_config_filepath)
+                    "Can't parse configuration file "
+                    f"under path '{base_config_filepath}'. "
+                    "See the project config documentation"
+                )
 
             return config_dict
 

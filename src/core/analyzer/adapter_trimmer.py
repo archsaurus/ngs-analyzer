@@ -1,34 +1,34 @@
 """This module contains the AdapterTrimmer class,
-which manages the removal of adapter sequences from sequencing
-reads using the Trimmomatic program.
+    which manages the removal of adapter sequences from sequencing
+    reads using the Trimmomatic program.
 
-This preprocessing step is crucial for ensuring that primer sequences
-are positioned close to the read ends,
-allowing for more accurate downstream analysis.
+    This preprocessing step is crucial for ensuring that primer sequences
+    are positioned close to the read ends,
+    allowing for more accurate downstream analysis.
 
-Classes:
-    - AdapterTrimmer:
-    Responsible for executing adapter trimming on sequencing reads.
-    Utilizes Trimmomatic, supports both single-end and paired-end modes,
-    and logs the trimming process.
+    Classes:
+        - AdapterTrimmer:
+        Responsible for executing adapter trimming on sequencing reads.
+        Utilizes Trimmomatic, supports both single-end and paired-end modes,
+        and logs the trimming process.
 
-Main Features:
-    - Validates the existence of input read files.
-    - Constructs and executes the Trimmomatic command
-    with appropriate parameters.
-    - Handles output directories and logging.
-    - Returns paths to the processed, adapter-trimmed read files.
+    Main Features:
+        - Validates the existence of input read files.
+        - Constructs and executes the Trimmomatic command
+        with appropriate parameters.
+        - Handles output directories and logging.
+        - Returns paths to the processed, adapter-trimmed read files.
 
-Dependencies:
-    - src.core.base:
-        Provides logging and command execution utilities.
-    - src.core.sample_data_container:
-        Defines the SampleDataContainer class.
-    - src.core.analyzer.i_data_preparator:
-        Interface for data preparator classes.
+    Dependencies:
+        - src.core.base:
+            Provides logging and command execution utilities.
+        - src.core.sample_data_container:
+            Defines the SampleDataContainer class.
+        - src.core.analyzer.i_data_preparator:
+            Interface for data preparator classes.
 
-This class is designed to be integrated into sequencing data pipelines,
-automating the adapter trimming process with configurable options.
+    This class is designed to be integrated into sequencing data pipelines,
+    automating the adapter trimming process with configurable options.
 """
 
 # region Imports
@@ -51,14 +51,14 @@ from src.core.analyzer.i_data_preparator import IDataPreparator
 
 class AdapterTrimmer(LoggerMixin, IDataPreparator):
     """The AdapterTrimmer class is responsible for
-    removing adapter sequences
-    from sequencing reads using the Trimmomatic program.
-    This step is essential to ensure that primer sequences are
-    positioned close to the read ends,
-    enabling more accurate identification.
+        removing adapter sequences
+        from sequencing reads using the Trimmomatic program.
+        This step is essential to ensure that primer sequences are
+        positioned close to the read ends,
+        enabling more accurate identification.
 
-    Inherits from LoggerMixin and IDataPreparator,
-    implementing the data preparation interface.
+        Inherits from LoggerMixin and IDataPreparator,
+        implementing the data preparation interface.
     """
 
     def __init__(self, configurator):
@@ -78,23 +78,23 @@ class AdapterTrimmer(LoggerMixin, IDataPreparator):
         executor: Union[CommandExecutor, callable]
     ) -> list[PathLike[AnyStr]]:
         """Executes adapter sequence trimming
-        on the provided sequencing sample.
+            on the provided sequencing sample.
 
-        Args:
-            sample (SampleDataContainer):
-                The container holding sample sequencing data,
-                including paths to raw reads.
-            executor (Union[CommandExecutor, callable]):
-                The command executor or callable
-                responsible for running system commands.
+            Args:
+                sample (SampleDataContainer):
+                    The container holding sample sequencing data,
+                    including paths to raw reads.
+                executor (Union[CommandExecutor, callable]):
+                    The command executor or callable
+                    responsible for running system commands.
 
-        Returns:
-            list[PathLike[AnyStr]]:
-                A list of paths to the processed (trimmed) read files,
-                specifically the paired read files.
+            Returns:
+                list[PathLike[AnyStr]]:
+                    A list of paths to the processed (trimmed) read files,
+                    specifically the paired read files.
 
-        Raises:
-            FileNotFoundError: If any of the input read files are missing.
+            Raises:
+                FileNotFoundError: If any of the input read files are missing.
         """
 
         if not os.path.exists(sample.R1_source):

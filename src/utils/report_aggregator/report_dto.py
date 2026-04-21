@@ -1,28 +1,29 @@
-"""This module defines the ReportDTO class,
-which serves as a comprehensive data container for report entries.
+"""This module defines the ReportDTO class, which serves as a comprehensive
+    data container for report entries.
 
-The ReportDTO class inherits from IReportDataContainer and is implemented
-as a dataclass. It aggregates various pieces of information,
-including a unique sample ID, variant coverage details, gene details,
-1000 Genomes project data, and ClinVar clinical significance.
+    The ReportDTO class inherits from IReportDataContainer and is implemented
+    as a dataclass. It aggregates various pieces of information,
+    including a unique sample ID, variant coverage details, gene details,
+    1000 Genomes project data, and ClinVar clinical significance.
 
-The class provides a method to convert the entire report data
-into a dictionary format, suitable for reporting, exporting,
-or further processing.
+    The class provides a method to convert the entire report data
+    into a dictionary format, suitable for reporting, exporting,
+    or further processing.
 
-Attributes:
-    id (str):
-        Unique identifier for the sample.
-    variant_coverage (VariantCoverageDTO):
-        Coverage information for a genetic variant.
-    gene_details (GeneDetailsDTO):
-        Detailed gene annotation information.
-    one_thousand_genomics (str):
-        Data from the 1000 Genomes project.
-    clinvar_clinical_sign (str):
-        Clinical significance annotation from ClinVar.
+    Attributes:
+        id (str):
+            Unique identifier for the sample.
+        variant_coverage (VariantCoverageDTO):
+            Coverage information for a genetic variant.
+        gene_details (GeneDetailsDTO):
+            Detailed gene annotation information.
+        one_thousand_genomics (str):
+            Data from the 1000 Genomes project.
+        clinvar_clinical_sign (str):
+            Clinical significance annotation from ClinVar.
 """
 
+# region Imports
 from dataclasses import dataclass
 
 from src.utils.report_aggregator.i_report_data_container import \
@@ -31,8 +32,10 @@ from src.utils.report_aggregator.i_report_data_container import \
 from src.utils.report_aggregator.variant_coverage_dto import VariantCoverageDTO
 from src.utils.report_aggregator.gene_details_dto import GeneDetailsDTO
 
+# endregion
 
-@dataclass
+
+@dataclass(slots=True)
 class ReportDTO(IReportDataContainer):
     """Data container for report entries."""
     id: str

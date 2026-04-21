@@ -7,7 +7,7 @@
 import os
 
 from src.configurator import Configurator
-from src.analyzer import Analyzer
+from src.analyzer import BRCAAnalyzer
 from src.core.sample_data_factory import SampleDataFactory
 
 from src.utils.report_aggregator import report_aggregator
@@ -27,9 +27,10 @@ def main():
     configurator = Configurator()
     main_logger = configurator.logger
 
-    brca1_analyzer = Analyzer(
+    brca1_analyzer = BRCAAnalyzer(
         configurator=configurator,
-        cmd_caller=os.system)
+        cmd_caller=os.system
+    )
 
     if configurator.args.table_manager_flag:
         table_manager.main()
@@ -59,15 +60,22 @@ def main():
                         f"Skip '{sample_id.strip()}' sample")
                     continue
 
-                brca1_analyzer.prepare_data(sample)
+                try:
+                    brca1_analyzer.prepare_data(sample)
+
+                except Exception as e:
+                    main_logger.critical(e)
+                    raise e
+
                 brca1_analyzer.analyze(sample)
 
                 report_aggregator.aggregate_report(sample=sample)
+
     else:
         runtime_error_msg = (
-            "The analyzer requires a sample list to function. "
-            "Provide the sample list in the TableManager.dump-file field "
-            "of the configuration file."
+            'The analyzer requires a sample list to function. '
+            'Provide the sample list in the TableManager.dump-file field '
+            'of the configuration file.'
         )
 
         main_logger.critical(runtime_error_msg)

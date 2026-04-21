@@ -1,30 +1,30 @@
 """This module contains classes for variant calling
-in genomic data analysis.
+    in genomic data analysis.
 
-It defines a base class `VariantCaller` and specific implementations
-for different variant calling tools such as
-    Pisces, \
-    GATK's UnifiedGenotyper, \
-    and FreeBayes.
+    It defines a base class `VariantCaller` and specific implementations
+    for different variant calling tools such as
+        Pisces, \
+        GATK's UnifiedGenotyper, \
+        and FreeBayes.
 
-The classes provide methods to execute variant calling commands,
-handle logging, and manage configurations.
+    The classes provide methods to execute variant calling commands,
+    handle logging, and manage configurations.
 
-The design promotes modularity and extensibility,
-allowing easy integration of additional
-variant callers by subclassing `VariantCaller`.
+    The design promotes modularity and extensibility,
+    allowing easy integration of additional
+    variant callers by subclassing `VariantCaller`.
 
-The use of a configurator object ensures flexible parameter management
-across different tools.
+    The use of a configurator object ensures flexible parameter management
+    across different tools.
 
-Usage:
-    - Instantiate the specific variant caller class with the configuration.
-    - Call the `call_variant()` method with a sample data container \
-    and executor to perform variant calling.
+    Usage:
+        - Instantiate the specific variant caller class with the configuration.
+        - Call the `call_variant()` method with a sample data container \
+        and executor to perform variant calling.
 
-Note:
-    - The `UnifiedGenotyperVariantCaller` is deprecated; \
-    consider updating to newer GATK tools.
+    Note:
+        - The `UnifiedGenotyperVariantCaller` is deprecated; \
+        consider updating to newer GATK tools.
 """
 
 # region Imports
@@ -51,13 +51,13 @@ from src.core.analyzer.i_variant_caller import IVariantCaller
 class VariantCaller(LoggerMixin, IVariantCaller):
     """Base class for variant callers.
 
-    Provides a common interface and shared functionality
-    for specific variant caller implementations.
-    Manages configuration and logging setup.
+        Provides a common interface and shared functionality
+        for specific variant caller implementations.
+        Manages configuration and logging setup.
 
-    Attributes:
-        configurator (Configurator):
-            Configuration object containing parameters and paths.
+        Attributes:
+            configurator (Configurator):
+                Configuration object containing parameters and paths.
     """
 
     def __init__(
@@ -66,13 +66,13 @@ class VariantCaller(LoggerMixin, IVariantCaller):
         logger: Optional[logging.Logger] = None
     ):
         """Initializes the VariantCaller with
-        configuration and optional logger.
+            configuration and optional logger.
 
-        Args:
-            configurator (Configurator):
-                Configuration object with paths and parameters.
-            logger (Optional[logging.Logger]):
-                Logger for logging.
+            Args:
+                configurator (Configurator):
+                    Configuration object with paths and parameters.
+                logger (Optional[logging.Logger]):
+                    Logger for logging.
         """
         self.configurator = configurator
         super().__init__(
@@ -83,22 +83,22 @@ class VariantCaller(LoggerMixin, IVariantCaller):
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable]
     ):
-        """Method to perform variant calling.
-        To be implemented in subclasses.
+        """Method to perform variant calling. To be implemented in subclasses.
         """
         raise NotImplementedError(
-            "Subclasses should implement this method.")
+            "Subclasses should implement this method."
+        )
 
 
 class PiscesVariantCaller(VariantCaller):
     """Variant caller implementation using Pisces.
 
-    Executes the Pisces command-line tool
-    for variant calling on a given sample.
+        Executes the Pisces command-line tool
+        for variant calling on a given sample.
 
-    Methods:
-        call_variant(sample, executor):
-            Performs variant calling and returns output VCF path.
+        Methods:
+            call_variant(sample, executor):
+                Performs variant calling and returns output VCF path.
     """
 
     def __init__(
@@ -133,18 +133,17 @@ class PiscesVariantCaller(VariantCaller):
         base_logpath = os.path.join(sample.processing_logpath, 'PiscesLogs')
 
         cmd = ' '.join([
-            'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1',
+            'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 '
             'LD_LIBRARY_PATH="/usr/local/lib"'
             if get_platform() == "linux" else '',
             self.configurator.config['pisces'],
-            # '--coveragemethod, f'"exact"',
             # '--sbfilter' str(0.1),
             '--coveragemethod', 'exact',  # 'exact' (greedy) or 'approximate'.
             '--multiprocess', 'true',
             '--gvcf false',
-            '--minbasecallquality', str(10),
-            '--minmapquality', str(10),
-            '--minimumvariantfrequency', str(0.01),
+            '--minbasecallquality', str(1),  # 10
+            '--minmapquality', str(1),  # 10
+            '--minimumvariantfrequency', str(0.0001),  # 0.01
             '--minvariantqscore', str(1),
             '--bampaths', sample.bam_filepath,
             '--genomefolders', os.path.dirname(
@@ -158,7 +157,8 @@ class PiscesVariantCaller(VariantCaller):
 
         self.logger.info(
             "Variant calling successfully done. See it's log on %s",
-            base_logpath)
+            base_logpath
+        )
 
         return os.path.splitext(sample.bam_filepath)[0]+".vcf"
 
@@ -166,12 +166,12 @@ class PiscesVariantCaller(VariantCaller):
 class UnifiedGenotyperVariantCaller(VariantCaller):
     """Deprecated GATK UnifiedGenotyper variant caller.
 
-    Issue warning indicating deprecation.
-    Intended for use with older GATK versions.
+        Issue warning indicating deprecation.
+        Intended for use with older GATK versions.
 
-    Methods:
-        call_variant(sample, executor):
-            Placeholder with warning; does not perform actual calling.
+        Methods:
+            call_variant(sample, executor):
+                Placeholder with warning; does not perform actual calling.
     """
 
     def call_variant(
@@ -181,7 +181,8 @@ class UnifiedGenotyperVariantCaller(VariantCaller):
     ) -> None:
         self.logger.warning(
             "GATK UnifiedGenotyper depricated since version 4.0.0. "
-            "Configure older versions for using it")
+            "Configure older versions for using it"
+        )
 
 
 class FreebayesVariantCaller(VariantCaller):

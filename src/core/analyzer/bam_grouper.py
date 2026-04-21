@@ -102,7 +102,8 @@ class BamGrouper(LoggerMixin, IDataPreparator):
             self.configurator.config['picard'], 'AddOrReplaceReadGroups',
             '-INPUT', os.path.join(
                 sample.processing_path,
-                sample.bam_filepath),
+                sample.bam_filepath,
+            ),
             '-OUTPUT', picard_grouping_outpath+'.bam',
             '-SORT_ORDER', 'coordinate',
             '-CREATE_INDEX', 'TRUE',

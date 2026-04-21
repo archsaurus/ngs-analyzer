@@ -26,20 +26,34 @@
 
 #### On Linux/Mac:
 
+For simple use of the program:
+
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -r requirements/requirements.txt
+```
+
+and for Development purposes:
+
+```bash
+python -m pip install -r requirements/requirements-dev.txt
 ```
 
 ##### On Windows:
 
 ```powershell
-C:\Path\To\Python\python.exe -m pip install -r requirements.txt
+C:\Path\To\Python\python.exe -m pip install -r requirements\requirements.txt
+```
+
+For Developers:
+
+```powershell
+C:\Path\To\Python\python.exe -m pip install -r requirements\requirements-dev.txt
 ```
 
 Or, if python is in your PATH environment varriable,
 
 ```powershell
-python.exe -m pip install -r requirements.txt
+python.exe -m pip install -r requirements\requirements.txt
 ```
 
 ### External Dependencies
@@ -49,6 +63,8 @@ The project also relies on several external tools. Please ensure these are insta
 [bcl2fastq2](https://support.illumina.com) | Converts Illumina BCL files to FASTQ files.
 
 [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) | Fast aligner for sequencing reads.
+
+[bwa](https://github.com/lh3/bwa) | Burrow-Wheeler Aligner for short-read alignment.
 
 [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic) | Read trimming tool.
 

@@ -1,38 +1,38 @@
 """This module processes genetic variant data and \
-generates a comprehensive report.
+    generates a comprehensive report.
 
-Overview:
-    The script reads annotation and
-    coverage data for a given biological sample,
-    consolidates variant information with annotations,
-    and outputs a summarized report in Excel format.
+    Overview:
+        The script reads annotation and
+        coverage data for a given biological sample,
+        consolidates variant information with annotations,
+        and outputs a summarized report in Excel format.
 
-Main functionalities:
-    - Parses configuration to determine target genomic regions.
-    - Performs coverage analysis on specified regions.
-    - Reads variant annotation data from a text file.
-    - Extracts relevant variant and annotation details.
-    - Calculates coverage metrics for each variant.
-    - Compiles the data into a structured report using a data container.
-    - Exports the report as an Excel file for further analysis.
+    Main functionalities:
+        - Parses configuration to determine target genomic regions.
+        - Performs coverage analysis on specified regions.
+        - Reads variant annotation data from a text file.
+        - Extracts relevant variant and annotation details.
+        - Calculates coverage metrics for each variant.
+        - Compiles the data into a structured report using a data container.
+        - Exports the report as an Excel file for further analysis.
 
-Usage:
-    This script is intended to be run as
-        a standalone module, with the `main()`
-    function invoked with a `SampleDataContainer`
-        object representing the sample.
+    Usage:
+        This script is intended to be run as
+            a standalone module, with the `main()`
+        function invoked with a `SampleDataContainer`
+            object representing the sample.
 
-Dependencies:
-    - pandas:
-        for data manipulation and Excel output.
-    - os:
-        for filesystem operations.
-    - Other project-specific modules imported with `from . import *`.
+    Dependencies:
+        - pandas:
+            for data manipulation and Excel output.
+        - os:
+            for filesystem operations.
+        - Other project-specific modules imported with `from . import *`.
 
-Note:
-    Ensure that all required input files
-    (e.g., annotation text files) are available, and that configuration
-    settings are properly set up before running.
+    Note:
+        Ensure that all required input files
+        (e.g., annotation text files) are available, and that configuration
+        settings are properly set up before running.
 """
 
 # region Imports
@@ -66,23 +66,23 @@ from src.utils.report_aggregator.annotation_data_container import \
 def parse_variant_section(row: str) -> IReportDataContainer:
     r"""Parse a variant section string into a VariantDataContainer object.
 
-    Args:
-        row (str):
-            A tab-separated string containing variant information.
+        Args:
+            row (str):
+                A tab-separated string containing variant information.
 
-    Returns:
-        IReportDataContainer:
-            An instance of VariantDataContainer
-            populated with parsed data.
+        Returns:
+            IReportDataContainer:
+                An instance of VariantDataContainer
+                populated with parsed data.
 
-    Example:
-        row = "chr1\t12345\t12345\tA\tT\tmissense_variant\
-            \tGENE1\tGeneName1\tmissense\tp.Val600Glu\t12345\
-            \tDiseaseX\tDatabaseY\treviewed\tpathogenic\
-            \tDiseaseY\tDatabaseZ\treviewed\toncogenic\
-            \tHigh\tLow\tModerate\tYes\t..."
+        Example:
+            row = "chr1\t12345\t12345\tA\tT\tmissense_variant\
+                \tGENE1\tGeneName1\tmissense\tp.Val600Glu\t12345\
+                \tDiseaseX\tDatabaseY\treviewed\tpathogenic\
+                \tDiseaseY\tDatabaseZ\treviewed\toncogenic\
+                \tHigh\tLow\tModerate\tYes\t..."
 
-        variant = parse_variant_section(row)
+            variant = parse_variant_section(row)
     """
     var_fields = row.split('\t')
 
@@ -122,18 +122,18 @@ def parse_variant_section(row: str) -> IReportDataContainer:
 
 class FirstAnnotation(AnnotationDataContainer):
     """Represents a detailed annotation of a genetic mutation
-    with specific gene and transcript information.
+        with specific gene and transcript information.
 
-    This class encapsulates annotation data including gene name,
-    mutation identifier, transcript biotype, exon information,
-    and HGVS nomenclature for both cDNA and protein changes.
+        This class encapsulates annotation data including gene name,
+        mutation identifier, transcript biotype, exon information,
+        and HGVS nomenclature for both cDNA and protein changes.
 
-    It provides a method to convert the annotation data into a dictionary
-    format for further processing or output.
+        It provides a method to convert the annotation data into a dictionary
+        format for further processing or output.
 
-    Note:
-        This class was developed to meet the specific data representation
-        needs of a laboratory.
+        Note:
+            This class was developed to meet the specific data representation
+            needs of a laboratory.
     """
 
     def to_dict(self):
@@ -149,18 +149,18 @@ class FirstAnnotation(AnnotationDataContainer):
 
 class NextAnnotation(AnnotationDataContainer):
     """Represent a simplified annotation of a genetic mutation \
-    focusing on core transcript information.
+        focusing on core transcript information.
 
-    This class includes essential annotation details such as gene name,
-    mutation identifier, transcript biotype, exon information,
-    and HGVS nomenclature for cDNA and protein changes.
+        This class includes essential annotation details such as gene name,
+        mutation identifier, transcript biotype, exon information,
+        and HGVS nomenclature for cDNA and protein changes.
 
-    It provides a method to convert the data
-    into a dictionary format suitable for downstream applications.
+        It provides a method to convert the data
+        into a dictionary format suitable for downstream applications.
 
-    Note:
-        This class was developed to meet the specific data representation
-        needs of a particular laboratory.
+        Note:
+            This class was developed to meet the specific data representation
+            needs of a particular laboratory.
     """
 
     def to_dict(self):
@@ -175,26 +175,26 @@ class NextAnnotation(AnnotationDataContainer):
 
 def parse_annotation_section(row: str) -> list[IReportDataContainer]:
     """Parses an annotation section string
-    into an AnnotationDataContainer object.
+        into an AnnotationDataContainer object.
 
-    Args:
-        row (str):
-            A string containing annotation information,
-            with fields separated by '|'.
-            The string may contain additional data separated by ';LOF=',
-                which is ignored here.
+        Args:
+            row (str):
+                A string containing annotation information,
+                with fields separated by '|'.
+                The string may contain additional data separated by ';LOF=',
+                    which is ignored here.
 
-    Returns:
-        IReportDataContainer:
-            An instance of AnnotationDataContainer
-                populated with parsed data.
+        Returns:
+            IReportDataContainer:
+                An instance of AnnotationDataContainer
+                    populated with parsed data.
 
-    Example:
-        row = "A|missense_variant|MODERATE|GeneX|ID123|missense|rs123\
-            |protein_coding|exon2|c.123A>T|p.Lys41Asn|cDNA info|CDS info\
-            |Ala|100bp|info,more"
+        Example:
+            row = "A|missense_variant|MODERATE|GeneX|ID123|missense|rs123\
+                |protein_coding|exon2|c.123A>T|p.Lys41Asn|cDNA info|CDS info\
+                |Ala|100bp|info,more"
 
-        annotation = parse_annotation_section(row)
+            annotation = parse_annotation_section(row)
     """
     annotations = []
     sub_annotations = row.split(";LOF=")[0].split('|,')
@@ -237,29 +237,34 @@ def parse_annotation_section(row: str) -> list[IReportDataContainer]:
 def aggregate_report(sample: SampleDataContainer = None):
     """Main processing function.
 
-    Reads annotation data,
-    performs coverage analysis,
-    and generates a report.
+        Reads annotation data,
+        performs coverage analysis,
+        and generates a report.
     """
     logger = Configurator().logger
 
     txt_path = os.path.abspath(os.path.join(
-        sample.processing_path, sample.sid+".ann.hg19_multianno.txt"))
+        sample.processing_path, sample.sid+".ann.hg19_multianno.txt"
+    ))
 
     if not os.path.exists(sample.report_path):
         os.makedirs(sample.report_path)
 
     logger.info(
-        f"Starting to perform report aggregation for sample {sample.sid}")
+        f"Starting to perform report aggregation for sample {sample.sid}"
+    )
+
     logger.debug(
         "Report aggregator configuration:\n"
         "Target regions:\n\t(Region, mpileup filepath): "
-        f"""{'\n\t(Region, mpileup filepath): '.join(
-            [f"({region}, {path})" for (region, path) in sample.target_regions]
-            )}\n""")
+        f"""{'\n\t(Region, mpileup filepath): '.join([
+            f"({regions_data})" for regions_data in sample.target_regions
+        ])}\n"""
+    )
 
     preparator = AmpliconCoverageDataPreparator(
-        Configurator(), filter_func=mean)
+        Configurator(), filter_func=mean
+    )
     preparator.perform(sample, os.system)
 
     report_list = []
@@ -274,16 +279,30 @@ def aggregate_report(sample: SampleDataContainer = None):
                     line.split(";ANN="),
                     [parse_variant_section, parse_annotation_section])
 
-                data = preparator.count_variant_coverage(
-                    variant.chromosome.replace('chr', '').strip(),
-                    variant.start,
-                    variant.reference,
-                    variant.alternate)
-                if data:
-                    depth, alt_count, alt_coverage = data
+                if sample.target_regions is not None:
+                    try:
+                        data = preparator.count_variant_coverage(
+                            variant.chromosome.replace('chr', '').strip(),
+                            variant.start,
+                            variant.reference,
+                            variant.alternate
+                        )
 
-                    if alt_count < 1:
-                        continue
+                        if data:
+                            depth, alt_count, alt_coverage = data
+
+                            if alt_count < 1:
+                                continue
+
+                    except Exception as exc:
+                        logger.warning(
+                            f'An error {exc} occured while processing {sample}'
+                        )
+
+                        depth = alt_count = alt_coverage = -1
+
+                else:
+                    depth = alt_count = alt_coverage = 'undefined'
 
                 report_list.append(ReportDTO(
                     sample.sid,
@@ -292,7 +311,9 @@ def aggregate_report(sample: SampleDataContainer = None):
                         variant.start,
                         variant.reference,
                         variant.alternate,
-                        depth - alt_count if depth != -1 else -1,
+                        depth - alt_count if depth != -1 and isinstance(
+                            depth, (int, float)
+                        ) else -1,
                         alt_count,
                         alt_coverage),
                     GeneDetailsDTO(annotations),
@@ -300,11 +321,21 @@ def aggregate_report(sample: SampleDataContainer = None):
                     variant.clinvar.clinical_sign))
 
     report_dataframe = pandas.DataFrame([report_column for report_column in [
-        report.to_dict() for report in report_list]])
+        report.to_dict() for report in report_list
+    ]])
 
-    report_dataframe.to_excel(excel_writer=f"{
-            os.path.join(sample.report_path, sample.sid+'.report.xlsx')}",
-        sheet_name="main", index=False)
+    report_filepath = os.path.join(
+        sample.report_path, sample.sid+'.report.xlsx'
+    )
+
+    report_dataframe.to_excel(
+        excel_writer=f"{report_filepath}",
+        sheet_name="main", index=False
+    )
+
+    logger.info(
+        f'Report agregation has done. See the report at \'{report_filepath}\''
+    )
 
 
 if __name__ == '__main__':
