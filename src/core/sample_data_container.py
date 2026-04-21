@@ -16,9 +16,6 @@ from typing import AnyStr
 
 from src.configurator import Configurator
 from src.utils.util import reg_tuple_generator
-
-from src.utils.header_alias_mapper import get_pinned_regions
-
 # endregion
 
 
@@ -199,34 +196,6 @@ class SampleDataContainer:
             ))
 
             print(self.target_regions)
-
-        except (FileNotFoundError, PermissionError, IOError, OSError) as e:
-            if logger is not None:
-                logger.critical(
-                    "Can't parse intervals from '%s' "
-                    "because an error '%s' occurred",
-                    path if path is not None else default_sam_filepath, e)
-                raise e
-
-    def parse_regions_new(
-        self,
-        configurator: Configurator,
-        aliases_map_filepath: AnyStr,
-        path: AnyStr = None,
-        logger: logging.Logger = None
-    ):
-        default_sam_filepath = os.path.abspath(os.path.join(
-            self.processing_path, self.sid + ".sam"
-        ))
-
-        try:
-            self.target_regions = get_pinned_regions(
-                sam_filepath=default_sam_filepath,
-                alias_filepath=aliases_map_filepath
-            )
-
-            # [reg_tuple_generator(configurator, interval)
-            # for interval in target_chromosomes]
 
         except (FileNotFoundError, PermissionError, IOError, OSError) as e:
             if logger is not None:
