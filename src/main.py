@@ -1,11 +1,13 @@
-#!/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """Main module for the data analysis pipeline."""
 
 # region Imports
 import os
 
 from src.configurator import Configurator
-from src.analyzer import Analyzer
+from src.analyzer import BRCAAnalyzer
 from src.core.sample_data_factory import SampleDataFactory
 
 from src.utils.report_aggregator import report_aggregator
@@ -18,19 +20,17 @@ from src import table_manager
 def main():
     """Main function to initiate and run the data analysis pipeline.
 
-    Loads configuration, initializes logging, dependency handler,
-    and the BRCA1 analyzer. Optionally runs additional modules
-    (e.g., table management or demultiplexing).
+        Loads configuration, initializes logging, dependency handler,
+        and the BRCA1 analyzer. Optionally runs additional modules
+        (e.g., table management or demultiplexing).
     """
-    configurator = Configurator(
-        config_path=os.path.abspath(os.path.join(
-            os.path.curdir, 'src', 'conf', 'config.ini')))
-
+    configurator = Configurator()
     main_logger = configurator.logger
 
-    brca1_analyzer = Analyzer(
+    brca1_analyzer = BRCAAnalyzer(
         configurator=configurator,
-        cmd_caller=os.system)
+        cmd_caller=os.system
+    )
 
     if configurator.args.table_manager_flag:
         table_manager.main()
@@ -38,7 +38,10 @@ def main():
     if configurator.args.demultiplexor_flag:
         demultiplexor_adapter.main()
 
-    sample_factory = SampleDataFactory(logger=main_logger)
+    sample_factory = SampleDataFactory(
+        outpath=configurator.output_dir,
+        logger=main_logger
+    )
 
     tm_config = configurator.parse_configuration(
         base_config_filepath=configurator.args.configFilepath,
@@ -57,19 +60,26 @@ def main():
                         f"Skip '{sample_id.strip()}' sample")
                     continue
 
-                sample_base_outpath = os.path.abspath(os.path.join(
-                    configurator.output_dir, sample_id))
+                try:
+                    brca1_analyzer.prepare_data(sample)
 
-                sample.processing_logpath = os.path.join(
-                    sample_base_outpath, "log")
-                sample.processing_path = sample_base_outpath
-                sample.report_path = os.path.join(
-                    sample_base_outpath, "report")
+                except Exception as e:
+                    main_logger.critical(e)
+                    raise e
 
-                brca1_analyzer.prepare_data(sample)
                 brca1_analyzer.analyze(sample)
 
                 report_aggregator.aggregate_report(sample=sample)
+
+    else:
+        runtime_error_msg = (
+            'The analyzer requires a sample list to function. '
+            'Provide the sample list in the TableManager.dump-file field '
+            'of the configuration file.'
+        )
+
+        main_logger.critical(runtime_error_msg)
+        raise RuntimeError(runtime_error_msg)
 
 
 if __name__ == '__main__':

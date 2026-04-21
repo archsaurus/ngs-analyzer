@@ -1,22 +1,22 @@
 """This module provides functions for validating and potentially creating
-file and directory paths.  It aims to ensure consistent path handling
-throughout a larger system, preventing errors related to missing or
-incorrectly specified paths.  The module leverages the `IPathValidator`
-interface for flexibility and maintainability.
+    file and directory paths.  It aims to ensure consistent path handling
+    throughout a larger system, preventing errors related to missing or
+    incorrectly specified paths.  The module leverages the `IPathValidator`
+    interface for flexibility and maintainability.
 
-Functions:
-    - validate_path:
-        Validates a path and optionally creates it if it doesn't exist.
+    Functions:
+        - validate_path:
+            Validates a path and optionally creates it if it doesn't exist.
 
-Classes:
-    - FileValidator:
-        Validates file paths, checking for existence
-        and potentially raising exceptions.
-    - DirectoryValidator:
-        Validates directory paths, checking for
-        existence and potentially creating directories.
-    - IPathValidator:
-        Abstract base class defining the contract for path validation.
+    Classes:
+        - FileValidator:
+            Validates file paths, checking for existence
+            and potentially raising exceptions.
+        - DirectoryValidator:
+            Validates directory paths, checking for
+            existence and potentially creating directories.
+        - IPathValidator:
+            Abstract base class defining the contract for path validation.
 """
 
 # region Imports
@@ -64,44 +64,51 @@ class LoggingConfigurator(ILoggingConfigurator):
         log_path: PathLike[AnyStr] = os.curdir,
         args: argparse.Namespace = None
     ):
-        """Initializes the LoggingConfigurator with dependencies
-        and parameters.
+        """Initializes the LoggingConfigurator with deps and parameters.
 
-        Args:
-            path_validator (IPathValidator):
-                Instance for verifying log file path.
-            log_path (PathLike[AnyStr], optional):
-                Base directory for logs. Defaults to current directory.
-            args (argparse.Namespace, optional):
-                Parsed command-line arguments.
+            Args:
+                path_validator (IPathValidator):
+                    Instance for verifying log file path.
+                log_path (PathLike[AnyStr], optional):
+                    Base directory for logs. Defaults to current directory.
+                args (argparse.Namespace, optional):
+                    Parsed command-line arguments.
         """
-        self.args = args if args is not None else None
-        self.log_path = log_path
+        self.args = args
+
+        if args is not None:
+            self.log_path = args.logFilename
+        else:
+            self.log_path = log_path
+
         self.path_validator = path_validator
+
+        self.set_logger()
 
     def set_logger(
         self,
         silent: bool = False
     ) -> logging.Logger:
-        """Sets up logging configuration,
-        creating log files and handlers.
+        """Sets up logging configuration, creating log files and handlers.
 
-        Args:
-            silent (bool):
-                If True, disables console output. Defaults to False.
+            Args:
+                silent (bool):
+                    If True, disables console output. Defaults to False.
 
-        Returns:
-            logging.Logger:
-                Configured logger instance.
+            Returns:
+                logging.Logger:
+                    Configured logger instance.
 
-        Raises:
-            SystemExit:
-                If verification or creation of log path fails.
+            Raises:
+                SystemExit:
+                    If verification or creation of log path fails.
         """
         try:
             if self.args is not None:
                 base_logpath = os.path.abspath(os.path.join(
-                    self.log_path, self.args.logFilename))
+                    self.args.outputDir, self.log_path or self.args.logFilename
+                ))
+
             else:
                 base_logpath = os.path.abspath(os.path.join(
                     self.log_path, 'default_analyzer.log'))

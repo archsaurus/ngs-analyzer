@@ -1,29 +1,29 @@
-#!/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """This script aggregates individual sample reports
-into a single consolidated table.
+    into a single consolidated table.
 
-Usage:
-    python script_name.py \
-        --input <input_directory> \
-        --output <output_directory>
+    Usage:
+        python script_name.py \
+            --input <input_directory> \
+            --output <output_directory>
 
-Description:
-    The script takes as input a directory containing per-sample report
-    files in Excel format.
-    It reads all '.xlsx' files from the specified output directory,
-    concatenates their data into one combined DataFrame, and saves
-    the result as 'report.xlsx' in the same output directory.
+    Description:
+        The script takes as input a directory containing per-sample report
+        files in Excel format.
+        It reads all '.xlsx' files from the specified output directory,
+        concatenates their data into one combined DataFrame, and saves
+        the result as 'report.xlsx' in the same output directory.
 
-Arguments:
-    --input / -i: Path to the directory containing per-sample reports.
-    --output / -o: Directory for the output consolidated report.
+    Arguments:
+        --input / -i: Path to the directory containing per-sample reports.
+        --output / -o: Directory for the output consolidated report.
 
-Note:
-    - Ensure that the specified output directory contains \
-    the report files in '.xlsx' format.
-    - The script uses pandas for reading \
-    and concatenating Excel files.
-
+    Note:
+        - Ensure that the specified output directory contains \
+        the report files in '.xlsx' format.
+        - The script uses pandas for reading \
+        and concatenating Excel files.
 """
 
 import argparse
@@ -39,16 +39,25 @@ if __name__ == "__main__":
                     'processed reports to one table')
 
     arguments = [
-        {'name': ('--input', '-i'), 'kwargs': {
-            'dest': 'inputDir',
-            'type': str,
-            'help': 'Path to directory, containing per sample reports',
-            'required':  True}},
-        {'name': ('--output', '-o'), 'kwargs': {
-            'dest': 'outputDir',
-            'type': str,
-            'help': 'directory for output',
-            'required': True}}]
+        {
+            'name': ('--input', '-i'),
+            'kwargs': {
+                'dest': 'inputDir',
+                'type': str,
+                'help': 'Path to directory, containing per sample reports',
+                'required':  True
+            }
+        },
+        {
+            'name': ('--output', '-o'),
+            'kwargs': {
+                'dest': 'outputDir',
+                'type': str,
+                'help': 'directory for output',
+                'required': True
+            }
+        }
+    ]
 
     for arg in arguments:
         parser.add_argument(*arg['name'], **arg['kwargs'])

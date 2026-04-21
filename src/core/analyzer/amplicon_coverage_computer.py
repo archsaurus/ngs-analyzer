@@ -1,37 +1,39 @@
 """This module defines the AmpliconCoverageDataPreparator class
-and associated components for analyzing sequencing data coverage
-within specified genomic regions.
+    and associated components for analyzing sequencing data coverage
+    within specified genomic regions.
 
-Modules and Classes:
-- PositionNotFoundError:
-    Custom exception raised when a specific genomic
-    position cannot be found in a mpileup file.
+    Modules and Classes:
+    - PositionNotFoundError:
+        Custom exception raised when a specific genomic
+        position cannot be found in a mpileup file.
 
-- AmpliconCoverageDataPreparator:
-    A class responsible for generating mpileup files
-    for given sample regions, calculating coverage metrics,
-    and analyzing variant coverage at specific positions.
-    It inherits from LoggerMixin for logging capabilities
-    and IDataPreparator to adhere to a data preparation interface.
+    - AmpliconCoverageDataPreparator:
+        A class responsible for generating mpileup files
+        for given sample regions, calculating coverage metrics,
+        and analyzing variant coverage at specific positions.
+        It inherits from LoggerMixin for logging capabilities
+        and IDataPreparator to adhere to a data preparation interface.
 
-Key functionalities:
-    - Generating mpileup files for sample regions using samtools.
-    - Counting coverage over regions based on mpileup data.
-    - Counting variant coverage at specific genomic positions.
-    - Performing the entire process of mpileup generation
-    and coverage calculation.
-    - Managing configuration and executing system commands for data processing.
+    Key functionalities:
+        - Generating mpileup files for sample regions using samtools.
+        - Counting coverage over regions based on mpileup data.
+        - Counting variant coverage at specific genomic positions.
+        - Performing the entire process of mpileup generation
+        and coverage calculation.
+        - Managing configuration and executing system commands
+        for data processing.
 
-Usage:
-    Instantiate the class with a configuration object and a filter function,
-    then call `perform()` with a sample data container, target regions,
-    and an executor to process coverage analysis for sequencing samples.
+    Usage:
+        Instantiate the class with a configuration object and
+        a filter function, then call `perform()` with a sample data container,
+        target regions, and an executor to process coverage analysis
+        for sequencing samples.
 
-Note:
-    Ensure that the configuration file contains correct paths
-    and parameters, especially for 'samtools' and 'bedtools'.
-    The class also relies on the presence of mpileup files
-    and the ability to generate them via command-line tools.
+    Note:
+        Ensure that the configuration file contains correct paths
+        and parameters, especially for 'samtools' and 'bedtools'.
+        The class also relies on the presence of mpileup files
+        and the ability to generate them via command-line tools.
 """
 
 # region Imports
@@ -67,14 +69,14 @@ class PositionNotFoundError(Exception):
 
 class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     """The AmpliconCoverageDataPreparator class is designed to
-    generate mpileup files for specified regions of a sequenced sample
-    and calculate coverage metrics within those regions.
-    It also provides methods to count coverage over regions and analyze
-    variant coverage at specific positions.
+        generate mpileup files for specified regions of a sequenced sample
+        and calculate coverage metrics within those regions.
+        It also provides methods to count coverage over regions and analyze
+        variant coverage at specific positions.
 
-    Inherits from LoggerMixin and IDataPreparator,
-    ensuring logging capabilities and adherence to
-    data preparation interface.
+        Inherits from LoggerMixin and IDataPreparator,
+        ensuring logging capabilities and adherence to
+        data preparation interface.
     """
 
     def __init__(
@@ -83,19 +85,20 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         filter_func: callable
     ):
         """Initializes the AmpliconCoverageDataPreparator
-        with configuration and filter function.
+            with configuration and filter function.
 
-        Args:
-            configurator (Configurator):
-                The configuration object containing settings and paths.
-            filter_func (callable):
-                A function to filter coverage data, e.g.,
-                calculating average or median.
+            Args:
+                configurator (Configurator):
+                    The configuration object containing settings and paths.
+                filter_func (callable):
+                    A function to filter coverage data, e.g.,
+                    calculating average or median.
         """
         super().__init__(logger=configurator.logger)
 
         self.configurator = configurator
         self.config = self.configurator.parse_configuration(
+            base_config_filepath=self.configurator.args.configFilepath,
             target_section='samtools')
 
         # a file with lines in format
@@ -114,14 +117,14 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     ) -> list[PathLike[AnyStr]]:
         """Generates mpileup files for specified regions of the sample.
 
-        Args:
-            sample (SampleDataContainer):
-                The sample containing sequencing data.
-            executor (callable):
-                The command executor or function to run system commands.
+            Args:
+                sample (SampleDataContainer):
+                    The sample containing sequencing data.
+                executor (callable):
+                    The command executor or function to run system commands.
 
-        Returns:
-            list of PathLike: Paths to the generated mpileup files.
+            Returns:
+                list of PathLike: Paths to the generated mpileup files.
         """
         mp_files = []
 
@@ -129,32 +132,44 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
             sample.processing_path,
             sample.sid+".sorted.read_groups.recalibrated.bam")
 
-        for region, out_name in sample.target_regions:
-            out_path = os.path.join(
-                sample.processing_path, f"{sample.sid}.{out_name}")
+        try:
+            for region, out_name in sample.target_regions:
+                out_path = os.path.join(
+                    sample.processing_path, f"{sample.sid}.{out_name}")
 
-            cmd = ' '.join([
-                self.configurator.config['samtools'], "mpileup",
-                sample.bam_filepath,
-                # skip bases with baseQ/BAQ smaller than value was given
-                # '--min-BQ', self.config['min-bq'],
-                '--no-BAQ' if 'no-BAQ' in self.config else '',
-                '--max-depth', self.config['max-depth'],
-                '--region', "chr"+region,
-                '--reference', self.configurator.config['reference'],
-                '--count-orphans',  # do not discard anomalous read pairs
-                '--output', out_path])
+                cmd = ' '.join([
+                    self.configurator.config['samtools'], "mpileup",
+                    sample.bam_filepath,
+                    # skip bases with baseQ/BAQ smaller than value was given
+                    # '--min-BQ', self.config['min-bq'],
+                    '--no-BAQ' if 'no-BAQ' in self.config else '',
+                    '--max-depth', self.config['max-depth'],
+                    '--region', region,
+                    '--reference', self.configurator.config['reference'],
+                    '--count-orphans',  # do not discard anomalous read pairs
+                    '--output', out_path])
 
-            execute(executor, cmd)
+                execute(executor, cmd)
 
-            depth_filter(
-                filepath=out_path,
-                depth=5,
-                logger=self.logger)
+                try:
+                    depth_filter(
+                        filepath=out_path,
+                        depth=2,
+                        logger=self.logger
+                    )
 
-            mp_files.append(out_path)
+                    mp_files.append(out_path)
 
-        return mp_files
+                except FileNotFoundError:
+                    self.logger.info(
+                        'Skip mpileup performing for "%s"', out_path
+                    )
+
+            return mp_files
+
+        except TypeError:
+            return None
+
 
     def count_region_coverage(
         self,
@@ -163,22 +178,21 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         start: Union[int, str],
         end: Union[int, str]
     ) -> float:
-        """Counts the coverage within a specified region
-            from a mpileup file.
+        """Counts the coverage within a specified region from a mpileup file.
 
-        Args:
-            mpileup (PathLike):
-                Path to the mpileup file.
-            chromosome (int or str):
-                Chromosome identifier.
-            start (int or str):
-                Start position of the region.
-            end (int or str):
-                End position of the region.
+            Args:
+                mpileup (PathLike):
+                    Path to the mpileup file.
+                chromosome (int or str):
+                    Chromosome identifier.
+                start (int or str):
+                    Start position of the region.
+                end (int or str):
+                    End position of the region.
 
-        Returns:
-            float:
-                The filtered average coverage within the region.
+            Returns:
+                float:
+                    The filtered average coverage within the region.
         """
         try:
             start, end = int(start), int(end)
@@ -233,10 +247,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
     @staticmethod
     def count_indels(data: str) -> dict[str, int]:
-        """
-            Counts the number of insertions and deletions
-            for two replicates (r1 and r2) based on
-            the input data string.
+        """Counts the number of insertions and deletions
+            for two replicates (r1 and r2) based on the input data string.
 
             Args:
                 data (str):
@@ -285,41 +297,41 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         alt: str
     ) -> tuple[int, int, float]:
         """Calculates coverage information and variant counts
-        at a specific genomic position from mpileup data.
+            at a specific genomic position from mpileup data.
 
-        Args:
-            chromosome (int or str):
-                The chromosome identifier (number or string).
-            position (int or str):
-                The genomic position to analyze.
-            ref (str):
-                The reference allele at the position.
-            alt (str):
-                The alternative allele at the position.
+            Args:
+                chromosome (int or str):
+                    The chromosome identifier (number or string).
+                position (int or str):
+                    The genomic position to analyze.
+                ref (str):
+                    The reference allele at the position.
+                alt (str):
+                    The alternative allele at the position.
 
-        Returns:
-            tuple: \\
-                depth (int):
-                    The total read depth at the position. \\
-                total_alt_count (int):
-                    The total count of reads supporting
-                    the alternative allele, including indels. \\
-                alt_ratio (float):
-                    The ratio of reads supporting the alternative allele
-                    to total depth, rounded to 3 decimal places.
+            Returns:
+                tuple: \\
+                    depth (int):
+                        The total read depth at the position. \\
+                    total_alt_count (int):
+                        The total count of reads supporting
+                        the alternative allele, including indels. \\
+                    alt_ratio (float):
+                        The ratio of reads supporting the alternative allele
+                        to total depth, rounded to 3 decimal places.
 
-        Note:
-            - This method searches for the specified position
-            in a chromosome-specific mpileup file.
-            - It uses memory-mapped file access for efficiency.
-            - It counts reference matches ('.' and ',')
-            and mismatches (based on alt allele).
-            - It also calls `count_indels()` to count insertions
-            and deletions supporting the variant.
-            - Returns (-1, -1, -1) if the position is not found
-            or an error occurs.
-            - Raises FileNotFoundError if the mpileup file
-            for the chromosome does not exist.
+            Note:
+                - This method searches for the specified position
+                in a chromosome-specific mpileup file.
+                - It uses memory-mapped file access for efficiency.
+                - It counts reference matches ('.' and ',')
+                and mismatches (based on alt allele).
+                - It also calls `count_indels()` to count insertions
+                and deletions supporting the variant.
+                - Returns (-1, -1, -1) if the position is not found
+                or an error occurs.
+                - Raises FileNotFoundError if the mpileup file
+                for the chromosome does not exist.
         """
         self.logger.debug(
             "Starting to determine (%s:%s>%s, %s) variant coverage",
@@ -478,19 +490,20 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         """Executes the process of generating mpileup files for
             target regions and calculates coverage metrics.
 
-        Args:
-            sample (SampleDataContainer):
-                The sequencing data sample.
-            executor (callable):
-                Function or command executor to run system commands.
+            Args:
+                sample (SampleDataContainer):
+                    The sequencing data sample.
+                executor (callable):
+                    Function or command executor to run system commands.
 
-        Returns:
-            list:
-                Results containing coverage metrics for each region.
+            Returns:
+                list:
+                    Results containing coverage metrics for each region.
         """
         mpileup_data_list = self.generate_mpileup(
             sample=sample,
-            executor=os.system)
+            executor=os.system
+        )
 
         for file_path in mpileup_data_list:
             chromosome = file_path[-2:]
@@ -500,6 +513,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
             self.coords = os.path.join(
                 sample.processing_path,
                 sample.sid+".coords")
+
             touch(self.coords)
 
             try:

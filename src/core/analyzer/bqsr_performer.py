@@ -1,26 +1,26 @@
 """This module contains the BQSRPerformer class, which manages
-Base Quality Score Recalibration (BQSR) using GATK's BaseRecalibrator
-and ApplyBQSR tools.
+    Base Quality Score Recalibration (BQSR) using GATK's BaseRecalibrator
+    and ApplyBQSR tools.
 
-It performs the following key steps:
-    1. Generates a recalibration table with BaseRecalibrator. \
-    2. Applies the recalibration to produce a recalibrated BAM file \
-    with ApplyBQSR.
+    It performs the following key steps:
+        1. Generates a recalibration table with BaseRecalibrator. \
+        2. Applies the recalibration to produce a recalibrated BAM file \
+        with ApplyBQSR.
 
-The process enhances variant calling accuracy by adjusting
-quality scores based on known sites and covariates,
-improving downstream analyses.
+    The process enhances variant calling accuracy by adjusting
+    quality scores based on known sites and covariates,
+    improving downstream analyses.
 
-Classes:
-    - BQSRPerformer:
-        Executes BQSR by running GATK commands, managing logs, \
-        and handling input/output files.
+    Classes:
+        - BQSRPerformer:
+            Executes BQSR by running GATK commands, managing logs, \
+            and handling input/output files.
 
-Main Features:
-    - Constructs command-line strings for GATK tools.
-    - Executes commands with logging and error handling.
-    - Handles input sample data and target regions.
-    - Renames output files post-processing.
+    Main Features:
+        - Constructs command-line strings for GATK tools.
+        - Executes commands with logging and error handling.
+        - Handles input sample data and target regions.
+        - Renames output files post-processing.
 """
 
 # region Imports
@@ -47,13 +47,13 @@ from src.core.analyzer.i_data_preparator import IDataPreparator
 class BQSRPerformer(LoggerMixin, IDataPreparator):
     """Handles Base Quality Score Recalibration (BQSR) using GATK's tools.
 
-    Performs two main steps:
-        1. Generates a recalibration table with BaseRecalibrator.
-        2. Applies the recalibration with ApplyBQSR
-        to produce a corrected BAM file.
+        Performs two main steps:
+            1. Generates a recalibration table with BaseRecalibrator.
+            2. Applies the recalibration with ApplyBQSR
+            to produce a corrected BAM file.
 
-    This process improves the accuracy of variant calling
-    by adjusting quality scores based on known sites and covariates.
+        This process improves the accuracy of variant calling
+        by adjusting quality scores based on known sites and covariates.
     """
 
     def __init__(
@@ -61,11 +61,11 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
         configurator: Configurator
     ):
         """Initializes the BQSRPerformer
-        with configuration and target regions.
+            with configuration and target regions.
 
-        Args:
-            configurator (Configurator):
-                Contains paths and parameters.
+            Args:
+                configurator (Configurator):
+                    Contains paths and parameters.
         """
         super().__init__(logger=configurator.logger)
         self.configurator = configurator
@@ -77,19 +77,19 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
     ) -> PathLike[AnyStr]:
         """Executes BQSR using GATK's BaseRecalibrator and ApplyBQSR.
 
-        Args:
-            sample (SampleDataContainer):
-                The sample data to process.
-            executor (Union[CommandExecutor, callable]):
-                Function or object to run commands.
+            Args:
+                sample (SampleDataContainer):
+                    The sample data to process.
+                executor (Union[CommandExecutor, callable]):
+                    Function or object to run commands.
 
-        Returns:
-            PathLike[AnyStr]:
-                Path to the recalibrated BAM file.
+            Returns:
+                PathLike[AnyStr]:
+                    Path to the recalibrated BAM file.
 
-        Raises:
-            Propagates exceptions from command execution
-            or file operations.
+            Raises:
+                Propagates exceptions from command execution
+                or file operations.
         """
         base_recal_logpath = os.path.abspath(os.path.join(
             sample.processing_logpath,
@@ -106,10 +106,10 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             '--reference', self.configurator.config['reference'],
             # TODO: Have to make it works with a list of sites
             '--known-sites', self.configurator.config['annotation-database'],
-            ' '.join(
-                [f"--intervals {interval}" for interval in
-                    [sample.target_regions[i][0] for i in range(
-                        len(sample.target_regions))]]),
+            # ' '.join(
+            #     [f"--intervals {interval}" for interval in
+            #         [sample.target_regions[i][0] for i in range(
+            #             len(sample.target_regions))]]),
             '2>', base_recal_logpath,
             '>>', base_recal_logpath])
 
@@ -151,7 +151,8 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
 
             self.logger.info(
                 "ApplyBQSR completed successfully. See the log at '%s'",
-                apply_bqsr_logpath)
+                apply_bqsr_logpath
+            )
 
             return recalibrated_outpath
         except (
@@ -164,6 +165,7 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             self.logger.critical(
                 "Error '%s' occurred at line '%s' during BQSR",
                 repr(e),
-                e.__traceback__.tb_frame.f_lineno)
+                e.__traceback__.tb_frame.f_lineno
+            )
 
             sys.exit(os.EX_SOFTWARE)
