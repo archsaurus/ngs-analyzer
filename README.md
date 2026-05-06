@@ -120,16 +120,27 @@ For the build alias, you can use "UCSC hg38" as an example.
 The project also relies on several external tools. Please ensure these are installed and their paths in your configuration.
 
 [bcl2fastq2](https://support.illumina.com) | Converts Illumina BCL files to FASTQ files.
+
 [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) | Fast aligner for sequencing reads.
+
 [bwa](https://github.com/lh3/bwa) | Burrow-Wheeler Aligner for short-read alignment (for systems with less then 64 Gb RAM).
+
 [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic) | Read trimming tool.
+
 [pTrimmer](https://github.com/DMU-lilab/pTrimmer) | Adapter trimming and quality control.
+
 [Picard](https://broadinstitute.github.io/picard/) | Toolkit for manipulating high-throughput sequencing data.
+
 [Genome Analysis Toolkit](https://gatk.broadinstitute.org/hc/en-us) | Genome Analysis Toolkit for variant discovery.
+
 [samtools](http://www.htslib.org/) | Utilities for manipulating alignments and variant calling.
+
 [bedtools](https://github.com/arq5x/bedtools2) | Genomic interval manipulation.
+
 [SnpEff](http://pcingola.github.io/SnpEff/) | Variant annotation and effect prediction.
+
 [Pisces](https://github.com/Illumina/Pisces) | Variant caller optimized for amplicon sequencing.
+
 [Annovar](https://annovar.openbioinformatics.org/en/latest/) | Variant annotation tool.
 
 Please follow the official installation instructions for each tool required for your needs to ensure proper setup.
