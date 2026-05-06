@@ -5,7 +5,7 @@
 ![Codecov](https://codecov.io/gh/archsaurus/ngs-analyzer/branch/dev/graph/badge.svg)
 ![Python Version](https://img.shields.io/badge/python-3.13%2B-blue)
 ![pip Version](https://img.shields.io/badge/pip-25.2%2B-green)
-![Java Version](https://img.shields.io/badge/java_SE-24%2B-red)
+![Java Version](https://img.shields.io/badge/java_SE-25%2B-red)
 
 ---
 
@@ -35,7 +35,7 @@
 
 - [Python 3.13+](https://www.python.org/)
 - [pip 25.2+](https://pypi.org/project/pip/)
-- [Java 8](https://www.java.com/)
+- [JDK 25](https://www.java.com/)
 - C/C++ compiler ([GCC](https://gcc.gnu.org/), [Clang](https://clang.llvm.org/), [MinGV](https://mingw-w64.org/), etc.)
 
 
@@ -47,33 +47,21 @@ To isolate project dependencies, it is recommended to use a virtual environment.
 
 ---
 
-Use the following command for create virtual environment
+Use the following command to create virtual environment:
 
 ```sh
-python3 -m venv venv
+python -m venv venv # Linux / Mac
+
+C:\Path\To\Python\python.exe -m venv venv # Windows
 ```
-
-on Linux / Mac or
-
-```sh
-C:\Path\To\Python\python.exe -m venv venv
-```
-
-on Windows.
 
 Activate the virtual environment with
 
 ```sh
-source venv/bin/activate
+source venv/bin/activate # Linux / Mac
+
+.\venv\Scripts\activate # Windows
 ```
-
-on Linux / Mac and
-
-```sh
-.\venv\Scripts\activate
-```
-
-on Windows.
 
 #### Fetching requirements
 
@@ -81,13 +69,14 @@ on Windows.
 
 For simple use of the program:
 
-```bash
+```sh
+python -m pip install --upgrade pip
 python -m pip install -r requirements/requirements.txt
 ```
 
 and for Development purposes:
 
-```bash
+```sh
 python -m pip install -r requirements/requirements-dev.txt
 ```
 
@@ -139,7 +128,7 @@ The project also relies on several external tools. Please ensure these are insta
 
 [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) | Fast aligner for sequencing reads.
 
-[bwa](https://github.com/lh3/bwa) | Burrow-Wheeler Aligner for short-read alignment (for systems with less then 64 Gb RAM).
+[bwa](https://github.com/lh3/bwa) | Burrow-Wheeler Aligner for short-read alignment (for systems with less than 64 Gb RAM).
 
 [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic) | Read trimming tool.
 
@@ -165,7 +154,12 @@ Please follow the official installation instructions for each tool required for 
 
 ## Contributing
 
-Contributions are welcome! Please open issues or pull requests.
+Contributions are welcome:
+
+1. Fork repo
+2. Create feature branch  
+3. Open PR to `dev`
+4. Issues welcome!
 
 ---
 
