@@ -9,6 +9,22 @@
 
 ---
 
+## Navigation
+
+- [Overview](#overview)
+- [Installation](#installation)
+  - [Prerequisites](#prerequisites)
+  - [Python Requirements](#python-requirements)
+    - [Environment Setup and Virtual Environment Activation](#environment-setup-and-virtual-environment-activation)
+    - [Fetching requirements](#fetching-requirements)
+      - [On Linux / Mac](#on-linux--mac)
+      - [On Windows](#on-windows)
+- [Preparing the Reference Genome for the Pipeline](#preparing-the-reference-genome-for-the-pipeline)
+- [External Dependencies](#external-dependencies)
+- [Contributing](#contributing)
+
+---
+
 ## Overview
 
 **NGS Analyzer** is a comprehensive python-based pipeline designed for amplicon-based NGS data analysis. It streamlines processes such as demultiplexing, read alignment, variant calling, and annotation, providing researchers with a powerful tool for genomics research.
