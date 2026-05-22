@@ -177,6 +177,9 @@ class SampleDataContainer:
 
                     sn_value = sn_field.split(':')[1]
 
+                    if sn_value.startswith('chr'):
+                        sn_value = sn_value[3:]
+
                     chromosome_number = _alias_map.get(sn_value, None)
                     if chromosome_number is None:
                         _logger = logger if logger else configurator.logger
