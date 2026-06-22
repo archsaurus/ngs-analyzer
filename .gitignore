@@ -18,4 +18,9 @@ test.py
 requirements/*.in
 config.ini
 
+*.log
+output*
+
+notes.md
+
 src/tests*
