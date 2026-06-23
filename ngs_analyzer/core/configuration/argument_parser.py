@@ -121,7 +121,7 @@ class ArgumentParser(IArgumentParser):
 
         if namespace.configFilepath is None:
             namespace.configFilepath = os.path.abspath(os.path.join(
-                os.curdir, 'src', 'conf', 'config.ini',
+                os.curdir, 'config.ini',
             ))
 
         return namespace
