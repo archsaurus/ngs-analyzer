@@ -7,8 +7,7 @@ providing logging capabilities and adhering to the \
     demultiplexer adapter interface.
 
 The adapter handles configuration validation, \
-command construction, \
-and execution of the bcl2fastq command.
+command construction, and execution of the bcl2fastq command.
 """
 
 import logging
@@ -50,7 +49,7 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
         self,
         config: dict[str, str],
         cmd_caller: Optional[callable] = os.system,
-        logger: logging.Logger = None
+        logger: logging.Logger = None,
     ):
         super().__init__()
 
@@ -71,14 +70,12 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
 
     @staticmethod
     def _check_config(config: dict[str, str],) -> tuple[bool, str]:
-        """Validates the provided configuration dictionary.
+        """Validate the provided configuration dictionary.
 
         Args:
-            config (dict[str, str]): \
-                The configuration dictionary to validate.
+            config (dict[str, str]): The configuration dictionary to validate.
         Returns: tuple[bool, str] contains
-            flag (bool): \
-                True if the configuration is valid, False otherwise.
+            flag (bool): True if the configuration is valid, False otherwise.
             message (str): \
                 A message indicating the validation result \
                     or describing missing keys.
@@ -86,30 +83,31 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
         if not isinstance(config, dict):
             return (
                 False,
-                f"Expected 'config' to be a dict, got {type(config)}")
+                f'Expected "config" to be a dict, got {type(config)}')
 
         required_keys = [
             'demultiplexor',
             'input-dir',
             'output-dir',
             'sample-sheet',
-            'runfolder-dir']
+            'runfolder-dir',
+        ]
 
         missing_keys = [k for k in required_keys if k not in config]
         if missing_keys:
             return (
-                False, f"Missing required configuration keys: {missing_keys}")
+                False, f'Missing required configuration keys: {missing_keys}')
 
-        return True, "OK"
+        return True, 'OK'
 
     def _add_param(
         self,
         arguments: list,
         arg_name: str,
         config_key=None,
-        is_flag: bool = False
+        is_flag: bool = False,
     ):
-        """Adds a command-line argument to the list \
+        """Add a command-line argument to the list \
             based on configuration and parameters.
 
         Args:
@@ -135,7 +133,7 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
         key = config_key or arg_name.lstrip('-')
 
         if is_flag:
-            if self.config[key] == "True":
+            if self.config[key] == 'True':
                 arguments.append(arg_name)
         else:
             val = self.config.get(key)
@@ -143,7 +141,7 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
                 arguments.extend([arg_name, str(val)])
 
     def demultiplex(self) -> None:
-        """Constructs and executes the demultiplexing command \
+        """Construct and executes the demultiplexing command \
             based on the current configuration.
 
         Note:
@@ -153,7 +151,6 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             Uses 'self.cmd_caller' to execute the command \
                 with the constructed arguments.
         """
-
         cmd_args = [self.config['demultiplexor']]
 
         required = [
@@ -162,12 +159,14 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'output-dir',
             'sample-sheet',
             'tiles',
-            'use-bases-mask'
+            'use-bases-mask',
         ]
 
-        _ = [self._add_param(
-            cmd_args, arg_name=f"--{arg}", config_key=arg)
-            for arg in required]
+        _ = [
+            self._add_param(
+                cmd_args, arg_name=f'--{arg}', config_key=arg,
+            ) for arg in required
+        ]
 
         defaults = {
             'min-log-level': 'INFO',
@@ -178,11 +177,11 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'mask-short-adapter-reads': 22,
             'adapter-stringency': 0.9,
             'fastq-compression-level': 4,
-            'barcode-mismatches': 1
+            'barcode-mismatches': 1,
         }
 
         for key in defaults:
-            self._add_param(cmd_args, arg_name=f"--{key}", config_key=key)
+            self._add_param(cmd_args, arg_name=f'--{key}', config_key=key)
 
         for flag in [
             'ignore-missing-bcls',
@@ -194,24 +193,24 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
             'create-fastq-for-index-reads',
             'find-adapters-with-sliding-window',
             'no-bgzf-compression',
-            'no-lane-splitting'
+            'no-lane-splitting',
         ]:
             self._add_param(
-                cmd_args,
-                arg_name=f"--{flag}",
-                config_key=flag,
-                is_flag=True)
+                cmd_args, arg_name=f'--{flag}',
+                config_key=flag, is_flag=True,
+            )
 
         for other_optional in [
             'intensities-dir',
             'stats-dir',
             'interop-dir',
-            'reports-dir'
+            'reports-dir',
         ]:
             self._add_param(
                 cmd_args,
-                arg_name=f"--{other_optional}",
-                config_key=other_optional)
+                arg_name=f'--{other_optional}',
+                config_key=other_optional,
+            )
 
         _ = [print(arg) for arg in cmd_args]
 
@@ -220,6 +219,6 @@ class BclToFastqAdapter(LoggerMixin, IDemultiplexorAdapter):
     def extract_barcodes(
         self,
         r1_path: PathLike[AnyStr],
-        r2_path: Optional[PathLike[AnyStr]] = None
+        r2_path: Optional[PathLike[AnyStr]] = None,
     ) -> PathLike[AnyStr]:
         return None

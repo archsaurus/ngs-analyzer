@@ -49,9 +49,9 @@ class CutPrimers(LoggerMixin, IDataPreparator):
     def perform(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> tuple[PathLike[AnyStr], PathLike[AnyStr]]:
-        """Executes the primer cutting process on the provided sample data.
+        """Execute the primer cutting process on the provided sample data.
 
         This method constructs a command to run an external \
             primer cutting script with the specified parameters, \
@@ -101,18 +101,15 @@ class CutPrimers(LoggerMixin, IDataPreparator):
         cmd = ' '.join([
             self.configurator.config['python'],
             self.configurator.config['cutprimers'],
-            '-r1',   sample.r1_source,
-            '-tr1',  tr1,
-            '-utr1', utr1,
-            '-r2',   sample.r2_source,
-            '-tr2',  tr2,
-            '-utr2', utr2,
+            '-r1', sample.r1_source, '-tr1', tr1, '-utr1', utr1,
+            '-r2', sample.r2_source, '-tr2', tr2, '-utr2', utr2,
             '-pr15', self.configurator.config['primer15'],
             '-pr13', self.configurator.config['primer13'],
             '-pr25', self.configurator.config['primer25'],
             '-pr23', self.configurator.config['primer23'],
             '-stat', primer_cutter_logpath,
-            '-t',    str(self.configurator.args.threads)])
+            '-t', str(self.configurator.args.threads),
+        ])
 
         # '''cmd_bam = ' '.join([
         #   self.configurator.config['python'],
@@ -131,13 +128,13 @@ class CutPrimers(LoggerMixin, IDataPreparator):
         #   '-t', str(self.configurator.args.threads)])
         # '''
 
-        self.configurator.logger.info("Executing cutPrimers command")
-        self.configurator.logger.debug("Command: %s", cmd)
+        self.configurator.logger.info('Executing cutPrimers command')
+        self.configurator.logger.debug('Command: %s', cmd)
 
         execute(executor, cmd)
 
         self.configurator.logger.info(
-            "cutPrimers completed successfully. See the log at '%s'",
+            'cutPrimers completed successfully. See the log at "%s"',
             primer_cutter_logpath)
 
         return tr1, tr2
@@ -157,9 +154,9 @@ class PTrimmer(LoggerMixin, IDataPreparator):
     def perform(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> tuple[PathLike[AnyStr], PathLike[AnyStr]]:
-        """Performs primer trimming on the sample's read files.
+        """Perform primer trimming on the sample's read files.
 
         Args:
             sample (SampleDataContainer):
@@ -171,11 +168,13 @@ class PTrimmer(LoggerMixin, IDataPreparator):
             Tuple of paths to the trimmed R1 and R2 files.
         """
         primer_cutter_logpath = os.path.join(
-            sample.processing_logpath, 'pTrimmer.log')
+            sample.processing_logpath, 'pTrimmer.log',
+        )
 
         if not os.path.exists(os.path.dirname(primer_cutter_logpath)):
-            os.makedirs(os.path.abspath(
-                os.path.dirname(primer_cutter_logpath)))
+            os.makedirs(
+                os.path.abspath(os.path.dirname(primer_cutter_logpath)),
+            )
 
         if not os.path.exists(primer_cutter_logpath):
             with open(primer_cutter_logpath, 'a', encoding='utf-8'):
@@ -202,16 +201,17 @@ class PTrimmer(LoggerMixin, IDataPreparator):
             '--kmer', str(4),
             '>', primer_cutter_logpath,
             '2>&1',
-            '--gzip'])
+            '--gzip',
+        ])
 
-        self.configurator.logger.info("Executing pTrimmer command")
-        self.configurator.logger.debug("Command: %s", cmd)
+        self.configurator.logger.info('Executing pTrimmer command')
+        self.configurator.logger.debug('Command: %s', cmd)
 
         execute(executor, cmd)
 
         self.configurator.logger.info(
-            "pTrimmer completed successfully."
-            f"See the log at '{primer_cutter_logpath}'"
+            'pTrimmer completed successfully.'
+            f'See the log at "{primer_cutter_logpath}"',
         )
 
         return r1_trimmed, r2_trimmed
@@ -219,6 +219,7 @@ class PTrimmer(LoggerMixin, IDataPreparator):
 
 class PrimerCutter(LoggerMixin):
     """Factory class for creating primer-related data preparator instances.
+
     Provides a method to instantiate specific primer cutter
     classes based on name.
     """
@@ -226,7 +227,7 @@ class PrimerCutter(LoggerMixin):
     def __init__(
         self,
         configurator: Configurator,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         super().__init__(logger=logger or configurator.logger)
         self.configurator = configurator
@@ -234,10 +235,9 @@ class PrimerCutter(LoggerMixin):
     @staticmethod
     def create_primer_cutter(
         configurator: Configurator,
-        cutter_name: Optional[str] = 'cutprimers'
+        cutter_name: Optional[str] = 'cutprimers',
     ) -> IDataPreparator:
-        """Factory method to instantiate a primer cutter object
-        based on the cutter_name.
+        """Instantiate a primer cutter object based on the cutter_name.
 
         Args:
             configurator (Configurator):
@@ -255,5 +255,5 @@ class PrimerCutter(LoggerMixin):
                 return PTrimmer(configurator)
             case _:
                 raise NotImplementedError(
-                    f"There is no any cutter with name '{cutter_name}'"
+                    f'There is no any cutter with name "{cutter_name}"',
                 )

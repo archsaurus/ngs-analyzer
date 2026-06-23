@@ -9,14 +9,11 @@ import pandas
 
 from ngs_analyzer.core.base.mixins.logger_mixin import LoggerMixin
 from ngs_analyzer.core.table_manager.i_table_manager import ITableManager
-
 # endregion
 
 
 class XmlTableManager(LoggerMixin, ITableManager):
-    """Manages XML file operations for tabular data,
-    including reading and saving.
-    """
+    """Manage XML op-s for tabular data, including reading and saving."""
 
     def __init__(self, logger: logging.Logger = None):
         super().__init__(logger=logger)
@@ -27,6 +24,6 @@ class XmlTableManager(LoggerMixin, ITableManager):
     def save_dump(
         self,
         path: PathLike[AnyStr],
-        data: pandas.DataFrame
+        data: pandas.DataFrame,
     ) -> bool:
         """Save the DataFrame to an XML file at the specified path."""

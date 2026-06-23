@@ -1,5 +1,5 @@
-from collections.abc import Sequence
 import os
+from collections.abc import Sequence
 from typing import Optional
 
 from ngs_analyzer.core.report.coverage_collector.dto import (
@@ -45,7 +45,7 @@ def parse_allele_coverage(line: str) -> AlleleCoverage:
 
 
 def parse_multianno(
-    annotation_filepath: Optional[str] = None
+    annotation_filepath: Optional[str] = None,
 ) -> Sequence[tuple[int, AlleleCoverage]]:
     """Parse a Multianno‑style annotation file and return a summary table.
 
@@ -91,13 +91,3 @@ def parse_multianno(
             coverage_seq.append((cnt, parse_allele_coverage(line)))
             cnt += 1
     return coverage_seq
-
-
-if __name__ == '__main__':
-    print(
-            parse_multianno(
-            '/home/archsaurus/Documents/code/ngs-analyzer-refactoring'
-            '/output_20260522_202744'
-            '/BRCA_65222/BRCA_65222.ann.hg19_multianno.txt'
-        )
-    )

@@ -1,33 +1,23 @@
-"""This module provides functionality to load
-    configuration settings from a file.
+"""This module provides functionality to load config settings from a file.
 
-    It defines:
-        - `IConfigLoader`:
-            An interface (via Protocol) that specifies a `load()`
-            method for loading configuration data.
-        - `ConfigLoader`:
-            Implements `IConfigLoader` and `LoggerMixin` to load
-            configuration from an INI file.
+Main features:
+    - Loads configuration from a specified file path,
+    defaulting to 'src/conf/config.ini'.
+    - Reads a specific section (default 'Pathes')
+    from the configuration file.
+    - Returns a dictionary containing configuration key-value pairs.
+    - Raises `FileNotFoundError` if the configuration file does not exist.
+    - Raises `ConfigurationError` if the section is missing or invalid.
 
-    Main features:
-        - Loads configuration from a specified file path,
-        defaulting to 'src/conf/config.ini'.
-        - Reads a specific section (default 'Pathes')
-        from the configuration file.
-        - Returns a dictionary containing configuration key-value pairs.
-        - Raises `FileNotFoundError` if the configuration file does not exist.
-        - Raises `ConfigurationError` if the section is missing or invalid.
-
-    Usage:
-        Instantiate `ConfigLoader`, optionally passing a logger,
-        and call `load()` with the desired file path and section.
+Usage:
+    Instantiate `ConfigLoader`, optionally passing a logger,
+    and call `load()` with the desired file path and section.
 """
 
+# region Imports
 import configparser
 import logging
-# region Imports
 import os
-from os import PathLike
 from typing import AnyStr, Optional, Protocol
 
 from ngs_analyzer.core.base.mixins.logger_mixin import LoggerMixin
@@ -39,11 +29,12 @@ from ngs_analyzer.core.configuration.configuration_error import \
 
 class IConfigLoader(Protocol):
     """Interface for configuration loader classes.
+
     Defines a load() method to load configuration data.
     """
 
     def load(self) -> dict:
-        """Loads configuration from a file.
+        """Load configuration from a file.
 
             Returns:
                 A dictionary containing the loaded configuration.
@@ -57,22 +48,22 @@ class IConfigLoader(Protocol):
 
 
 class ConfigLoader(LoggerMixin, IConfigLoader):
-    """Loads configuration data from an INI file, with logging support."""
+    """Load configuration data from an INI file, with logging support."""
 
     def __init__(self, logger: Optional[logging.Logger] = None):
         super().__init__(logger)
 
     def load(
         self,
-        base_config_filepath: Optional[PathLike[AnyStr]] = os.path.abspath(
-            os.path.join('src', 'conf', 'config.ini')
+        base_config_filepath: Optional[os.PathLike[AnyStr]] = os.path.abspath(
+            os.path.join('src', 'conf', 'config.ini'),
         ),
         target_section: AnyStr = 'Pathes',
     ) -> dict:
-        """Loads configuration from the specified INI file and section.
+        """Load configuration from the specified INI file and section.
 
             Args:
-                base_config_filepath (PathLike):
+                base_config_filepath (os.PathLike):
                     Path to the configuration file.
                 target_section (str):
                     Section in the configuration file to load.
@@ -88,8 +79,8 @@ class ConfigLoader(LoggerMixin, IConfigLoader):
                     if the section is missing or cannot be parsed.
         """
         if (
-            os.path.exists(base_config_filepath) and
-            os.path.isfile(base_config_filepath)
+            os.path.exists(
+                base_config_filepath) and os.path.isfile(base_config_filepath)
         ):
             conf = configparser.ConfigParser(
                 inline_comment_prefixes=[';', '#'],
@@ -104,9 +95,9 @@ class ConfigLoader(LoggerMixin, IConfigLoader):
                     config_dict[path_value] = conf[target_section][path_value]
             else:
                 raise ConfigurationError(
-                    "Can't parse configuration file "
-                    f"under path '{base_config_filepath}'. "
-                    "See the project config documentation"
+                    'Can\'t parse configuration file '
+                    f'under path "{base_config_filepath}". '
+                    'See the project config documentation',
                 )
 
             return config_dict
@@ -114,7 +105,7 @@ class ConfigLoader(LoggerMixin, IConfigLoader):
         else:
 
             file_not_found_msg = \
-                f"Can't find config file under path '{base_config_filepath}'"
+                f'Can\'t find config file under path "{base_config_filepath}"'
 
             self.logger.critical(file_not_found_msg)
             raise FileNotFoundError(file_not_found_msg)

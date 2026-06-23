@@ -1,4 +1,5 @@
 """This module defines an interface for managing table data.
+
 It includes a Protocol for managing table data, including aggregation
 and saving to a file.
 """
@@ -12,44 +13,36 @@ import pandas
 
 class ITableManager(Protocol):
     """Interface for managing table data."""
-    def aggregate_data(
-        self, *args, **kwargs
-    ) -> Optional[pandas.DataFrame]:
-        """Aggregates data and returns a Pandas DataFrame.
+
+    def aggregate_data(self, *args, **kwargs) -> Optional[pandas.DataFrame]:
+        """Aggregate data and returns a Pandas DataFrame.
 
         Returns:
             pandas.DataFrame:
-                If data has been aggregated properly
-                None otherwise
+                If data has been aggregated properly. None otherwise
         """
         raise NotImplementedError
 
     def save_dump(
         self,
         path: PathLike[AnyStr],
-        data: pandas.DataFrame
+        data: pandas.DataFrame,
     ) -> bool:
-        """Saves the DataFrame to a file.
+        """Save the DataFrame to a file.
 
         Args:
-            path:
-                The path to save the file.
-            data:
-                The DataFrame to save.
+            path: The path to save the file.
+            data: The DataFrame to save.
 
         Returns:
             True if the save was successful, False otherwise.
         """
         raise NotImplementedError
 
-    def set_logger(
-        self,
-        logger: logging.Logger
-    ) -> None:
-        """Sets the logger for the table manager.
+    def set_logger(self, logger: logging.Logger) -> None:
+        """Set the logger for the table manager.
 
         Args:
-            logger:
-                The logger instance.
+            logger: The logger instance.
         """
         raise NotImplementedError

@@ -1,63 +1,61 @@
 """This module processes genetic variant data and \
-    generates a comprehensive report.
+generates a comprehensive report.
 
-    Overview:
-        The script reads annotation and
-        coverage data for a given biological sample,
-        consolidates variant information with annotations,
-        and outputs a summarized report in Excel format.
+Overview:
+    The script reads annotation and
+    coverage data for a given biological sample,
+    consolidates variant information with annotations,
+    and outputs a summarized report in Excel format.
 
-    Main functionalities:
-        - Parses configuration to determine target genomic regions.
-        - Performs coverage analysis on specified regions.
-        - Reads variant annotation data from a text file.
-        - Extracts relevant variant and annotation details.
-        - Calculates coverage metrics for each variant.
-        - Compiles the data into a structured report using a data container.
-        - Exports the report as an Excel file for further analysis.
+Main functionalities:
+    - Parses configuration to determine target genomic regions.
+    - Performs coverage analysis on specified regions.
+    - Reads variant annotation data from a text file.
+    - Extracts relevant variant and annotation details.
+    - Calculates coverage metrics for each variant.
+    - Compiles the data into a structured report using a data container.
+    - Exports the report as an Excel file for further analysis.
 
-    Usage:
-        This script is intended to be run as
-            a standalone module, with the `main()`
-        function invoked with a `SampleDataContainer`
-            object representing the sample.
+Usage:
+    This script is intended to be run as
+        a standalone module, with the `main()`
+    function invoked with a `SampleDataContainer`
+        object representing the sample.
 
-    Dependencies:
-        - pandas:
-            for data manipulation and Excel output.
-        - os:
-            for filesystem operations.
-        - Other project-specific modules imported with `from . import *`.
+Dependencies:
+    - pandas:
+        for data manipulation and Excel output.
+    - os:
+        for filesystem operations.
+    - Other project-specific modules imported with `from . import *`.
 
-    Note:
-        Ensure that all required input files
-        (e.g., annotation text files) are available, and that configuration
-        settings are properly set up before running.
+Note:
+    Ensure that all required input files
+    (e.g., annotation text files) are available, and that configuration
+    settings are properly set up before running.
 """
 
 # region Imports
 import os
-from statistics import mean
 from typing import Optional
 
 import pandas
 
 from ngs_analyzer.core.configuration.configurator import Configurator
-from ngs_analyzer.core.data_processing.analyzer.amplicon_coverage_computer import \
-    AmpliconCoverageDataPreparator
 from ngs_analyzer.core.data_processing.sample_input.sample_data_container import \
     SampleDataContainer
 from ngs_analyzer.core.report.annotation_data_container import \
     AnnotationDataContainer
+from ngs_analyzer.core.report.coverage_collector.service import \
+    parse_allele_coverage
 from ngs_analyzer.core.report.gene_details_dto import GeneDetailsDTO
 from ngs_analyzer.core.report.i_report_data_container import \
     IReportDataContainer
 from ngs_analyzer.core.report.report_dto import ReportDTO
 from ngs_analyzer.core.report.variant_coverage_dto import VariantCoverageDTO
 from ngs_analyzer.core.report.variant_data_container import (
-    ClinvarVariantAnnotationContainer, VariantDataContainer)
-from ngs_analyzer.core.report.coverage_collector.service import (
-    parse_allele_coverage
+    ClinvarVariantAnnotationContainer,
+    VariantDataContainer,
 )
 # endregion
 
@@ -65,25 +63,25 @@ from ngs_analyzer.core.report.coverage_collector.service import (
 def parse_variant_section(row: str) -> IReportDataContainer:
     r"""Parse a variant section string into a VariantDataContainer object.
 
-        Args:
-            row (str):
-                A tab-separated string containing variant information.
+    Args:
+        row (str):
+            A tab-separated string containing variant information.
 
-        Returns:
-            IReportDataContainer:
-                An instance of VariantDataContainer
-                populated with parsed data.
+    Returns:
+        IReportDataContainer:
+            An instance of VariantDataContainer
+            populated with parsed data.
 
-        Example:
-            row = "chr1\t12345\t12345\tA\tT\tmissense_variant\
-                \tGENE1\tGeneName1\tmissense\tp.Val600Glu\t12345\
-                \tDiseaseX\tDatabaseY\treviewed\tpathogenic\
-                \tDiseaseY\tDatabaseZ\treviewed\toncogenic\
-                \tHigh\tLow\tModerate\tYes\t..."
+    Example:
+        row = "chr1\t12345\t12345\tA\tT\tmissense_variant\
+            \tGENE1\tGeneName1\tmissense\tp.Val600Glu\t12345\
+            \tDiseaseX\tDatabaseY\treviewed\tpathogenic\
+            \tDiseaseY\tDatabaseZ\treviewed\toncogenic\
+            \tHigh\tLow\tModerate\tYes\t..."
 
-            variant = parse_variant_section(row)
+        variant = parse_variant_section(row)
     """
-    var_fields = row.split("\t")
+    var_fields = row.split('\t')
 
     variant = VariantDataContainer(
         chromosome=var_fields[0],
@@ -136,13 +134,13 @@ class FirstAnnotation(AnnotationDataContainer):
 
     def to_dict(self):
         return {
-            "Gene name": self.gene_name,
-            "Annotation": self.annotation,
-            "Mutation ID": self.mutation_id,
-            "Transcript type": self.transcript_biotype,
-            "Exon": self.exon,
-            "HGVS.c": self.hgvs_cds,
-            "HGVS.p": self.hgvs_protein,
+            'Gene name': self.gene_name,
+            'Annotation': self.annotation,
+            'Mutation ID': self.mutation_id,
+            'Transcript type': self.transcript_biotype,
+            'Exon': self.exon,
+            'HGVS.c': self.hgvs_cds,
+            'HGVS.p': self.hgvs_protein,
         }
 
 
@@ -150,63 +148,62 @@ class NextAnnotation(AnnotationDataContainer):
     """Represent a simplified annotation of a genetic mutation \
         focusing on core transcript information.
 
-        This class includes essential annotation details such as gene name,
-        mutation identifier, transcript biotype, exon information,
-        and HGVS nomenclature for cDNA and protein changes.
+    This class includes essential annotation details such as gene name,
+    mutation identifier, transcript biotype, exon information,
+    and HGVS nomenclature for cDNA and protein changes.
 
-        It provides a method to convert the data
-        into a dictionary format suitable for downstream applications.
+    It provides a method to convert the data
+    into a dictionary format suitable for downstream applications.
 
-        Note:
-            This class was developed to meet the specific data representation
-            needs of a particular laboratory.
+    Note:
+        This class was developed to meet the specific data representation
+        needs of a particular laboratory.
     """
 
     def to_dict(self):
         return {
-            "Gene name": self.gene_name,
-            "Mutation ID": self.mutation_id,
-            "Transcript type": self.transcript_biotype,
-            "Exon": self.exon,
-            "HGVS.c": self.hgvs_cds,
-            "HGVS.p": self.hgvs_protein,
+            'Gene name': self.gene_name,
+            'Mutation ID': self.mutation_id,
+            'Transcript type': self.transcript_biotype,
+            'Exon': self.exon,
+            'HGVS.c': self.hgvs_cds,
+            'HGVS.p': self.hgvs_protein,
         }
 
 
 def parse_annotation_section(row: str) -> list[IReportDataContainer]:
-    """Parses an annotation section string
-        into an AnnotationDataContainer object.
+    """Parse an annotation section into an AnnotationDataContainer object.
 
-        Args:
-            row (str):
-                A string containing annotation information,
-                with fields separated by '|'.
-                The string may contain additional data separated by ';LOF=',
-                    which is ignored here.
+    Args:
+        row (str):
+            A string containing annotation information,
+            with fields separated by '|'.
+            The string may contain additional data separated by ';LOF=',
+                which is ignored here.
 
-        Returns:
-            IReportDataContainer:
-                An instance of AnnotationDataContainer
-                    populated with parsed data.
+    Returns:
+        IReportDataContainer:
+            An instance of AnnotationDataContainer
+                populated with parsed data.
 
-        Example:
-            row = "A|missense_variant|MODERATE|GeneX|ID123|missense|rs123\
-                |protein_coding|exon2|c.123A>T|p.Lys41Asn|cDNA info|CDS info\
-                |Ala|100bp|info,more"
+    Example:
+        row = "A|missense_variant|MODERATE|GeneX|ID123|missense|rs123\
+            |protein_coding|exon2|c.123A>T|p.Lys41Asn|cDNA info|CDS info\
+            |Ala|100bp|info,more"
 
-            annotation = parse_annotation_section(row)
+        annotation = parse_annotation_section(row)
     """
     annotations = []
-    sub_annotations = row.split(";LOF=")[0].split("|,")
+    sub_annotations = row.split(';LOF=')[0].split('|,')
 
     for ann_fields in sub_annotations:
         annotations_count = 0
 
-        ann_fields = ann_fields.split("|")
+        ann_fields = ann_fields.split('|')
         fields_count = len(ann_fields)
         if fields_count < 16:
             for _ in range(fields_count, 16):
-                ann_fields.append("")
+                ann_fields.append('')
 
         if annotations_count > 0:
             Annotation = NextAnnotation
@@ -231,40 +228,35 @@ def parse_annotation_section(row: str) -> list[IReportDataContainer]:
                 aminoacid=ann_fields[13],
                 distance=ann_fields[14],
                 info=ann_fields[15],
-            )
+            ),
         )
 
     return annotations
 
 
 def aggregate_report(sample: Optional[SampleDataContainer] = None):
-    """Main processing function.
-
-    Reads annotation data,
-    performs coverage analysis,
-    and generates a report.
-    """
+    """Read annotations, perform coverage analysis, and generate a report."""
     logger = Configurator().logger
 
     txt_path = os.path.abspath(os.path.join(
-        sample.processing_path, sample.sid + ".ann.hg19_multianno.txt"
+        sample.processing_path, sample.sid + '.ann.hg19_multianno.txt',
     ))
 
     if not os.path.exists(sample.report_path):
         os.makedirs(sample.report_path)
 
     logger.info(
-        "Starting to perform report aggregation for sample %s", sample.sid
+        'Starting to perform report aggregation for sample %s', sample.sid,
     )
 
     logger.debug(
-        "Report aggregator configuration:\n"
-        "Target regions:\n\t(Region, mpileup filepath): "
+        'Report aggregator configuration:\n'
+        'Target regions:\n\t(Region, mpileup filepath): '
         f"""{
             "\n\t(Region, mpileup filepath): ".join(
-                [f"({regions_data})" for regions_data in sample.target_regions]
-            )
-        }\n"""
+                [f"({regions_data})" for regions_data in sample.target_regions],
+            ),
+        }\n""",
     )
 
     # preparator = AmpliconCoverageDataPreparator(
@@ -274,14 +266,14 @@ def aggregate_report(sample: Optional[SampleDataContainer] = None):
 
     report_list = []
 
-    with open(file=txt_path, mode="r", encoding="utf-8") as fd:
+    with open(file=txt_path, mode='r', encoding='utf-8') as fd:
         for line in fd.readlines()[1:]:
-            if ";ANN=" in line:
+            if ';ANN=' in line:
                 depth, alt_count, alt_coverage = 0, 0, 0
 
                 variant, annotations = map(
                     lambda s, parser: parser(s),
-                    line.split(";ANN="),
+                    line.split(';ANN='),
                     [parse_variant_section, parse_annotation_section],
                 )
 
@@ -293,11 +285,10 @@ def aggregate_report(sample: Optional[SampleDataContainer] = None):
                         alt_count = data.alternate_count
                         alt_coverage = data.alternate_frequency
 
-
                 except Exception as exc:
                     logger.warning(
-                        "An error %s occured while processing %s",
-                        exc, sample
+                        'An error %s occured while processing %s',
+                        exc, sample,
                     )
 
                     depth = alt_count = alt_coverage = -1
@@ -317,28 +308,28 @@ def aggregate_report(sample: Optional[SampleDataContainer] = None):
                         GeneDetailsDTO(annotations),
                         variant.one_thousand_genomics,
                         variant.clinvar.clinical_sign,
-                    )
+                    ),
                 )
 
     report_dataframe = pandas.DataFrame(
         [
             report_column
             for report_column in [report.to_dict() for report in report_list]
-        ]
+        ],
     )
 
     report_filepath = os.path.join(
-        sample.report_path, sample.sid + ".report.xlsx"
+        sample.report_path, sample.sid + '.report.xlsx',
     )
 
     report_dataframe.to_excel(
-        excel_writer=f"{report_filepath}", sheet_name="main", index=False
+        excel_writer=f'{report_filepath}', sheet_name='main', index=False,
     )
 
     logger.info(
-        "Report agregation has done. See the report at '%s'", report_filepath
+        'Report agregation has done. See the report at %s', report_filepath,
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     cfg = Configurator()

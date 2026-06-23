@@ -15,7 +15,7 @@ from ngs_analyzer.core.demultiplexing.bcl2fastq_adapter import \
 from ngs_analyzer.core.demultiplexing.i_demultiplexor_adapter import \
     IDemultiplexorAdapter
 
-T = TypeVar("T", bound=IDemultiplexorAdapter)
+T = TypeVar('T', bound=IDemultiplexorAdapter)
 
 
 class DemultiplexorAdapterFactory(LoggerMixin, Generic[T]):
@@ -28,9 +28,9 @@ class DemultiplexorAdapterFactory(LoggerMixin, Generic[T]):
     def __init__(
         self,
         adapter_types: list[type[T]],
-        logger: logging.Logger = None
+        logger: logging.Logger = None,
     ):
-        """Initializes the factory with a list of supported adapter types.
+        """Initialize the factory with a list of supported adapter types.
 
         Args:
             adapter_types:
@@ -45,9 +45,9 @@ class DemultiplexorAdapterFactory(LoggerMixin, Generic[T]):
         adapter_type_name: str,
         config: dict[str, str],
         logger: logging.Logger = None,
-        caller: Union[CommandExecutor, callable] = os.system
+        caller: Union[CommandExecutor, callable] = os.system,
     ) -> IDemultiplexorAdapter:
-        """Creates a demultiplexor adapter based on the provided type name.
+        """Create a demultiplexor adapter based on the provided type name.
 
         Args:
             adapter_type_name (str):
@@ -75,9 +75,9 @@ class DemultiplexorAdapterFactory(LoggerMixin, Generic[T]):
         adapter_type_name: str,
         config: dict[str, str],
         logger: logging.Logger = None,
-        caller: Union[CommandExecutor, callable] = os.system
+        caller: Union[CommandExecutor, callable] = os.system,
     ) -> IDemultiplexorAdapter:
-        """Retrieve an instance of a demultiplexor adapter
+        """Retrieve an instance of a demultiplexor adapter \
         matching the specified type name.
 
         Searches through the available adapter types managed
@@ -116,9 +116,12 @@ class DemultiplexorAdapterFactory(LoggerMixin, Generic[T]):
                     return adapter
                 except (TypeError, ValueError) as e:
                     self.logger.error(
-                        "Failed to create adapter of type %s: %s",
-                        adapter_type.__name__, e)
+                        'Failed to create adapter of type %s: %s',
+                        adapter_type.__name__, e,
+                    )
 
         self.logger.critical(
-            "No suitable demultiplexor adapter found.")
+            'No suitable demultiplexor adapter found.',
+        )
+
         return None

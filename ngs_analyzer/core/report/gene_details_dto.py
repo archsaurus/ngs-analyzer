@@ -1,5 +1,5 @@
-"""This module defines the GeneDetailsDTO class,
-which encapsulates detailed information about a gene,
+"""This module defines the GeneDetailsDTO class, \
+which encapsulates detailed information about a gene, \
 including its name, transcript, exon, and HGVS annotations.
 
 The GeneDetailsDTO class inherits from IReportDataContainer
@@ -27,7 +27,7 @@ from ngs_analyzer.core.report.i_report_data_container import \
 
 @dataclass
 class GeneDetailsDTO(IReportDataContainer):
-    """Represents detailed information about a gene, including its
+    """Represents detailed information about a gene, including its \
         name, transcript, exon, and HGVS annotations.
 
     Attributes:
@@ -54,7 +54,7 @@ class GeneDetailsDTO(IReportDataContainer):
 
             for name, value in annotation.to_dict().items():
                 if value is not None:
-                    key = f"{i+1} {name.replace('_', ' ')}"
+                    key = f"{i + 1} {name.replace('_', ' ')}"
                     annotation_context[key] = value
 
         return annotation_context

@@ -8,10 +8,9 @@ from dataclasses import fields
 
 
 class IReportDataContainer(ABC):
-    """Interface for report data containers, providing utility methods
-    for converting to dictionary, creating instances from lists,
-    and generating string representations.
-    """
+    """Interface for report data containers, providing utility methods \
+    for converting to dictionary, creating instances from lists, \
+    and generating string representations."""
 
     @classmethod
     def to_dict(cls, self):
@@ -50,4 +49,5 @@ class IReportDataContainer(ABC):
 
     def __str__(self):
         return ';\n'.join([
-            f"{key}: {value}" for key, value in vars(self).items()])
+            f'{key}: {value}' for key, value in vars(self).items()
+        ])

@@ -16,9 +16,9 @@ from ngs_analyzer.core.table_manager.table_manager_factory import \
 
 
 def main():
-    """Loads configuration, creates a TableManager instance,
-    aggregates data from specified files (adapters, indexes, samples),
-    and saves the aggregated data to a file.
+    """Load configuration, creates a TableManager instance, \
+        aggregates data from specified files (adapters, indexes, samples), \
+        and saves the aggregated data to a file.
 
     Returns:
         None. Prints success message or error message to console.
@@ -27,19 +27,19 @@ def main():
 
     tm_config = configurator.parse_configuration(
         configurator.args.configFilepath,
-        target_section='TableManager'
+        target_section='TableManager',
     )
 
     _, table_ext = os.path.splitext(tm_config['adapter-list'])
 
     excel_tm = TableManagerFactory.create_manager(
-        table_ext[1:], logger=configurator.logger
+        table_ext[1:], logger=configurator.logger,
     )
 
     demultiplexing_table = excel_tm.aggregate_data(
         adapters_filepath=tm_config['adapter-list'],
         indexes_filepath=tm_config['index-list'],
-        samples_filepath=tm_config['sample-list']
+        samples_filepath=tm_config['sample-list'],
     )
 
     excel_tm.save_dump(

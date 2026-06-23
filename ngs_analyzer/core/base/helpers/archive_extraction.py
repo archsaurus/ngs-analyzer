@@ -7,21 +7,18 @@ from typing import AnyStr
 
 
 def extract_archive(archive_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
-    """Extracts an archive file (zip, tar, gzip).
+    """Extract an archive file (zip, tar, gzip).
 
-        Args:
-            archive_filepath (PathLike[AnyStr]):
-                Path to archive file.
+    Args:
+        archive_filepath (PathLike[AnyStr]): Path to archive file.
 
-        Returns:
-            PathLike:
-                List of extracted file names or extracted filename for gzip.
+    Returns:
+        PathLike:
+            List of extracted file names or extracted filename for gzip.
 
-        Raises:
-            FileNotFoundError:
-                If the archive file does not exist.
-            IOError:
-                If the archive format is unsupported or extraction fails.
+    Raises:
+        FileNotFoundError: If the archive file does not exist.
+        IOError: If the archive format is unsupported or extraction fails.
     """
     archive_absolute_filepath = os.path.abspath(archive_filepath)
 
@@ -38,7 +35,7 @@ def extract_archive(archive_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
             case '.tar' | '.tar.gz' | '.tar.bz2' | '.tar.xz':
                 with tarfile.open(
                     archive_absolute_filepath,
-                    f'r:{ext.split('.')[-1]}'
+                    f'r:{ext.split(".")[-1]}',
                 ) as tf:
                     tf.extractall(base_dir)
                     return tf.getnames()
@@ -60,11 +57,8 @@ def extract_archive(archive_filepath: PathLike[AnyStr]) -> PathLike[AnyStr]:
                         OSError,
                         SystemError,
                         PermissionError,
-                        IOError
+                        IOError,
                     ) as e:
-                        print(
-                            "A fatal error '%s' occurred at '%s'",
-                            repr(e), e.__traceback__.tb_frame)
                         raise e
 
             case _:

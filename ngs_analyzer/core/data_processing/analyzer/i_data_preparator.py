@@ -20,7 +20,7 @@ class IDataPreparator(Protocol):
     """
 
     def perform(self, *args, **kwargs) -> Any:
-        """Performs the data preparation steps.
+        """Perform the data preparation steps.
 
         Raises:
             NotImplementedError:

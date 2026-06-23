@@ -70,7 +70,7 @@ class Analyzer(Protocol):
     def __init__(
         self,
         configurator: Configurator,
-        cmd_caller: Union[CommandExecutor, callable] = None
+        cmd_caller: Union[CommandExecutor, callable] = None,
     ):
         self.configurator = configurator
 
@@ -85,73 +85,72 @@ class Analyzer(Protocol):
 
         else:
             raise TypeError(
-                "Command caller must be callable, "
-                f"'{type(cmd_caller)}' given"
+                'Command caller must be callable, '
+                f'"{type(cmd_caller)}" given',
             )
 
     def prepare_data(self, sample: SampleDataContainer) -> SampleDataContainer:
-        """Prepares raw sequencing data for analysis, including alignment,
+        """Prepare raw sequencing data for analysis, including alignment, \
             read grouping, and recalibration.
 
-            Args:
-                sample (SampleDataContainer):
-                    Sample with raw data and metadata.
+        Args:
+            sample (SampleDataContainer): Sample with raw data and metadata.
 
-            Returns:
-                SampleDataContainer:
-                    Updated sample with paths to intermediate and final files.
+        Returns:
+            SampleDataContainer:
+                Updated sample with paths to intermediate and final files.
         """
         raise NotImplementedError
 
     def analyze(self, sample: SampleDataContainer) -> SampleDataContainer:
-        """Performs variant calling, annotation, and format conversion.
+        """Perform variant calling, annotation, and format conversion.
 
-            Args:
-                sample (SampleDataContainer):
-                    Sample with aligned data.
+        Args:
+            sample (SampleDataContainer): Sample with aligned data.
 
-            Returns:
-                SampleDataContainer:
-                    Updated sample with annotated variants and reports.
+        Returns:
+            SampleDataContainer:
+                Updated sample with annotated variants and reports.
         """
         raise NotImplementedError
 
     def __repr__(self):
         return ''.join([
-            f"{self.__class__}(configurator={self.configurator.__repr__()}, "
-            f"cmd_caller={self.cmd_caller.__repr__()}"])
+            f'{self.__class__}(configurator={self.configurator.__repr__()}, '
+            f'cmd_caller={self.cmd_caller.__repr__()}',
+        ])
 
 
 class BRCAAnalyzer(Analyzer):
-    """Main analyzer class that manages the entire
-        genomic data analysis pipeline.
+    """Main analyzer class that manages the entire genomic data \
+        analysis pipeline.
 
-        This class orchestrates the steps involved
-        in processing sequencing data, including data preparation,
-        read alignment, variant calling, annotation, and format conversion.
-        It leverages various components such as SequenceAligner,
-        BamGrouper, BQSRPerformer, variant callers,
-        and annotation tools to perform the analysis systematically.
+    This class orchestrates the steps involved
+    in processing sequencing data, including data preparation,
+    read alignment, variant calling, annotation, and format conversion.
+    It leverages various components such as SequenceAligner,
+    BamGrouper, BQSRPerformer, variant callers,
+    and annotation tools to perform the analysis systematically.
 
-        Attributes:
-            configurator (Configurator):
-                Configuration object containing paths, parameters, and logger.
-            cmd_caller (Union[CommandExecutor, callable]):
-                Function or object to execute system commands.
+    Attributes:
+        configurator (Configurator):
+            Configuration object containing paths, parameters, and logger.
+        cmd_caller (Union[CommandExecutor, callable]):
+            Function or object to execute system commands.
 
-        Methods:
-            prepare_data(sample):
-                Prepares raw sequencing data by trimming, aligning,
-                and recalibrating.
-            analyze(sample):
-                Performs variant calling, annotation,
-                and converts formats for reporting.
+    Methods:
+        prepare_data(sample):
+            Prepares raw sequencing data by trimming, aligning,
+            and recalibrating.
+        analyze(sample):
+            Performs variant calling, annotation,
+            and converts formats for reporting.
     """
 
     def __init__(
         self,
         configurator: Configurator,
-        cmd_caller: Union[CommandExecutor, callable] = None
+        cmd_caller: Union[CommandExecutor, callable] = None,
     ):
         self.configurator = configurator
 
@@ -166,24 +165,23 @@ class BRCAAnalyzer(Analyzer):
 
         else:
             raise TypeError(
-                "Command caller must be callable, "
-                f"'{type(cmd_caller)}' given"
+                'Command caller must be callable, '
+                f'"{type(cmd_caller)}" given',
             )
 
     def prepare_data(
         self,
-        sample: SampleDataContainer
+        sample: SampleDataContainer,
     ) -> SampleDataContainer:
-        """Prepares raw sequencing data for analysis, including alignment,
+        """Prepare raw sequencing data for analysis, including alignment, \
             read grouping, and recalibration.
 
-            Args:
-                sample (SampleDataContainer):
-                    Sample with raw data and metadata.
+        Args:
+            sample (SampleDataContainer): Sample with raw data and metadata.
 
-            Returns:
-                SampleDataContainer:
-                    Updated sample with paths to intermediate and final files.
+        Returns:
+            SampleDataContainer:
+                Updated sample with paths to intermediate and final files.
         """
         self.configurator.logger.info('Start processing sample %s', sample.sid)
 
@@ -193,71 +191,70 @@ class BRCAAnalyzer(Analyzer):
 
         ptrimmer = PrimerCutter.create_primer_cutter(
             configurator=self.configurator,
-            cutter_name='ptrimmer'
+            cutter_name='ptrimmer',
         )
 
         sample.r1_source, sample.r2_source = ptrimmer.perform(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
         sample.bam_filepath = bwa_aligner.perform(
             sample,
             self.configurator.config['reference'],
-            executor=self.cmd_caller
+            executor=self.cmd_caller,
         )
 
         sample.parse_regions(
             configurator=self.configurator,
-            logger=self.configurator.logger
+            logger=self.configurator.logger,
         )
 
         bam_index_filepath, sample.bam_filepath = picard_group_reads.perform(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
         gatk4_bqsr = BQSRPerformer(self.configurator)
 
         sample.bam_filepath = gatk4_bqsr.perform(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
-        os.rename(bam_index_filepath, sample.bam_filepath+".bai")
+        os.rename(bam_index_filepath, sample.bam_filepath + '.bai')
 
         return sample
 
     def analyze(
-        self, sample: SampleDataContainer
+        self, sample: SampleDataContainer,
     ) -> SampleDataContainer:
-        """Performs variant calling, annotation, and format conversion.
+        """Perform variant calling, annotation, and format conversion.
 
-            Args:
-                sample (SampleDataContainer):
-                    Sample with aligned data.
+        Args:
+            sample (SampleDataContainer): Sample with aligned data.
 
-            Returns:
-                SampleDataContainer:
-                    Updated sample with annotated variants and reports.
+        Returns:
+            SampleDataContainer:
+                Updated sample with annotated variants and reports.
         """
         pisces_variant_caller = VariantCallerFactory.create_caller(
-            caller_config={'name': 'pisces'}, configurator=self.configurator
+            caller_config={'name': 'pisces'}, configurator=self.configurator,
         )
 
         snpeff = SnpEffAnnotationAdapter(self.configurator)
 
         sample.vcf_filepath = pisces_variant_caller.call_variant(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
         annotated_sample_filepath = snpeff.annotate(
             sample=sample,
             reference_ident='hg19',
-            executor=self.cmd_caller
+            executor=self.cmd_caller,
         )
 
         convert2annovar_logpath = \
-            os.path.join(sample.processing_logpath, "convert2annovar.log")
+            os.path.join(sample.processing_logpath, 'convert2annovar.log')
 
-        outpath = annotated_sample_filepath+'.avinput'
+        outpath = annotated_sample_filepath + '.avinput'
 
         convert2annovar_cmd = ' '.join([
             self.configurator.config['convert2annovar'],
@@ -267,21 +264,21 @@ class BRCAAnalyzer(Analyzer):
             '-withfreq',
             '2>', convert2annovar_logpath,
             annotated_sample_filepath,
-            '>', outpath
+            '>', outpath,
         ])
 
-        self.configurator.logger.info("Starting to execute convert2annovar")
-        self.configurator.logger.debug("Command: %s", convert2annovar_cmd)
+        self.configurator.logger.info('Starting to execute convert2annovar')
+        self.configurator.logger.debug('Command: %s', convert2annovar_cmd)
 
         execute(self.cmd_caller, convert2annovar_cmd)
 
         self.configurator.logger.info(
-            "Convertion to avinput format successfully done. "
-            "See it's output on %s", outpath
+            'Convertion to avinput format successfully done. '
+            'See it\'s output on %s', outpath,
         )
 
         table_annovar_logpath = \
-            os.path.join(sample.processing_logpath, "table_annovar.log")
+            os.path.join(sample.processing_logpath, 'table_annovar.log')
 
         table_annovar_cmd = ' '.join([
             self.configurator.config['table_annovar'],
@@ -290,42 +287,44 @@ class BRCAAnalyzer(Analyzer):
             '--protocol', ','.join([
                 'refGene',
                 'clinvar_20250721',  # 'clinvar_20260226',
-                'ALL.sites.2015_08'  # '1000g2015aug',
+                'ALL.sites.2015_08',  # '1000g2015aug',
                 # 'MANE.GRCh38.v1.5.summary'
             ]),
             '--outfile', os.path.join(
-                sample.processing_path, sample.sid+".ann"),
+                sample.processing_path, sample.sid + '.ann'),
             '--remove',
             '--otherinfo',
             outpath,
             self.configurator.config['annovar_humandb'],
             '>', table_annovar_logpath,
-            '2>&1'])
+            '2>&1',
+        ])
 
         self.configurator.logger.info(
-            "Starting to execute annotation with table_annovar"
+            'Starting to execute annotation with table_annovar',
         )
 
-        self.configurator.logger.debug("Command: %s", table_annovar_cmd)
+        self.configurator.logger.debug('Command: %s', table_annovar_cmd)
 
         execute(self.cmd_caller, table_annovar_cmd)
 
         annotation_result_filepath = os.path.join(
-            sample.processing_path, sample.sid+".ann.hg19_multianno.csv"
+            sample.processing_path, sample.sid + '.ann.hg19_multianno.csv',
         )
 
         self.configurator.logger.info(
-            "Annotation with annovar successfully done. "
-            "See it's output on %s",
-            annotation_result_filepath
+            'Annotation with annovar successfully done. '
+            'See it\'s output on %s',
+            annotation_result_filepath,
         )
 
         return sample
 
     def __repr__(self):
         return ''.join([
-            f"{self.__class__}(configurator={self.configurator.__repr__()}, "
-            f"cmd_caller={self.cmd_caller.__repr__()}"])
+            f'{self.__class__}(configurator={self.configurator.__repr__()}, '
+            f'cmd_caller={self.cmd_caller.__repr__()}',
+        ])
 
 
 class TestAnalyzerhg19(Analyzer):
@@ -334,56 +333,56 @@ class TestAnalyzerhg19(Analyzer):
         sequence_aligner = BWAAligner(self.configurator)
 
         primer_trimmer = PrimerCutter.create_primer_cutter(
-            configurator=self.configurator, cutter_name='ptrimmer'
+            configurator=self.configurator, cutter_name='ptrimmer',
         )
 
         sample.r1_source, sample.r2_source = primer_trimmer.perform(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
         sample.bam_filepath = sequence_aligner.perform(
-            sample, self.configurator.config['reference'], os.system
+            sample, self.configurator.config['reference'], os.system,
         )
 
         sample.parse_regions(
             configurator=self.configurator,
-            logger=self.configurator.logger
+            logger=self.configurator.logger,
         )
 
         picard_group_reads = BamGrouper(self.configurator)
 
         bam_index_filepath, sample.bam_filepath = picard_group_reads.perform(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
         gatk4_bqsr = BQSRPerformer(self.configurator)
 
         sample.bam_filepath = gatk4_bqsr.perform(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
-        os.rename(bam_index_filepath, sample.bam_filepath+".bai")
+        os.rename(bam_index_filepath, sample.bam_filepath + '.bai')
 
         return sample
 
     def analyze(self, sample: SampleDataContainer) -> SampleDataContainer:
         pisces_variant_caller = VariantCallerFactory.create_caller(
-            caller_config={'name': 'pisces'}, configurator=self.configurator
+            caller_config={'name': 'pisces'}, configurator=self.configurator,
         )
 
         snpeff = SnpEffAnnotationAdapter(self.configurator)
 
         sample.vcf_filepath = pisces_variant_caller.call_variant(
-            sample, executor=self.cmd_caller
+            sample, executor=self.cmd_caller,
         )
 
         annotated_sample_filepath = sample.vcf_filepath
         snpeff.annotate(sample, 'hg19', executor=self.cmd_caller)
 
         convert2annovar_logpath = \
-            os.path.join(sample.processing_logpath, "convert2annovar.log")
+            os.path.join(sample.processing_logpath, 'convert2annovar.log')
 
-        outpath = annotated_sample_filepath+'.avinput'
+        outpath = annotated_sample_filepath + '.avinput'
 
         convert2annovar_cmd = ' '.join([
             self.configurator.config['convert2annovar'],
@@ -393,21 +392,21 @@ class TestAnalyzerhg19(Analyzer):
             '-withfreq',
             '2>', convert2annovar_logpath,
             annotated_sample_filepath,
-            '>', outpath
+            '>', outpath,
         ])
 
-        self.configurator.logger.info("Starting to execute convert2annovar")
-        self.configurator.logger.debug("Command: %s", convert2annovar_cmd)
+        self.configurator.logger.info('Starting to execute convert2annovar')
+        self.configurator.logger.debug('Command: %s', convert2annovar_cmd)
 
         execute(self.cmd_caller, convert2annovar_cmd)
 
         self.configurator.logger.info(
-            "Convertion to avinput format successfully done. "
-            "See it's output on %s", outpath
+            'Convertion to avinput format successfully done. '
+            'See it\'s output on %s', outpath,
         )
 
         table_annovar_logpath = os.path.join(
-            sample.processing_logpath, "table_annovar.log"
+            sample.processing_logpath, 'table_annovar.log',
         )
 
         table_annovar_cmd = ' '.join([
@@ -420,30 +419,30 @@ class TestAnalyzerhg19(Analyzer):
                 'ALL.sites.2015_08',  # '1000g2015aug',
             ]),
             '--outfile', os.path.join(
-                sample.processing_path, sample.sid+".ann"),
+                sample.processing_path, sample.sid + '.ann'),
             '--remove',
             '--otherinfo',
             outpath,
             self.configurator.config['annovar_humandb'],
             '>', table_annovar_logpath,
-            '2>&1'])
+            '2>&1',
+        ])
 
         self.configurator.logger.info(
-            "Starting to execute annotation with table_annovar")
-        self.configurator.logger.debug(
-            "Command: %s", table_annovar_cmd
+            'Starting to execute annotation with table_annovar',
         )
+        self.configurator.logger.debug('Command: %s', table_annovar_cmd)
 
         execute(self.cmd_caller, table_annovar_cmd)
 
         annotation_result_filepath = os.path.join(
-            sample.processing_path, sample.sid+".ann.hg19_multianno.csv"
+            sample.processing_path, sample.sid + '.ann.hg19_multianno.csv',
         )
 
         self.configurator.logger.info(
-            "Annotation with annovar successfully done. "
-            "See it's output on %s",
-            annotation_result_filepath
+            'Annotation with annovar successfully done. '
+            'See it\'s output on %s',
+            annotation_result_filepath,
         )
 
         return sample

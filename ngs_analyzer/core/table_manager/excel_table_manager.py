@@ -41,10 +41,9 @@ from ngs_analyzer.core.table_manager.sample_sheet_container import (
 
 
 class ExcelTableManager(LoggerMixin, ITableManager):
-    """Manages Excel table data for sample sheets,
-    including merging data from multiple Excel files,
-    saving data to CSV, and creating sample sheets.
-    """
+    """Manages Excel table data for sample sheets, \
+    including merging data from multiple Excel files, \
+    saving data to CSV, and creating sample sheets."""
 
     def __init__(self, logger: logging.Logger = None):
         super().__init__()
@@ -52,7 +51,7 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
     @staticmethod
     def determine_idx_type(idx_type_candidates: list) -> str:
-        """Determines the index type based on given candidates."""
+        """Determine the index type based on given candidates."""
         if not idx_type_candidates:
             return 'Unknown'
 
@@ -77,9 +76,9 @@ class ExcelTableManager(LoggerMixin, ITableManager):
         self,
         adapters_filepath: PathLike[AnyStr],
         indexes_filepath: PathLike[AnyStr],
-        samples_filepath: PathLike[AnyStr]
+        samples_filepath: PathLike[AnyStr],
     ) -> Optional[pandas.DataFrame]:
-        """Merges data from three Excel files into a single DataFrame.
+        """Merge data from three Excel files into a single DataFrame.
 
         Args:
             adapters_filepath (PathLike[AnyStr]):
@@ -101,19 +100,19 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
         except (ParserError, EmptyDataError, DataError) as e:
             self.logger.critical(
-                "A fatal error '%s' occurred at '%s'",
+                'A fatal error "%s" occurred at "%s"',
                 repr(e), e.__traceback__.tb_frame)
 
             return None
 
         table = pandas.DataFrame({
             'sample_id': [],
-            'lib_type':  [], 'index_type': [],
-            'i7_mark':   [], 'i5_mark':    [],
-            'p7':        [], 'p5':         [],
-            'i7':        [], 'i7_compl':   [],
-            'i5':        [], 'i5_compl':   []
-            }, dtype=str)
+            'lib_type': [], 'index_type': [],
+            'i7_mark': [], 'i5_mark': [],
+            'p7': [], 'p5': [],
+            'i7': [], 'i7_compl': [],
+            'i5': [], 'i5_compl': [],
+        }, dtype=str)
 
         table['i7_mark'] = table['i7_mark'].astype(int)
         table['i5_mark'] = table['i5_mark'].astype(int)
@@ -128,13 +127,14 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                     'lib_type': [lib_type],
                     'index_type': [index_type],
                     'i7_mark': [i7_mark],
-                    'i5_mark': [i5_mark]
-                })], ignore_index=True)
+                    'i5_mark': [i5_mark],
+                }),
+            ], ignore_index=True)
 
         # Add i7, i7_compl, i5 and i5_compl to table
         for index_row in indexes_book.itertuples():
             index_type = 'BridgeV1' if 'Bridge' in str(
-                index_row[1]
+                index_row[1],
             ) else index_row[1]
 
             sid, index_norm, index_compl = index_row[2:5]
@@ -156,17 +156,21 @@ class ExcelTableManager(LoggerMixin, ITableManager):
                 adapter_sid, adapter_seq = adapter_row[1:3]
 
                 idx_marks = re.findall(
-                    r"\d{3}", adapter_sid)
+                    r'\d{3}', adapter_sid,
+                )
 
                 # region Name mapping
                 try:
                     idx_type_candidates = re.findall(
-                        r"([a-zA-Z]{2,})|(D\d{3})", adapter_sid)
+                        r'([a-zA-Z]{2,})|(D\d{3})', adapter_sid,
+                    )
                     idx_type = self.determine_idx_type(idx_type_candidates)
 
                 except re.PatternError as e:
-                    print(f"Raise '{e}' with data "
-                          f"'{e.__traceback__.tb_frame.f_trace}'")
+                    self.logger.error(
+                        f'Raise "{e}" with data '
+                        f'"{e.__traceback__.tb_frame.f_trace}"',
+                    )
 
                     return None
                 # endregion
@@ -189,54 +193,57 @@ class ExcelTableManager(LoggerMixin, ITableManager):
     def save_dump(
         self,
         path: PathLike[AnyStr],
-        data: pandas.DataFrame
+        data: pandas.DataFrame,
     ) -> bool:
-        """Saves data from a Pandas DataFrame to a CSV file.
+        """Save data from a Pandas DataFrame to a CSV file.
 
         Args:
-            path:
-                The path to the output CSV file.
-            data:
-                The Pandas DataFrame containing the data to save.
+            path: The path to the output CSV file.
+            data: The Pandas DataFrame containing the data to save.
 
         Returns:
             True if the data was successfully saved, False otherwise.
             Raises an exception if the file cannot be created or written to.
 
         Raises:
-            TypeError:
-                If input data is not a Pandas DataFrame.
+            TypeError: If input data is not a Pandas DataFrame.
         """
         if not isinstance(data, pandas.DataFrame):
-            raise TypeError("Input data must be a Pandas DataFrame.")
+            raise TypeError('Input data must be a Pandas DataFrame.')
 
         try:
             with open(path, 'x', encoding='utf-8') as sample_sheet_fd:
-                header = "sample_id;lib_type;index_type;"\
-                    "i7_mark;i5_mark;p7;p5;i7;i7_compl;i5;i5_compl;"
-                print(header, file=sample_sheet_fd)
+                header = 'sample_id;lib_type;index_type;' \
+                    'i7_mark;i5_mark;p7;p5;i7;i7_compl;i5;i5_compl;'
+                self.logger.info(header, file=sample_sheet_fd)
 
                 for i in data.itertuples():
-                    print(';'.join((map(str, i[1:]))), file=sample_sheet_fd)
+                    self.logger.info(
+                        ';'.join((map(str, i[1:]))),
+                        file=sample_sheet_fd,
+                    )
 
             return True
 
         except FileExistsError:
-            self.logger.warning("File '%s' already exists.", path)
+            self.logger.warning('File %s already exists.', path)
             while True:
                 response = input(
-                    f"Do you want to rewrite {path} [y/n]? ").lower()
+                    f'Do you want to rewrite {path} [y/n]? ',
+                ).lower()
+
                 if response in ('y', 'n'):
                     break
 
-                print("Invalid input. Please enter 'y' or 'n'.")
+                self.logger.info('Invalid input. Please enter "y" or "n".')
+
             if response == 'y':
                 with open(path, 'w', encoding='utf-8') as sample_sheet_fd:
-                    header = "sample_id;lib_type;index_type;"\
-                        "i7_mark;i5_mark;p7;p5;i7;i7_compl;i5;i5_compl;"
-                    print(header, file=sample_sheet_fd)
+                    header = 'sample_id;lib_type;index_type;'\
+                        'i7_mark;i5_mark;p7;p5;i7;i7_compl;i5;i5_compl;'
+                    self.logger.info(header, file=sample_sheet_fd)
                     for i in data.itertuples():
-                        print(';'.join(
+                        self.logger.info(';'.join(
                             (map(str, i[1:]))), file=sample_sheet_fd)
 
                 return True
@@ -245,32 +252,32 @@ class ExcelTableManager(LoggerMixin, ITableManager):
     def create_sample_sheet(
         self,
         path: PathLike[AnyStr],
-        data: pandas.DataFrame
+        data: pandas.DataFrame,
     ) -> bool:
-        """Creates a sample sheet CSV file based on provided data.
+        """Create a sample sheet CSV file based on provided data.
 
         Args:
-            path (PathLike[AnyStr]):
-                Path to save the sample sheet.
-            data (pandas.DataFrame):
-                DataFrame with sample data.
+            path (PathLike[AnyStr]): Path to save the sample sheet.
+            data (pandas.DataFrame): DataFrame with sample data.
 
         Returns:
             bool:
                 True if the sample sheet was successfully created,
                 raises exceptions otherwise.
         """
-
         try:
             sh = SampleSheetContainer()
-            sh.add_section(Section("Header", {
-                "Local Run Manager Analysis Id": 1,
-                "Date": datetime.date.today(),
-                "Experiment Name": "NSG216",
-                "WorkFlow": "GenerateFastQWorkflow",
-                "Description": "",
-                "Chemistry": "Amplicon"}))
-            sh.add_section(Section("Reads", ["151", "151"]))
+
+            sh.add_section(Section('Header', {
+                'Local Run Manager Analysis Id': 1,
+                'Date': datetime.date.today(),
+                'Experiment Name': 'NSG001',
+                'WorkFlow': 'GenerateFastQWorkflow',
+                'Description': '',
+                'Chemistry': 'Amplicon',
+            }))
+
+            sh.add_section(Section('Reads', ['151', '151']))
 
             # data:
             #    row[0]  - column index,  row[1] - sample identifier
@@ -287,37 +294,45 @@ class ExcelTableManager(LoggerMixin, ITableManager):
 
             counter = 1
 
-            sh_data_dict = {'Sample_ID': [
-                'Sample_Name',
-                'Index',
-                'I7_Index_ID',
-                'index2',
-                'I5_Index_ID']}
+            sh_data_dict = {
+                'Sample_ID': [
+                    'Sample_Name',
+                    'Index',
+                    'I7_Index_ID',
+                    'index2',
+                    'I5_Index_ID',
+                ],
+            }
 
             for row in data.itertuples():
                 if counter not in sh_data_dict:
                     sh_data_dict[str(counter)] = [
-                        f"{row[1]}",
-                        f"{row[9]}",
-                        f"{row[4]}",
-                        f"{row[11]}",
-                        f"{row[5]}"]
+                        f'{row[1]}',
+                        f'{row[9]}',
+                        f'{row[4]}',
+                        f'{row[11]}',
+                        f'{row[5]}',
+                    ]
 
                 else:
                     raise IndexError(
-                        f"Not unique value '{counter}' passed as primary key")
+                        'Not unique value %s passed as primary key',
+                        counter,
+                    )
 
                 counter += 1
 
-            sh.add_section(Section("Data", sh_data_dict))
+            sh.add_section(Section('Data', sh_data_dict))
 
             sh_builder = SampleSheetBuilder(sh, separator=',')
             sh_builder.build()
             sh_builder.save_to_csv(path)
+        
             return True
 
         except Exception as e:
             self.logger.critical(
-                "An error '%s' occurred at '%s'",
+                'An error "%s" occurred at "%s"',
                 repr(e), e.__traceback__.tb_frame.f_trace)
-            raise e
+
+            raise

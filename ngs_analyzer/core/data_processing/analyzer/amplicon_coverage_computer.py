@@ -77,17 +77,17 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def __init__(
         self,
         configurator: Configurator,
-        filter_func: callable
+        filter_func: callable,
     ):
-        """Initializes the AmpliconCoverageDataPreparator
+        """Initialize the AmpliconCoverageDataPreparator
             with configuration and filter function.
 
-            Args:
-                configurator (Configurator):
-                    The configuration object containing settings and paths.
-                filter_func (callable):
-                    A function to filter coverage data, e.g.,
-                    calculating average or median.
+        Args:
+            configurator (Configurator):
+                The configuration object containing settings and paths.
+            filter_func (callable):
+                A function to filter coverage data, e.g.,
+                calculating average or median.
         """
         super().__init__(logger=configurator.logger)
 
@@ -108,43 +108,40 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def depth_filter(
         self,
         filepath: PathLike[AnyStr],
-        depth: int = 1
+        depth: int = 1,
     ) -> None:
-        """Filters lines in a mpileup file based on a depth value
+        """Filter lines in a mpileup file based on a depth value \
             in the fourth field.
 
-            Reads the specified file line by line, and writes only those lines
-            where the integer value in the fourth field (index 3) is greater
-            than or equal to the specified 'depth' threshold.
-            The original file is atomically replaced with the filtered content.
+        Reads the specified file line by line, and writes only those lines
+        where the integer value in the fourth field (index 3) is greater
+        than or equal to the specified 'depth' threshold.
+        The original file is atomically replaced with the filtered content.
 
-            Args:
-                filepath (PathLike[AnyStr]):
-                    Path to the input file to be filtered.
-                depth (int, optional):
-                    Minimum depth value to retain lines. Defaults to 10.
-                logger (Optional[logging.Logger], optional):
-                    Logger instance for warnings and critical messages.
-                    If None, messages are printed to standard output.
+        Args:
+            filepath (PathLike[AnyStr]):
+                Path to the input file to be filtered.
+            depth (int, optional):
+                Minimum depth value to retain lines. Defaults to 10.
+            logger (Optional[logging.Logger], optional):
+                Logger instance for warnings and critical messages.
+                If None, messages are printed to standard output.
 
-            Raises:
-                FileNotFoundError:
-                    If the input file does not exist.
-                PermissionError:
-                    If there are insufficient \
-                        permissions to read/write the file.
-                SystemError, IOError, OSError:
-                    For other I/O related errors.
+        Raises:
+            FileNotFoundError: If the input file does not exist.
+            PermissionError:
+                If there are insufficient permissions to read/write the file.
+            SystemError, IOError, OSError: For other I/O related errors.
 
-            Example:
-                depth_filter('data.txt', depth=15)
+        Example:
+            depth_filter('data.txt', depth=15)
         """
         try:
             with open(
-                file=filepath, mode='r', encoding='utf-8'
+                file=filepath, mode='r', encoding='utf-8',
             ) as fd, tempfile.NamedTemporaryFile(
                 mode='w', delete=False, encoding='utf-8',
-                dir=os.path.dirname(filepath)
+                dir=os.path.dirname(filepath),
             ) as temp_fd:
                 for line in fd:
                     fields = line.strip().split()
@@ -158,9 +155,9 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             temp_fd.write(line)
 
                     except (ValueError, IndexError) as e:
-                        msg = f"An error '{repr(e)}' occurred at line " \
-                            f"'{e.__traceback__.tb_frame.f_lineno}'. " \
-                            f"Skip the line '{line}'"
+                        msg = f'An error "{repr(e)}" occurred at line ' \
+                            f'"{e.__traceback__.tb_frame.f_lineno}". ' \
+                            f'Skip the line "{line}"'
 
                         if self.logger:
                             self.logger.warning(msg)
@@ -175,11 +172,11 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
             PermissionError,
             SystemError,
             IOError,
-            OSError
+            OSError,
         ) as e:
             msg = \
-                f"A critical error '{repr(e)}' occurred " \
-                f"at line {e.__traceback__.tb_frame.f_lineno}"
+                f'A critical error "{repr(e)}" occurred ' \
+                f'at line {e.__traceback__.tb_frame.f_lineno}'
 
             if self.logger:
                 self.logger.critical(msg)
@@ -192,9 +189,9 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def generate_mpileup(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> list[PathLike[AnyStr]]:
-        """Generates mpileup files for specified regions of the sample.
+        """Generate mpileup files for specified regions of the sample.
 
             Args:
                 sample (SampleDataContainer):
@@ -209,15 +206,17 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
         sample.bam_filepath = os.path.join(
             sample.processing_path,
-            sample.sid+".sorted.read_groups.recalibrated.bam")
+            sample.sid + '.sorted.read_groups.recalibrated.bam',
+        )
 
         try:
             for region, out_name in sample.target_regions:
                 out_path = os.path.join(
-                    sample.processing_path, f"{sample.sid}.{out_name}")
+                    sample.processing_path, f'{sample.sid}.{out_name}',
+                )
 
                 cmd = ' '.join([
-                    self.configurator.config['samtools'], "mpileup",
+                    self.configurator.config['samtools'], 'mpileup',
                     sample.bam_filepath,
                     # skip bases with baseQ/BAQ smaller than value was given
                     # '--min-BQ', self.config['min-bq'],
@@ -226,7 +225,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                     '--region', region,
                     '--reference', self.configurator.config['reference'],
                     '--count-orphans',  # do not discard anomalous read pairs
-                    '--output', out_path])
+                    '--output', out_path,
+                ])
 
                 execute(executor, cmd)
 
@@ -237,7 +237,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
                 except FileNotFoundError:
                     self.logger.info(
-                        'Skip mpileup performing for "%s"', out_path
+                        'Skip mpileup performing for "%s"', out_path,
                     )
 
             return mp_files
@@ -250,9 +250,9 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         mpileup: PathLike[AnyStr],
         chromosome: Union[int, str],
         start: Union[int, str],
-        end: Union[int, str]
+        end: Union[int, str],
     ) -> float:
-        """Counts the coverage within a specified region from a mpileup file.
+        """Count the coverage within a specified region from a mpileup file.
 
             Args:
                 mpileup (PathLike):
@@ -295,47 +295,48 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
                         if position > last_position + 1:
                             coverages.extend(
-                                [0] * (position - last_position - 1))
+                                [0] * (position - last_position - 1),
+                            )
 
                         coverages.append(depth)
                         last_position = position
                     if coverages:
                         if len(coverages) < end - start + 1:
                             coverages.extend(
-                                [0] * (end - start + 1 - len(coverages)))
+                                [0] * (end - start + 1 - len(coverages)),
+                            )
 
                         return self.filter_func(coverages)
                     return 0.0
             except FileNotFoundError:
                 self.logger.warning(
-                    "There is no mpileup-file for chromosome %s", chromosome)
+                    'There is no mpileup-file for chromosome %s', chromosome,
+                )
 
                 return 0.0
 
         except (SyntaxError, TypeError, OSError, IOError) as e:
             self.logger.critical(
-                "An error '%s' occurred in '%s.%s'. Abort",
+                'An error "%s" occurred in "%s.%s". Abort',
                 e, self.__class__.__name__,
                 self.perform.__func__.__name__)
             raise e
 
     @staticmethod
     def count_indels(data: str) -> dict[str, int]:
-        """Counts the number of insertions and deletions
+        """Count the number of insertions and deletions \
             for two replicates (r1 and r2) based on the input data string.
 
-            Args:
-                data (str):
-                    A string containing insertion and deletion patterns
-                    in the form '+<number><bases>' or '-<number><bases>',
-                    where <bases> is a sequence of [ACTGNactgn] characters.
+        Args:
+            data (str):
+                A string containing insertion and deletion patterns
+                in the form '+<number><bases>' or '-<number><bases>',
+                where <bases> is a sequence of [ACTGNactgn] characters.
 
-            Returns:
-                dict[str, int]: \\
-                    key:
-                        An indel signature. \\
-                    value:
-                        Count of the key in pileup line
+        Returns:
+            dict[str, int]:
+                key: An indel signature.
+                value: Count of the key in pileup line.
         """
         matches = re.findall(
             r'([+-])(\d+)([ACTGNactgn]+)', data)
@@ -343,7 +344,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         cov_dict = {}
         if matches:
             for sign, number, bases in matches:
-                var_match = str(sign)+str(number)+str(bases[:int(number)])
+                var_match = str(sign) + str(number) + str(bases[:int(number)])
                 if var_match:
                     if var_match in cov_dict:
                         cov_dict[var_match] += 1
@@ -354,7 +355,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     @staticmethod
     def count_target_char(
         src: AnyStr,
-        target_char: AnyStr = '*'
+        target_char: AnyStr = '*',
     ) -> int:
         pattern = re.compile(rf'([+-]\d+[actgnACTGN]*)|({target_char})')
         count = 0
@@ -368,58 +369,59 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
         chromosome: Union[int, str],
         position: Union[int, str],
         ref: str,
-        alt: str
+        alt: str,
     ) -> tuple[int, int, float]:
-        """Calculates coverage information and variant counts
+        """Calculate coverage information and variant counts
             at a specific genomic position from mpileup data.
 
-            Args:
-                chromosome (int or str):
-                    The chromosome identifier (number or string).
-                position (int or str):
-                    The genomic position to analyze.
-                ref (str):
-                    The reference allele at the position.
-                alt (str):
-                    The alternative allele at the position.
+        Args:
+            chromosome (int or str):
+                The chromosome identifier (number or string).
+            position (int or str):
+                The genomic position to analyze.
+            ref (str):
+                The reference allele at the position.
+            alt (str):
+                The alternative allele at the position.
 
-            Returns:
-                tuple: \\
-                    depth (int):
-                        The total read depth at the position. \\
-                    total_alt_count (int):
-                        The total count of reads supporting
-                        the alternative allele, including indels. \\
-                    alt_ratio (float):
-                        The ratio of reads supporting the alternative allele
-                        to total depth, rounded to 3 decimal places.
+        Returns:
+            tuple: \\
+                depth (int):
+                    The total read depth at the position. \\
+                total_alt_count (int):
+                    The total count of reads supporting
+                    the alternative allele, including indels. \\
+                alt_ratio (float):
+                    The ratio of reads supporting the alternative allele
+                    to total depth, rounded to 3 decimal places.
 
-            Note:
-                - This method searches for the specified position
-                in a chromosome-specific mpileup file.
-                - It uses memory-mapped file access for efficiency.
-                - It counts reference matches ('.' and ',')
-                and mismatches (based on alt allele).
-                - It also calls `count_indels()` to count insertions
-                and deletions supporting the variant.
-                - Returns (-1, -1, -1) if the position is not found
-                or an error occurs.
-                - Raises FileNotFoundError if the mpileup file
-                for the chromosome does not exist.
+        Note:
+            - This method searches for the specified position
+            in a chromosome-specific mpileup file.
+            - It uses memory-mapped file access for efficiency.
+            - It counts reference matches ('.' and ',')
+            and mismatches (based on alt allele).
+            - It also calls `count_indels()` to count insertions
+            and deletions supporting the variant.
+            - Returns (-1, -1, -1) if the position is not found
+            or an error occurs.
+            - Raises FileNotFoundError if the mpileup file
+            for the chromosome does not exist.
         """
         self.logger.debug(
-            "Starting to determine (%s:%s>%s, %s) variant coverage",
+            'Starting to determine (%s:%s>%s, %s) variant coverage',
             chromosome, ref, alt, position)
 
         chromosome = str(chromosome)  # .replace('chr', '').strip()
         position = str(position).strip()
 
-        chromosome = '0'+chromosome if chromosome in [
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] else chromosome
+        chromosome = '0' + chromosome if chromosome in [
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        ] else chromosome
 
         if chromosome in self.mpileup_files:
             self.logger.debug(
-                "Chromosome %s found on %s",
+                'Chromosome %s found on %s',
                 chromosome,
                 os.path.abspath(self.mpileup_files[chromosome]))
 
@@ -427,14 +429,14 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                 with open(
                     self.mpileup_files[chromosome],
                     mode='r',
-                    encoding='utf-8'
+                    encoding='utf-8',
                 ) as fd:
                     self.logger.debug(
                         "File '%s' opened with 'r' flag",
                         os.path.abspath(self.mpileup_files[chromosome]))
 
                     with mmap.mmap(
-                        fd.fileno(), 0, access=mmap.ACCESS_READ
+                        fd.fileno(), 0, access=mmap.ACCESS_READ,
                     ) as mm:
                         b_position = mm.find(bytes(
                             position, encoding='utf-8'))
@@ -483,7 +485,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             # a “$” character.
                             # endregion
 
-                            depth, pileup_data = fd.readlines()[line_number-1]\
+                            depth, pileup_data = fd.readlines()[line_number - 1]\
                                 .split('\t')[3:5]
                             depth = int(depth)
 
@@ -503,7 +505,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             r2_ins_count, r2_del_count = 0, 0
 
                             if indels_dict:
-                                number_regex = re.compile(r"([+-])(\d+)")
+                                number_regex = re.compile(r'([+-])(\d+)')
                                 for key, value in indels_dict.items():
                                     sign, number = number_regex.search(key)\
                                         .groups()
@@ -521,35 +523,39 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                                         elif bases.islower():
                                             r2_ins_count += value
 
-                            total_alt_count = (
-                                r1_alt_count + r2_alt_count +
-                                r1_ins_count + r1_del_count +
-                                r2_ins_count + r2_del_count)
+                            total_alt_count = sum(
+                                r1_alt_count, r2_alt_count,
+                                r1_ins_count, r1_del_count,
+                                r2_ins_count, r2_del_count,
+                            )
 
                             return (
                                 depth,
                                 total_alt_count,
-                                round(total_alt_count/depth, 3))
+                                round(total_alt_count / depth, 3),
+                            )
 
                         self.logger.warning(
-                            "Can't find position '%s' in mpileup data '%s'",
+                            'Can\'t find position "%s" in mpileup data "%s"',
                             position, os.path.basename(
-                                self.mpileup_files[chromosome]))
+                                self.mpileup_files[chromosome],
+                            ),
+                        )
 
                         return -1, -1, -1
 
             except (FileNotFoundError, ValueError):
                 self.logger.critical(
-                    "File '%s' not found or it is empty",
+                    'File "%s" not found or it is empty',
                     self.mpileup_files[chromosome])
                 return -1, -1, -1
 
         else:
-            msg = "The mpileup file for " \
-                 f"chromosome {chromosome} doesn't exist."
+            msg = 'The mpileup file for ' \
+                f'chromosome {chromosome} doesn\'t exist.'
 
             self.logger.critical(
-                "%s You have to execute '%s.%s' at first",
+                '%s You have to execute "%s.%s" at first',
                 msg,
                 self.__class__.__name__,
                 self.perform.__func__.__name__)
@@ -559,24 +565,24 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
     def perform(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> list:
-        """Executes the process of generating mpileup files for
+        """Execute the process of generating mpileup files for \
             target regions and calculates coverage metrics.
 
-            Args:
-                sample (SampleDataContainer):
-                    The sequencing data sample.
-                executor (callable):
-                    Function or command executor to run system commands.
+        Args:
+            sample (SampleDataContainer):
+                The sequencing data sample.
+            executor (callable):
+                Function or command executor to run system commands.
 
-            Returns:
-                list:
-                    Results containing coverage metrics for each region.
+        Returns:
+            list:
+                Results containing coverage metrics for each region.
         """
         mpileup_data_list = self.generate_mpileup(
             sample=sample,
-            executor=os.system
+            executor=os.system,
         )
 
         for file_path in mpileup_data_list:
@@ -585,8 +591,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
 
         if not os.path.exists(self.coords) or sample.sid not in self.coords:
             self.coords = os.path.join(
-                sample.processing_path,
-                sample.sid+".coords")
+                sample.processing_path, sample.sid + '.coords',
+            )
 
             touch(self.coords)
 
@@ -600,7 +606,8 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             '-i', sample.bam_filepath,
                             '|', os.path.join('/', 'bin', 'cut'), '-f1,2,3,5',
                             '|', 'uniq', '-u',
-                            '>', self.coords])
+                            '>', self.coords,
+                        ])
 
                     case 'windows':
                         cmd = ' '.join([
@@ -612,13 +619,14 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                             '$($fields[1])`t'
                             '$($fields[2])`t'
                             '$($fields[4])" }',
-                            f'| Set-Content {self.coords}"'])
+                            f'| Set-Content {self.coords}"',
+                        ])
 
                     case _:
                         self.logger.warning(
-                            "There is no any native way to "
-                            "build a comand for '%s'. "
-                            "Please edit '%s' script to execute it properly",
+                            'There is no any native way to '
+                            'build a comand for "%s". '
+                            'Please edit "%s" script to execute it properly',
                             self.configurator.config['bedtools'],
                             self.__module__)
 
@@ -631,7 +639,7 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                 OSError,
                 IOError,
                 FileNotFoundError,
-                PermissionError
+                PermissionError,
             ) as e:
                 self.logger.critical(
                     "An error '%s' occurred while performing '%s.%s'",
@@ -650,8 +658,9 @@ class AmpliconCoverageDataPreparator(LoggerMixin, IDataPreparator):
                     mpileup = self.mpileup_files[chrom]
                     cov_value = round(
                         self.count_region_coverage(
-                            mpileup, chrom, start, end
-                            ), 3)
+                            mpileup, chrom, start, end,
+                        ), 3,
+                    )
 
                     self.results.append(cov_value)
                 else:

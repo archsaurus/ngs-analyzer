@@ -40,59 +40,55 @@ class IPathValidator(Protocol):
     def verify_path(
         self,
         src: PathLike[AnyStr],
-        create_if_missing: bool = False
+        create_if_missing: bool = False,
     ) -> bool:
-        """Verifies the existence of the specified path.
+        """Verify the existence of the specified path.
 
-            Args:
-                src (PathLike[AnyStr]):
-                    The file or directory path to verify.
-                create_if_missing (bool, optional):
-                    If True, creates the path if it does not exist.
-                    Defaults to False.
+        Args:
+            src (PathLike[AnyStr]): The file or directory path to verify.
+            create_if_missing (bool, optional):
+                If True, creates the path if it does not exist.
+                Defaults to False.
 
-            Returns:
-                bool:
-                    True if the path exists or was successfully created;
-                    otherwise, False.
+        Returns:
+            bool:
+                True if the path exists or was successfully created;
+                otherwise, False.
         """
 
 
 class PathValidator(LoggerMixin, IPathValidator):
-    """Validates the existence of a file, optionally creating it if missing."""
+    """Validate the existence of a file, optionally creating it if missing."""
 
-    def __init__(
-        self,
-        logger: logging.Logger = None
-    ):
-        """Initializes the PathValidator with an optional logger.
+    def __init__(self, logger: logging.Logger = None):
+        """Initialize the PathValidator with an optional logger.
 
-            Args:
-                logger (logging.Logger, optional): \
-                    Logger instance for logging messages.
+        Args:
+            logger (logging.Logger, optional): \
+                Logger instance for logging messages.
         """
         super().__init__(logger=logger)
 
     def verify_path(
         self,
         src: PathLike[AnyStr],
-        create_if_missing: bool = False
+        create_if_missing: bool = False,
     ) -> bool:
-        """Checks the existence of the file or directory at the given path src.
+        """Check the existence of the file or directory at the given path src.
 
-            If the path does not exist, creates
-            the necessary directories and the file.
+        If the path does not exist, creates
+        the necessary directories and the file.
 
-            Args:
-                src (PathLike[AnyStr]):
-                    The path to the file or directory to check or create.
-                create_if_missing (bool):
-                    Whether to create the path if it doesn't exist.
-                    Defaults to False.
-            Returns:
-                bool:
-                    True if the path exists or was successfully created,
-                    otherwise False.
+        Args:
+            src (PathLike[AnyStr]):
+                The path to the file or directory to check or create.
+            create_if_missing (bool):
+                Whether to create the path if it doesn't exist.
+                Defaults to False.
+        Returns:
+            bool:
+                True if the path exists or was successfully created,
+                otherwise False.
         """
         try:
             if not os.path.exists(src):

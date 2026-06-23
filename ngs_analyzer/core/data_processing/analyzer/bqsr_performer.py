@@ -1,26 +1,27 @@
-"""This module contains the BQSRPerformer class, which manages
-    Base Quality Score Recalibration (BQSR) using GATK's BaseRecalibrator
-    and ApplyBQSR tools.
+"""This module contains the BQSRPerformer class, which manages GATK BQSR tools.
 
-    It performs the following key steps:
-        1. Generates a recalibration table with BaseRecalibrator. \
-        2. Applies the recalibration to produce a recalibrated BAM file \
-        with ApplyBQSR.
+Base Quality Score Recalibration (BQSR) using GATK's BaseRecalibrator
+and ApplyBQSR tools.
 
-    The process enhances variant calling accuracy by adjusting
-    quality scores based on known sites and covariates,
-    improving downstream analyses.
+It performs the following key steps:
+    1. Generates a recalibration table with BaseRecalibrator. \
+    2. Applies the recalibration to produce a recalibrated BAM file \
+    with ApplyBQSR.
 
-    Classes:
-        - BQSRPerformer:
-            Executes BQSR by running GATK commands, managing logs, \
-            and handling input/output files.
+The process enhances variant calling accuracy by adjusting
+quality scores based on known sites and covariates,
+improving downstream analyses.
 
-    Main Features:
-        - Constructs command-line strings for GATK tools.
-        - Executes commands with logging and error handling.
-        - Handles input sample data and target regions.
-        - Renames output files post-processing.
+Classes:
+    - BQSRPerformer:
+        Executes BQSR by running GATK commands, managing logs, \
+        and handling input/output files.
+
+Main Features:
+    - Constructs command-line strings for GATK tools.
+    - Executes commands with logging and error handling.
+    - Handles input sample data and target regions.
+    - Renames output files post-processing.
 """
 
 # region Imports
@@ -54,16 +55,12 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
         by adjusting quality scores based on known sites and covariates.
     """
 
-    def __init__(
-        self,
-        configurator: Configurator
-    ):
-        """Initializes the BQSRPerformer
+    def __init__(self, configurator: Configurator):
+        """Initialize the BQSRPerformer
             with configuration and target regions.
 
             Args:
-                configurator (Configurator):
-                    Contains paths and parameters.
+                configurator (Configurator): Contains paths and parameters.
         """
         super().__init__(logger=configurator.logger)
         self.configurator = configurator
@@ -71,31 +68,27 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
     def perform(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> PathLike[AnyStr]:
-        """Executes BQSR using GATK's BaseRecalibrator and ApplyBQSR.
+        """Execute BQSR using GATK's BaseRecalibrator and ApplyBQSR.
 
-            Args:
-                sample (SampleDataContainer):
-                    The sample data to process.
-                executor (Union[CommandExecutor, callable]):
-                    Function or object to run commands.
+        Args:
+            sample (SampleDataContainer): The sample data to process.
+            executor (Union[CommandExecutor, callable]):
+                Function or object to run commands.
 
-            Returns:
-                PathLike[AnyStr]:
-                    Path to the recalibrated BAM file.
+        Returns:
+            PathLike[AnyStr]: Path to the recalibrated BAM file.
 
-            Raises:
-                Propagates exceptions from command execution
-                or file operations.
+        Raises:
+            Propagates exceptions from command execution or file operations.
         """
         base_recal_logpath = os.path.abspath(os.path.join(
             sample.processing_logpath,
-            f"{os.path.basename(
-                self.configurator.config['gatk'])}-BaseRecalibrator.log"))
+            f'{os.path.basename(self.configurator.config["gatk"])}-BaseRecalibrator.log'))
 
         racalibration_table_path = os.path.abspath(os.path.join(
-            sample.processing_path, f"{sample.sid}.table"))
+            sample.processing_path, f'{sample.sid}.table'))
 
         base_recal_cmd_str = ' '.join([
             self.configurator.config['gatk'], 'BaseRecalibrator',
@@ -109,26 +102,27 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             #         [sample.target_regions[i][0] for i in range(
             #             len(sample.target_regions))]]),
             '2>', base_recal_logpath,
-            '>>', base_recal_logpath])
+            '>>', base_recal_logpath,
+        ])
 
         try:
-            self.logger.info(
-                "Executing BaseRecalibrator command")
-            self.configurator.logger.debug(
-                "Command: %s",
-                base_recal_cmd_str)
+            self.logger.info('Executing BaseRecalibrator command')
+            self.configurator.logger.debug('Command: %s', base_recal_cmd_str)
 
             execute(executor, base_recal_cmd_str)
 
             self.configurator.logger.info(
-                f"BaseRecalibrator completed successfully. "
-                f"See the log at '{base_recal_logpath}'")
+                f'BaseRecalibrator completed successfully. '
+                f'See the log at "{base_recal_logpath}"',
+            )
 
             recalibrated_outpath = insert_processing_infix(
-                '.recalibrated', sample.bam_filepath)
+                '.recalibrated', sample.bam_filepath,
+            )
 
             apply_bqsr_logpath = base_recal_logpath.replace(
-                'BaseRecalibrator', 'ApplyBQSR')
+                'BaseRecalibrator', 'ApplyBQSR',
+            )
 
             # Construct the ApplyBQSR command by
             # modifying the original BaseRecalibrator command string
@@ -139,17 +133,18 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
                 .replace(base_recal_logpath, apply_bqsr_logpath)
                 .replace('--known-sites', '')
                 .replace(self.configurator.config['annotation-database'], ''),
-                '--bqsr-recal-file', racalibration_table_path])
+                '--bqsr-recal-file', racalibration_table_path,
+            ])
 
-            self.logger.info("Executing ApplyBQSR command")
-            self.logger.debug("Command: %s", apply_bqsr_cmd_str)
+            self.logger.info('Executing ApplyBQSR command')
+            self.logger.debug('Command: %s', apply_bqsr_cmd_str)
 
             execute(executor, apply_bqsr_cmd_str)
             os.rename(sample.bam_filepath, recalibrated_outpath)
 
             self.logger.info(
-                "ApplyBQSR completed successfully. See the log at '%s'",
-                apply_bqsr_logpath
+                'ApplyBQSR completed successfully. See the log at "%s"',
+                apply_bqsr_logpath,
             )
 
             return recalibrated_outpath
@@ -158,12 +153,11 @@ class BQSRPerformer(LoggerMixin, IDataPreparator):
             IOError,
             SystemError,
             FileNotFoundError,
-            PermissionError
+            PermissionError,
         ) as e:
             self.logger.critical(
-                "Error '%s' occurred at line '%s' during BQSR",
-                repr(e),
-                e.__traceback__.tb_frame.f_lineno
+                'Error "%s" occurred at line "%s" during BQSR',
+                repr(e), e.__traceback__.tb_frame.f_lineno,
             )
 
             sys.exit(os.EX_SOFTWARE)

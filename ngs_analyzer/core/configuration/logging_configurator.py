@@ -37,11 +37,8 @@ class ILoggingConfigurator(Protocol):
     Implementations should provide a method to set a logger instance.
     """
 
-    def set_logger(
-        self,
-        silent: bool = False
-    ) -> logging.Logger:
-        """Configures and returns a logger instance.
+    def set_logger(self, silent: bool = False) -> logging.Logger:
+        """Configure and returns a logger instance.
 
         Args:
             silent (bool, optional):
@@ -61,9 +58,9 @@ class LoggingConfigurator(ILoggingConfigurator):
         self,
         path_validator: IPathValidator,
         log_path: PathLike[AnyStr] = os.curdir,
-        args: argparse.Namespace = None
+        args: argparse.Namespace = None,
     ):
-        """Initializes the LoggingConfigurator with deps and parameters.
+        """Initialize the LoggingConfigurator with deps and parameters.
 
             Args:
                 path_validator (IPathValidator):
@@ -84,28 +81,26 @@ class LoggingConfigurator(ILoggingConfigurator):
 
         self.set_logger()
 
-    def set_logger(
-        self,
-        silent: bool = False
-    ) -> logging.Logger:
-        """Sets up logging configuration, creating log files and handlers.
+    def set_logger(self, silent: bool = False) -> logging.Logger:
+        """Set up logging configuration, creating log files and handlers.
 
-            Args:
-                silent (bool):
-                    If True, disables console output. Defaults to False.
+        Args:
+            silent (bool):
+                If True, disables console output. Defaults to False.
 
-            Returns:
-                logging.Logger:
-                    Configured logger instance.
+        Returns:
+            logging.Logger:
+                Configured logger instance.
 
-            Raises:
-                SystemExit:
-                    If verification or creation of log path fails.
+        Raises:
+            SystemExit:
+                If verification or creation of log path fails.
         """
         try:
             if self.args is not None:
                 base_logpath = os.path.abspath(os.path.join(
-                    self.args.outputDir, self.log_path or self.args.logFilename
+                    self.args.outputDir,
+                    self.log_path or self.args.logFilename,
                 ))
 
             else:
@@ -114,7 +109,7 @@ class LoggingConfigurator(ILoggingConfigurator):
 
             if not self.path_validator.verify_path(
                 base_logpath,
-                create_if_missing=True
+                create_if_missing=True,
             ):
                 sys.exit(os.EX_SOFTWARE)
 

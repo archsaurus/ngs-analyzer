@@ -1,8 +1,5 @@
-"""A builder class for constructing a sample sheet text
-from a container of sections.
-
-This module provides a class `SampleSheetBuilder`
-for assembling a sample sheet from various sections.
+"""This module provides a class `SampleSheetBuilder` for assembling \
+    a sample sheet from various sections.
 
 It handles formatting and joining sections into a coherent text representation.
 
@@ -19,8 +16,8 @@ from ngs_analyzer.core.table_manager.sample_sheet_container import \
 
 
 class SampleSheetBuilder:
-    """A builder class for constructing a sample sheet
-    text from a container of sections.
+    """A builder class for constructing a sample sheet text from \
+        a container of sections.
 
     Attributes:
         container (SampleSheetContainer):
@@ -35,7 +32,7 @@ class SampleSheetBuilder:
     """
 
     def __init__(self, container: SampleSheetContainer, separator: str = ','):
-        """Initializes the SampleSheetBuilder with a container
+        """Initialize the SampleSheetBuilder with a container
         and optional separator.
 
         Args:
@@ -55,28 +52,30 @@ class SampleSheetBuilder:
         self.container = container
         self.lines = []
 
-        if len(separator) == 1 and len(re.findall(r"\w", separator)) == 0:
+        if len(separator) == 1 and len(re.findall(r'\w', separator)) == 0:
             self.separator = separator
         else:
             self.separator = ','
 
     def build(self) -> None:
-        """Builds the sample sheet lines from the sections in the container.
+        """Build the sample sheet lines from the sections in the container.
         Populates the self.lines list with the constructed lines.
         """
         for section in self.container.get_sections():
-            self.lines.append(f"[{section.name}]")
+            self.lines.append(f'[{section.name}]')
             section_data = section.data
 
             if isinstance(section_data, dict):
                 for key, value in section_data.items():
                     if isinstance(value, list):
-                        line_str = f"{self.separator}".join(value)
+                        line_str = f'{self.separator}'.join(value)
                         self.lines.append(
-                            str(key) + f"{self.separator}" + line_str)
+                            str(key) + f'{self.separator}' + line_str,
+                        )
                     else:
                         self.lines.append(
-                            str(key) + f"{self.separator}" + str(value))
+                            str(key) + f'{self.separator}' + str(value),
+                        )
 
             elif isinstance(section_data, list):
                 self.lines.extend(section_data)
@@ -86,7 +85,7 @@ class SampleSheetBuilder:
             self.lines.append('')
 
     def get_lines(self) -> list[str]:
-        """Retrieves the constructed sample sheet lines.
+        """Retrieve the constructed sample sheet lines.
 
         Returns:
             list: A list of strings representing the sample sheet.
@@ -94,7 +93,7 @@ class SampleSheetBuilder:
         return self.lines
 
     def save_to_csv(self, path: PathLike[AnyStr]) -> None:
-        """Saves the constructed sample sheet to a CSV
+        """Save the constructed sample sheet to a CSV
         file at the specified path.
 
         Args:

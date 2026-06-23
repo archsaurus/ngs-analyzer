@@ -42,71 +42,62 @@ from ngs_analyzer.core.table_manager.i_table_manager import ITableManager
 
 
 class CsvTableManager(LoggerMixin, ITableManager):
-    """
-        Manages CSV file operations for tabular data,
-        including reading, writing, and setting delimiters
+    """Manages CSV file operations for tabular data, \
+        including reading, writing, and setting delimiters \
         used in CSV formatting.
 
-        Extends LoggerMixin to provide logging capabilities
-        and conforms to the ITableManager interface
-        for standardized table management.
+    Extends LoggerMixin to provide logging capabilities
+    and conforms to the ITableManager interface
+    for standardized table management.
 
-        Attributes:
-            delimiter (str):
-                The character used to separate values in CSV files.
+    Attributes:
+        delimiter (str): The character used to separate values in CSV files.
     """
 
     def __init__(
         self,
         delimiter: str = ',',
-        logger: logging.Logger = None
+        logger: logging.Logger = None,
     ):
         super().__init__(logger=logger)
         self.delimiter = delimiter
 
     def set_delimiter(self, delimiter: str) -> None:
-        """Sets the delimiter character used in CSV operations.
+        """Set the delimiter character used in CSV operations.
 
         Args:
-            delimiter (str):
-                A single-character string to set as the delimiter.
+            delimiter (str): A single-char string to set as the delimiter.
 
         Raises:
-            SyntaxError:
-                If the passed delimiter is not a single character.
+            SyntaxError: If the passed delimiter is not a single character.
         """
         if len(delimiter) == 1:
             if self.delimiter != delimiter:
                 self.delimiter = delimiter
         else:
             raise SyntaxError(
-                f"Passed non one-character delimiter '{delimiter}'")
+                f'Passed non one-character delimiter "{delimiter}"',
+            )
 
     def aggregate_data(self, *args, **kwargs) -> pandas.DataFrame:
-        """Placeholder method for aggregating data from CSV files
-        into a pandas DataFrame.
+        """Aggregate data from CSV files into a pandas DataFrame.
 
         Returns:
-            pandas.DataFrame:
-                The combined data from CSV sources.
+            pandas.DataFrame: The combined data from CSV sources.
         """
 
     def save_dump(
         self,
         path: PathLike[AnyStr],
-        data: pandas.DataFrame
+        data: pandas.DataFrame,
     ) -> bool:
-        """Saves a pandas DataFrame to a CSV file
+        """Save a pandas DataFrame to a CSV file
         with the specified delimiter.
 
         Args:
-            path (PathLike[AnyStr]):
-                The file path where the CSV will be saved.
-            data (pandas.DataFrame):
-                The DataFrame to write to CSV.
+            path (PathLike[AnyStr]): The file path where the CSV will be saved.
+            data (pandas.DataFrame): The DataFrame to write to CSV.
 
         Returns:
-            bool:
-                True if the file was successfully written,
-                False otherwise.
+            bool: True if the file was successfully written, False otherwise.
         """

@@ -37,7 +37,7 @@ class VariantCallerFactory(LoggerMixin):
     """
 
     def __init__(self, logger: Optional[logging.Logger] = None):
-        """Initializes the factory with an optional logger.
+        """Initialize the factory with an optional logger.
 
         Args:
             logger (Optional[logging.Logger]):
@@ -48,10 +48,10 @@ class VariantCallerFactory(LoggerMixin):
     @staticmethod
     def create_caller(
         caller_config: dict[str, str],
-        configurator: Configurator
-     ) -> IVariantCaller:
-        """Creates an instance of a variant caller
-            based on the provided configuration.
+        configurator: Configurator,
+    ) -> IVariantCaller:
+        """Create an instance of a variant caller based on the provided \
+            configuration.
 
         Args:
             caller_config (Dict[str, str]):
@@ -89,5 +89,6 @@ class VariantCallerFactory(LoggerMixin):
                 logger.critical(
                     "Unknown caller type '%s'", caller_config['name'])
                 raise SyntaxError(
-                    "There is an error in your configuration file"
-                    "Check the project documentation")
+                    'There is an error in your configuration file'
+                    'Check the project documentation',
+                )

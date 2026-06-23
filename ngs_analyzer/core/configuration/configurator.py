@@ -16,21 +16,21 @@
         logging, and output directories.
 """
 
+# region Imports
 import argparse
 import logging
-# region Imports
 import os
 import sys
 from os import PathLike
 from typing import AnyStr, Optional
 
+from ngs_analyzer.core.base.helpers.path_utils import is_only_log_file
 from ngs_analyzer.core.base.mixins.patterns import SingletonMeta
 from ngs_analyzer.core.configuration.argument_parser import ArgumentParser
 from ngs_analyzer.core.configuration.config_loader import ConfigLoader
 from ngs_analyzer.core.configuration.logging_configurator import \
     LoggingConfigurator
 from ngs_analyzer.core.configuration.path_validator import PathValidator
-
 # endregion
 
 
@@ -72,9 +72,9 @@ class Configurator(metaclass=SingletonMeta):
         args: argparse.Namespace = None,
         config_path: PathLike[AnyStr] = None,
         log_path: PathLike[AnyStr] = None,
-        output_dir: PathLike[AnyStr] = None
+        output_dir: PathLike[AnyStr] = None,
     ):
-        """Initializes the Configurator, setting up logging, \
+        """Initialize the Configurator, setting up logging, \
             output directory, and configuration.
 
             Args:
@@ -91,18 +91,19 @@ class Configurator(metaclass=SingletonMeta):
 
         self.log_path, self.logger = self._setup_logger(
             log_filename=log_path or self.args.logFilename,
-            args=self.args)
+            args=self.args,
+        )
 
         self.output_dir = self._setup_output_directory(self.args.outputDir)
 
         self.config = self.parse_configuration(
             base_config_filepath=self.args.configFilepath,
-            target_section='Pathes'
+            target_section='Pathes',
         )
 
     @staticmethod
     def _parse_args() -> argparse.Namespace:
-        """Parses command-line arguments using argparse.
+        """Parse command-line arguments using argparse.
 
             Returns:
                 argparse.Namespace:
@@ -110,14 +111,15 @@ class Configurator(metaclass=SingletonMeta):
                     command-line parameters.
         """
         parser = ArgumentParser()
-        return parser.parse()
+        namespace = parser.parse()
+        return namespace
 
     @staticmethod
     def _setup_logger(
         log_filename: PathLike[AnyStr],
-        args: argparse.Namespace = None
+        args: argparse.Namespace = None,
     ) -> tuple[PathLike[AnyStr], logging.Logger]:
-        """Sets up the logging system with the specified log file.
+        """Set up the logging system with the specified log file.
 
             Args:
                 log_filename (PathLike[AnyStr]): Path to the log file.
@@ -131,14 +133,14 @@ class Configurator(metaclass=SingletonMeta):
 
         return (
             os.path.abspath(log_filename),
-            logger.set_logger(silent=False)
+            logger.set_logger(silent=False),
         )
 
     def _setup_output_directory(
         self,
-        output_dir: PathLike[AnyStr]
+        output_dir: PathLike[AnyStr],
     ) -> PathLike[AnyStr]:
-        """Validates the output directory path,
+        """Validate the output directory path,
             creates it if it doesn't exist,
             and handles existing directory conflicts based on user input.
 
@@ -157,11 +159,15 @@ class Configurator(metaclass=SingletonMeta):
             if not os.path.isdir(output_dir):
                 os.mkdir(output_dir)
             else:
-                msg = f"Directory '{output_dir}' already exists"
+                if is_only_log_file(output_dir, os.path.basename(self.log_path)):
+                    self.logger.info('Use "%s" directory as output', output_dir)
+                    return output_dir
+
+                msg = f'Directory "{output_dir}" already exists'
                 self.logger.warning(msg)
                 match input(
-                    f"Do you want to use existing directory '{output_dir}'"
-                    f" as the current output directory [y/n]: "
+                    f'Do you want to use existing directory "{output_dir}"'
+                    f' as the current output directory [y/n]: ',
                 ).lower():
                     case 'n':
                         sys.exit(os.EX_OK)
@@ -169,17 +175,17 @@ class Configurator(metaclass=SingletonMeta):
                         pass
 
         else:
-            os.mkdir(output_dir)
+            os.makedirs(output_dir)
 
-        self.logger.info("Use '%s' directory as output", output_dir)
+        self.logger.info('Use "%s" directory as output', output_dir)
         return output_dir
 
     def parse_configuration(
         self,
         base_config_filepath: Optional[PathLike[AnyStr]],
-        target_section: AnyStr = 'Pathes'
+        target_section: AnyStr = 'Pathes',
     ) -> dict:
-        """Loads a specific section of the configuration
+        """Load a specific section of the configuration
             from a base configuration file.
 
             Args:
@@ -200,4 +206,5 @@ class Configurator(metaclass=SingletonMeta):
             base_config_filepath = self.args.configFilepath
 
         return ConfigLoader(logger=self.logger).load(
-            base_config_filepath, target_section)
+            base_config_filepath, target_section,
+        )

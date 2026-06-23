@@ -2,7 +2,7 @@ import platform
 
 
 def get_platform() -> str:
-    """Detects the current operating system platform.
+    """Detect the current operating system platform.
 
     Returns:
         str:

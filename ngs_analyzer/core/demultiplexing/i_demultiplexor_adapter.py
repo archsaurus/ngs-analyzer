@@ -1,4 +1,4 @@
-"""This module defines the IDemultiplexorAdapter protocol,
+"""This module defines the IDemultiplexorAdapter protocol, \
 which specifies the interface for demultiplexing adapters.
 
 It's intended to be used for various demultiplexing methods,
@@ -11,12 +11,14 @@ from typing import AnyStr, Optional, Protocol
 
 class IDemultiplexorAdapter(Protocol):
     """Protocol for demultiplexing adapters.
+
     This defines the methods that any demultiplexing adapter
     must implement.
     """
 
     def demultiplex(self):
-        """Performs the demultiplexing operation.
+        """Perform the demultiplexing operation.
+
         This should handle all aspects of the demultiplexing process,
         including configuration, command execution, and error handling.
         """
@@ -25,7 +27,7 @@ class IDemultiplexorAdapter(Protocol):
     def extract_barcodes(
         self,
         r1_path: PathLike[AnyStr],
-        r2_path: Optional[PathLike[AnyStr]] = None
+        r2_path: Optional[PathLike[AnyStr]] = None,
     ) -> PathLike[AnyStr]:
         """Extract barcode subsequences from input sequence file(s).
 

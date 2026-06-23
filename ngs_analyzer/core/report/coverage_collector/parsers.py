@@ -53,7 +53,7 @@ def _warn_about_validation_error(
 
 
 def _empty_genotype(
-    logger: Optional[logging.Logger] = None
+    logger: Optional[logging.Logger] = None,
 ) -> GenotypeAdditionalInfo:
     """Return a GenotypeAdditionalInfo DTO with all default values.
 
@@ -70,7 +70,7 @@ def _empty_genotype(
     """
     logger = logger or logging.getLogger(__name__)
     logger.warning(
-        'Unable to parse FORMAT string from the line, return an empty DTO'
+        'Unable to parse FORMAT string from the line, return an empty DTO',
     )
 
     return GenotypeAdditionalInfo(
@@ -85,9 +85,9 @@ def _empty_genotype(
 
 
 def _validate_genotype_fields(
-    fields: Sequence[Any]
+    fields: Sequence[Any],
 ) -> GenotypeAdditionalInfo:
-    """Convert a sequence of raw genotype field values to a typed
+    """Convert a sequence of raw genotype field values to a typed \
         GenotypeAdditionalInfo DTO.
 
     This function iterates over GENOTYPE_FIELD_SPECS,
@@ -128,7 +128,7 @@ def _validate_genotype_fields(
 
 
 def parse_genotype_fields(line: str) -> GenotypeAdditionalInfo:
-    """Parse genotype fields from a VCF-like line and
+    """Parse genotype fields from a VCF-like line and \
         return a GenotypeAdditionalInfo DTO.
 
     Args:

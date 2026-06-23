@@ -17,7 +17,6 @@ Main Features:
     - Supports integration with command execution frameworks.
 """
 
-# region Imports
 import os
 from os import PathLike
 from typing import AnyStr, Protocol, Union
@@ -30,21 +29,18 @@ from ngs_analyzer.core.configuration.configurator import Configurator
 from ngs_analyzer.core.data_processing.sample_input.sample_data_container import \
     SampleDataContainer
 
-# endregion
-
 
 class IAnnotationAdapter(Protocol):
-    """Interface for annotation adapters that perform
-    variant annotation on sequencing data.
-    """
+    """Interface for annotation adapters that perform variant annotation \
+        on sequencing data."""
 
     def annotate(
         self,
         sample: SampleDataContainer,
         reference_ident: str,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> PathLike[AnyStr]:
-        """Performs annotation on the given sample's variant data.
+        """Perform annotation on the given sample's variant data.
 
         Args:
             sample (SampleDataContainer):
@@ -61,13 +57,11 @@ class IAnnotationAdapter(Protocol):
 
 
 class SnpEffAnnotationAdapter(LoggerMixin, IAnnotationAdapter):
-    """Implementation of the IAnnotationAdapter interface using
-    SnpEff for variant annotation.
-    """
+    """Implementation of the IAnnotationAdapter interface using \
+    SnpEff for variant annotation."""
 
     def __init__(self, configurator: Configurator):
-        """Initializes the SnpEffAnnotationAdapter
-        with configuration settings.
+        """Initialize the SnpEffAnnotationAdapter with configuration settings.
 
         Args:
             configurator (Configurator):
@@ -80,36 +74,35 @@ class SnpEffAnnotationAdapter(LoggerMixin, IAnnotationAdapter):
         self,
         sample: SampleDataContainer,
         reference_ident: str,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> PathLike[AnyStr]:
-        """Annotates variants in the sample's VCF file using SnpEff.
+        """Annotate variants in the sample's VCF file using SnpEff.
 
         Args:
-            sample (SampleDataContainer):
-                The sample with VCF data to annotate.
-            reference_ident (str):
-                The reference genome or database identifier.
-            executor (callable):
-                Function or object to execute system commands.
+            sample (SampleDataContainer): The sample with VCF data to annotate.
+            reference_ident (str): The reference genome or database identifier.
+            executor (callable): Function or object to execute system commands.
 
         Returns:
-            PathLike:
-                Path to the annotated VCF file.
+            PathLike: Path to the annotated VCF file.
         """
         annotated_vcf = insert_processing_infix('.ann', sample.vcf_filepath)
 
         html_stats_path = os.path.join(
-            sample.processing_logpath, f"{sample.sid}_snpEff_summary.html")
+            sample.processing_logpath, f'{sample.sid}_snpEff_summary.html',
+        )
 
         csv_stats_path = os.path.join(
-            sample.processing_logpath, f"{sample.sid}_snpEff_summary.csv")
+            sample.processing_logpath, f'{sample.sid}_snpEff_summary.csv',
+        )
 
         cmd = ' '.join([
             self.configurator.config['java'], '-jar',
             self.configurator.config['snpeff'], reference_ident,
             '-stats', html_stats_path,
             '-csvStats', csv_stats_path,
-            sample.vcf_filepath, '>', annotated_vcf])
+            sample.vcf_filepath, '>', annotated_vcf,
+        ])
 
         execute(executor, cmd)
 

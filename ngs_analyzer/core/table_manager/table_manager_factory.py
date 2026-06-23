@@ -17,7 +17,7 @@ from ngs_analyzer.core.table_manager.xml_table_manager import XmlTableManager
 
 
 class TableManagerFactory:
-    """Factory class for creating instances of table managers
+    """Factory class for creating instances of table managers \
     based on the specified format type.
 
     Methods:
@@ -29,9 +29,10 @@ class TableManagerFactory:
         manager = TableManagerFactory.create_manager(
             'csv', logger=my_logger)
     """
+
     @staticmethod
     def create_manager(format_type: str, logger=None) -> ITableManager:
-        """Creates and returns an instance of a table manager
+        """Create and returns an instance of a table manager
         based on the format type.
 
         Args:
@@ -59,4 +60,4 @@ class TableManagerFactory:
             case 'csv' | 'tsv':
                 return CsvTableManager(logger=logger)
             case _:
-                raise ValueError(f"Unknown format type: {format_type}")
+                raise ValueError(f'Unknown format type: {format_type}')

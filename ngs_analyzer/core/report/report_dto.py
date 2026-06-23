@@ -1,29 +1,3 @@
-"""This module defines the ReportDTO class, which serves as a comprehensive
-    data container for report entries.
-
-    The ReportDTO class inherits from IReportDataContainer and is implemented
-    as a dataclass. It aggregates various pieces of information,
-    including a unique sample ID, variant coverage details, gene details,
-    1000 Genomes project data, and ClinVar clinical significance.
-
-    The class provides a method to convert the entire report data
-    into a dictionary format, suitable for reporting, exporting,
-    or further processing.
-
-    Attributes:
-        id (str):
-            Unique identifier for the sample.
-        variant_coverage (VariantCoverageDTO):
-            Coverage information for a genetic variant.
-        gene_details (GeneDetailsDTO):
-            Detailed gene annotation information.
-        one_thousand_genomics (str):
-            Data from the 1000 Genomes project.
-        clinvar_clinical_sign (str):
-            Clinical significance annotation from ClinVar.
-"""
-
-# region Imports
 from dataclasses import dataclass
 
 from ngs_analyzer.core.report.gene_details_dto import GeneDetailsDTO
@@ -31,12 +5,29 @@ from ngs_analyzer.core.report.i_report_data_container import \
     IReportDataContainer
 from ngs_analyzer.core.report.variant_coverage_dto import VariantCoverageDTO
 
-# endregion
-
 
 @dataclass(slots=True)
 class ReportDTO(IReportDataContainer):
-    """Data container for report entries."""
+    """Data container for report entries.
+    
+    The ReportDTO clas aggregates a unique sample ID, \
+    coverage details and gene details, 1000 Genomes project data, \
+    and ClinVar clinical significance.
+
+    The class provides a method to convert the entire report data
+    into a dictionary format, suitable for reporting, exporting,
+    or further processing.
+
+    Attributes:
+        id (str): Unique identifier for the sample.
+        variant_coverage (VariantCoverageDTO):
+            Coverage information for a genetic variant.
+        gene_details (GeneDetailsDTO): Detailed gene annotation information.
+        one_thousand_genomics (str): Data from the 1000 Genomes project.
+        clinvar_clinical_sign (str):
+            Clinical significance annotation from ClinVar.
+    """
+
     id: str
     variant_coverage: VariantCoverageDTO
     gene_details: GeneDetailsDTO
@@ -44,10 +35,10 @@ class ReportDTO(IReportDataContainer):
     clinvar_clinical_sign: str
 
     def to_dict(self):
-        result_dict = {"Sample ID": self.id}
+        result_dict = {'Sample ID': self.id}
         result_dict.update(self.variant_coverage.to_dict())
         result_dict.update(self.gene_details.to_dict())
-        result_dict.update({"1000G": self.one_thousand_genomics})
-        result_dict.update({"Clinical sign": self.clinvar_clinical_sign})
+        result_dict.update({'1000G': self.one_thousand_genomics})
+        result_dict.update({'Clinical sign': self.clinvar_clinical_sign})
 
         return result_dict

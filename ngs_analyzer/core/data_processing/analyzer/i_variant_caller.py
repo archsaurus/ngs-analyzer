@@ -27,7 +27,7 @@ class IVariantCaller(Protocol):
         sample: SampleDataContainer,
         executor: Union[CommandExecutor, callable],
     ) -> Any:
-        """Executes variant calling on the provided sample.
+        """Execute variant calling on the provided sample.
 
         Args:
             sample (SampleDataContainer):

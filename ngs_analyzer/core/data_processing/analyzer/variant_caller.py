@@ -49,28 +49,26 @@ from ngs_analyzer.core.data_processing.sample_input.sample_data_container import
 class VariantCaller(LoggerMixin, IVariantCaller):
     """Base class for variant callers.
 
-        Provides a common interface and shared functionality
-        for specific variant caller implementations.
-        Manages configuration and logging setup.
+    Provides a common interface and shared functionality
+    for specific variant caller implementations.
+    Manages configuration and logging setup.
 
-        Attributes:
-            configurator (Configurator):
-                Configuration object containing parameters and paths.
+    Attributes:
+        configurator (Configurator):
+            Configuration object containing parameters and paths.
     """
 
     def __init__(
         self,
         configurator: Configurator,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
-        """Initializes the VariantCaller with
-            configuration and optional logger.
+        """Initialize the VariantCaller with configuration and optional logger.
 
-            Args:
-                configurator (Configurator):
-                    Configuration object with paths and parameters.
-                logger (Optional[logging.Logger]):
-                    Logger for logging.
+        Args:
+            configurator (Configurator):
+                Configuration object with paths and parameters.
+            logger (Optional[logging.Logger]): Logger for logging.
         """
         self.configurator = configurator
         super().__init__(
@@ -79,30 +77,27 @@ class VariantCaller(LoggerMixin, IVariantCaller):
     def call_variant(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ):
-        """Method to perform variant calling. To be implemented in subclasses.
-        """
-        raise NotImplementedError(
-            "Subclasses should implement this method."
-        )
+        """Perform variant calling."""
+        raise NotImplementedError('Subclasses should implement this method.')
 
 
 class PiscesVariantCaller(VariantCaller):
     """Variant caller implementation using Pisces.
 
-        Executes the Pisces command-line tool
-        for variant calling on a given sample.
+    Executes the Pisces command-line tool
+    for variant calling on a given sample.
 
-        Methods:
-            call_variant(sample, executor):
-                Performs variant calling and returns output VCF path.
+    Methods:
+        call_variant(sample, executor):
+            Performs variant calling and returns output VCF path.
     """
 
     def __init__(
         self,
         configurator: Configurator,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         if configurator:
             super().__init__(configurator, logger)
@@ -112,9 +107,9 @@ class PiscesVariantCaller(VariantCaller):
     def call_variant(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ):
-        """Executes variant calling using Pisces.
+        """Execute variant calling using Pisces.
 
         Args:
             sample (SampleDataContainer):
@@ -126,14 +121,14 @@ class PiscesVariantCaller(VariantCaller):
             str:
                 Path to the output VCF file.
         """
-        self.logger.info("Starting variant calling with Pisces")
+        self.logger.info('Starting variant calling with Pisces')
 
         base_logpath = os.path.join(sample.processing_logpath, 'PiscesLogs')
 
         cmd = ' '.join([
             'DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 '
             'LD_LIBRARY_PATH="/usr/local/lib"'
-            if get_platform() == "linux" else '',
+            if get_platform() == 'linux' else '',
             self.configurator.config['pisces'],
             # '--sbfilter' str(0.1),
             '--coveragemethod', 'exact',  # 'exact' (greedy) or 'approximate'.
@@ -145,20 +140,22 @@ class PiscesVariantCaller(VariantCaller):
             '--minvariantqscore', str(1),
             '--bampaths', sample.bam_filepath,
             '--genomefolders', os.path.dirname(
-                self.configurator.config['reference']),
-            '2>&1'])
+                self.configurator.config['reference'],
+            ),
+            '2>&1',
+        ])
 
-        self.logger.info("Executing Pisces command")
-        self.logger.debug("Command: %s", cmd)
+        self.logger.info('Executing Pisces command')
+        self.logger.debug('Command: %s', cmd)
 
         execute(executor, cmd)
 
         self.logger.info(
-            "Variant calling successfully done. See it's log on %s",
-            base_logpath
+            'Variant calling successfully done. See it\'s log on %s',
+            base_logpath,
         )
 
-        return os.path.splitext(sample.bam_filepath)[0]+".vcf"
+        return os.path.splitext(sample.bam_filepath)[0] + '.vcf'
 
 
 class UnifiedGenotyperVariantCaller(VariantCaller):
@@ -175,11 +172,11 @@ class UnifiedGenotyperVariantCaller(VariantCaller):
     def call_variant(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ) -> None:
         self.logger.warning(
-            "GATK UnifiedGenotyper depricated since version 4.0.0. "
-            "Configure older versions for using it"
+            'GATK UnifiedGenotyper depricated since version 4.0.0. '
+            'Configure older versions for using it',
         )
 
 
@@ -197,15 +194,14 @@ class FreebayesVariantCaller(VariantCaller):
     def call_variant(
         self,
         sample: SampleDataContainer,
-        executor: Union[CommandExecutor, callable]
+        executor: Union[CommandExecutor, callable],
     ):
-        """Executes variant calling using FreeBayes.
+        """Execute variant calling using FreeBayes.
 
         Args:
-            sample (SampleDataContainer): \
+            sample (SampleDataContainer):
                 Sample information including BAM and VCF paths.
-            executor (Union[CommandExecutor, callable]): \
-                Command executor.
+            executor (Union[CommandExecutor, callable]): Command executor.
         """
         cmd = ' '.join([
             self.configurator.config['freebayes'],
@@ -215,10 +211,14 @@ class FreebayesVariantCaller(VariantCaller):
             '--min-alternate-fraction', str(0.01),  # default value is 0.05
             '--no-population-priors',
             ' '.join([
-                f"--region {interval}" for interval in
-                [sample.target_regions[i][0] for i in range(
-                    len(sample.target_regions))]]),
+                f'--region {interval}' for interval in
+                [
+                    sample.target_regions[i][0]
+                    for i in range(len(sample.target_regions))
+                ]
+            ]),
             '--bam', sample.bam_filepath,  # input file
-            '--vcf', sample.vcf_filepath])  # output file
+            '--vcf', sample.vcf_filepath,  # output file
+        ])
 
         execute(executor, cmd)

@@ -24,6 +24,7 @@ class Section:
             which can be a dictionary of string key-value pairs
             or a list containing dictionaries or strings.
     """
+
     name: str
     data: Union[dict[str, str], list[Union[dict, str]]]
 
@@ -36,10 +37,11 @@ class SampleSheetContainer:
         sections (List[Section]):
             A list of Section objects.
     """
+
     sections: list[Section] = field(default_factory=list)
 
     def add_section(self, section: Section) -> None:
-        """Adds a new section to the container.
+        """Add a new section to the container.
 
         Args:
             section (Section):
@@ -48,7 +50,7 @@ class SampleSheetContainer:
         self.sections.append(section)
 
     def get_sections(self) -> list[Section]:
-        """Retrieves all sections stored in the container.
+        """Retrieve all sections stored in the container.
 
         Returns:
             list[Section]: The list of Section objects.
