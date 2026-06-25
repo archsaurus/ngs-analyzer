@@ -1,0 +1,29 @@
+"""Description: Implements XmlTableManager for managing XML table data."""
+
+# region Imports
+import logging
+from os import PathLike
+from typing import AnyStr
+
+import pandas
+
+from ngs_analyzer.core.base.mixins.logger_mixin import LoggerMixin
+from ngs_analyzer.core.table_manager.i_table_manager import ITableManager
+# endregion
+
+
+class XmlTableManager(LoggerMixin, ITableManager):
+    """Manage XML op-s for tabular data, including reading and saving."""
+
+    def __init__(self, logger: logging.Logger = None):
+        super().__init__(logger=logger)
+
+    def aggregate_data(self, *args, **kwargs) -> pandas.DataFrame:
+        """Aggregate data from XML sources into a pandas DataFrame."""
+
+    def save_dump(
+        self,
+        path: PathLike[AnyStr],
+        data: pandas.DataFrame,
+    ) -> bool:
+        """Save the DataFrame to an XML file at the specified path."""
