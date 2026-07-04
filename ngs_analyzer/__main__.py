@@ -6,8 +6,10 @@
 # region Imports
 from __future__ import annotations
 
+import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Iterator
 
 from ngs_analyzer.core.configuration.configurator import Configurator
 from ngs_analyzer.core.data_processing.analyzer.analyzer import (Analyzer,
@@ -20,13 +22,52 @@ from ngs_analyzer.core.table_manager import table_manager
 # endregion
 
 
+def _iter_sample_results(
+    sample_ids: list[str],
+    sample_factory: sample_data_factory.SampleDataFactory,
+    analyzer: Analyzer,
+    reads_dir: str,
+    logger: logging.Logger,
+    workers: int,
+) -> Iterator[dict[str, str | None]]: 
+    if workers == 1:
+        for sample_id in sample_ids:
+            yield process_sample(
+                sample_id=sample_id,
+                sample_factory=sample_factory,
+                analyzer=analyzer,
+                reads_dir=reads_dir,
+                logger=logger,
+            )
+        return
+
+    with ThreadPoolExecutor(
+        max_workers=workers,
+        thread_name_prefix='sample_worker',
+    ) as executor:
+        futures = [
+            executor.submit(
+                process_sample,
+                sample_id=sample_id,
+                sample_factory=sample_factory,
+                analyzer=analyzer,
+                reads_dir=reads_dir,
+                logger=logger,
+            )
+            for sample_id in sample_ids
+        ]
+
+        for future in as_completed(futures):
+            yield future.result()
+
+
 def process_sample(
     sample_id: str,
     sample_factory: sample_data_factory.SampleDataFactory,
     analyzer: Analyzer,
     reads_dir: str,
-    logger,
-) -> dict:
+    logger: logging.Logger,
+) -> dict[str, str | None]:
     """Process a single sample (wrapper for concurrent executor).
 
     Args:
@@ -60,7 +101,7 @@ def process_sample(
         logger.info(f'Successfully processed "{sample_id}"')
 
     except Exception as e:
-        logger.critical(f'Failed to process "{sample_id}": {e}')
+        logger.exception(f'Failed to process "{sample_id}": {e}')
         result['status'] = 'failed'
         result['error'] = str(e)
 
@@ -107,7 +148,8 @@ def main():
         main_logger.critical(runtime_error_msg)
         raise RuntimeError(runtime_error_msg)
 
-    sample_ids = []
+    sample_ids: list[str] = []
+    failed_samples: list[str] = []
     with open(tm_config['dump-file'], 'r', encoding='utf-8') as dump_fd:
         for dump_string in dump_fd.readlines():
             sample_id = dump_string.split(';')[0].strip()
@@ -119,79 +161,31 @@ def main():
 
     if configurator.args.workers == 1:
         main_logger.info('Processing samples sequentially...')
-
-        failed_samples = []
-        for sample_id in sample_ids:
-            result = process_sample(
-                sample_id=sample_id,
-                sample_factory=sample_factory,
-                analyzer=analyzer,
-                reads_dir=reads_dir,
-                logger=main_logger,
-            )
-
-            if result['status'] == 'failed':
-                failed_samples.append(sample_id)
-
-        if failed_samples:
-            main_logger.warning(
-                f'Failed to process {len(failed_samples)} '
-                f'samples: {failed_samples}',
-            )
-
     else:
         main_logger.info(
             f'Processing samples in parallel mode '
             f'with {configurator.args.workers} workers...',
         )
 
-        results = []
-        failed_samples = []
+    for result in _iter_sample_results(
+        sample_ids=sample_ids, sample_factory=sample_factory,
+        analyzer=analyzer, reads_dir=reads_dir, logger=main_logger,
+        workers=configurator.args.workers,
+    ):
+        if result['status'] == 'failed':
+            failed_samples.append(result['sample_id'])
 
-        with ThreadPoolExecutor(
-            max_workers=configurator.args.workers,
-            thread_name_prefix='sample_worker',
-        ) as executor:
-            futures = {
-                executor.submit(
-                    process_sample,
-                    sample_id=sample_id,
-                    sample_factory=sample_factory,
-                    analyzer=analyzer,
-                    reads_dir=reads_dir,
-                    logger=main_logger,
-                ): sample_id
-                for sample_id in sample_ids
-            }
+    # Summary
+    main_logger.info(
+        f'Completed: {len(sample_ids) - len(failed_samples)} successful, '
+        f'{len(failed_samples)} failed out of {len(sample_ids)} samples',
+    )
 
-            # Process results as they complete
-            for future in as_completed(futures):
-                sample_id = futures[future]
-                try:
-                    result = future.result()
-                    results.append(result)
-
-                    if result['status'] == 'failed':
-                        failed_samples.append(sample_id)
-
-                except Exception as e:
-                    main_logger.critical(f'Exception for "{sample_id}": {e}')
-                    failed_samples.append(sample_id)
-                    results.append({
-                        'sample_id': sample_id,
-                        'status': 'failed',
-                        'error': str(e),
-                    })
-
-        # Summary
-        success_count = len([r for r in results if r['status'] == 'success'])
-        main_logger.info(
-            f'Completed: {success_count} successful, '
-            f'{len(failed_samples)} failed out of {len(sample_ids)} samples',
+    if failed_samples:
+        main_logger.warning(
+            f'Failed to process {len(failed_samples)} '
+            f'samples: {failed_samples}',
         )
-
-        if failed_samples:
-            main_logger.warning(f'Failed samples: {failed_samples}')
 
     main_logger.info('Pipeline completed')
 

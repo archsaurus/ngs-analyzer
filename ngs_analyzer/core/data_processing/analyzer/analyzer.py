@@ -30,7 +30,7 @@ from ngs_analyzer.core.data_processing.analyzer.bam_grouper import BamGrouper
 from ngs_analyzer.core.data_processing.analyzer.bqsr_performer import \
     BQSRPerformer
 from ngs_analyzer.core.data_processing.analyzer.primer_cutter import \
-    PrimerCutter
+    PrimerCutter # CutPrimers
 from ngs_analyzer.core.data_processing.analyzer.sequence_aligner import \
     BWAAligner
 from ngs_analyzer.core.data_processing.analyzer.variant_caller_factory import \
@@ -197,6 +197,11 @@ class BRCAAnalyzer(Analyzer):
         sample.r1_source, sample.r2_source = ptrimmer.perform(
             sample, executor=self.cmd_caller,
         )
+
+        # cutprimers = CutPrimers(self.configurator)
+        # sample.r1_source, sample.r2_source = cutprimers.perform(
+        #     sample, self.cmd_caller,
+        # )
 
         sample.bam_filepath = bwa_aligner.perform(
             sample,
